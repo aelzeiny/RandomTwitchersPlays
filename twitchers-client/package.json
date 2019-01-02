@@ -1,0 +1,31 @@
+{
+  "name": "webrtc-client",
+  "version": "1.0.0",
+  "description": "webrtc client for hosting 'Random Twitchers Play' project",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo 'ayy'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aelzeiny/RandomTwitchersPlays.git"
+  },
+  "keywords": [
+    "Twitch",
+    "twitch",
+    "plays",
+    "webrtc",
+    "streaming",
+    "video",
+    "games"
+  ],
+  "author": "Ahmed Elzeiny",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/aelzeiny/RandomTwitchersPlays/issues"
+  },
+  "homepage": "https://github.com/aelzeiny/RandomTwitchersPlays#readme",
+  "dependencies": {
+    "express": "^4.16.4"
+  }
+}
