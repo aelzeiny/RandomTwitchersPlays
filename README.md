@@ -48,8 +48,10 @@ Video Output:
 Complicated Enough? Well let's confuse you even more by talking about video.
 The issue here is that Twitch has ~7 seconds of delay (and sometimes even more than 30 seconds). You can't play games on
 that, so we must do all we can to reduce latency.
+
 My Switch feeds HDMI to my home PC through a Magewell Capture Device. This device turns the output into a 
-low-latency USB3 webcam.
+low-latency USB3 WebCam.
+
 Webcam output is relayed to Kurento Media Servia via a WebRTC stream. The handshake happens on the Gamepad-Out Websocket
 Server to intiate the connection. For added security, the GamePad-Out Websocket Server streams to a port only accessible
 by my home IP address. From the other side of the diagram, the Client Browser initiates a handshake with the Gamepad-In 
