@@ -19,6 +19,43 @@ most commonly inputted command is relayed to the device. Kinda like an Ouji Boar
 Random Twitch Plays allows for players to plug in their controller or keyboard, and assume
 direct control for a period of time. Eventually the controls are passed to the next player in line.
 
+### Architecture
+![architecture](architecture.png)
+
+#### Controller Inputs
+```text
+Controller Input: 
+    Keyboard/Gamepad -> Client-Side Browser -> GamePad-In Server -> GamePad-Out Server -> USB to Serial converter -> Switch 
+```
+
+A lot to digest here. Let's start with just inputs, which flows from client's web-browser to my Switch. The client sends 
+a command to the GamePad-In Websocket Server, which is accessible from anywhere. The Server relays the command to an 
+existing connection between the GamePad-Out Websocket Server and my Home Server - which has a port that is only 
+accessible from my Home IP Address. The GamePad-Out Server does some verification to ensure no strange buttons 
+are being pressed, and sends the command to my Home Server (AKA My Gaming PC). The PC sends the command directly to a
+local Serial Port that has an USB to Serial converter connected, which translates the command to a controller-input for
+the Nintendo Switch.
+
+#### Video Output
+```text
+Video Output:
+    Switch -> MageWell USB Capture Device -> Home Server -> Gamepad-Out Server (handshake) -> Kurento Media Server
+        and
+    Kurento Media Server -> Gamepad-In Server (handshake) -> Client's Browser. 
+        and
+    Kurento Media Server -> Twitch RTP destination
+```  
+Complicated Enough? Well let's confuse you even more by talking about video.
+The issue here is that Twitch has ~7 seconds of delay (and sometimes even more than 30 seconds). You can't play games on
+that, so we must do all we can to reduce latency.
+My Switch feeds HDMI to my home PC through a Magewell Capture Device. This device turns the output into a 
+low-latency USB3 webcam.
+Webcam output is relayed to Kurento Media Servia via a WebRTC stream. The handshake happens on the Gamepad-Out Websocket
+Server to intiate the connection. For added security, the GamePad-Out Websocket Server streams to a port only accessible
+by my home IP address. From the other side of the diagram, the Client Browser initiates a handshake with the Gamepad-In 
+Websocket server, which is accessible from anywhere, and hooks into the same WebRTC stream.
+
+
 ### Giving Credit Where Credit is Due
 * My Fiancée is in love with Animal Crossing, and I dedicate this little project to her.
 * Switch Controller Relay [forked from this legend](https://github.com/Phroon/switch-controller) 
