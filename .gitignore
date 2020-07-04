@@ -1,3 +1,9 @@
-*/node_modules
-*/.idea
+# IDEs
+.idea
+.DS_Store
+.vscode
 
+# Build Dirs
+node_modules
+env
+bower_components

@@ -1,11 +1,25 @@
 # Random Twitchers Play Random Games From my Nintendo Switch
 
-The goal is to build a low-latency webclient to play nintendo switch games from anywhere in the world.
-Here's what I've pieced together so far:
-* 150ms of latency is considered too much latency
-* [DekuNukem's JoyAnalog repo](https://github.com/dekuNukem/joyAnalog) has a schematic for a PCB board that can send inputs to a Nintendo Switch Joycon Controller. I've barely managed to generate a Gerber file and Bill of Materials. Now I have to brush off some rusty soldering skills.
-* There are very few low-latency HDMI capture devices out there. The [Magewell USB Capture Device](https://www.amazon.com/d/B00I16VQOY) utilizes USB 3.0 webcam drivers to transmit data real-time without the installation of anything proprietry. [This table](http://www.magewell.com/blog/4/detail) allows us to optimize for the best resolution without sacrificing latency
-* Magewell also has a [developer's SDK](http://www.magewell.com/sdk) in C++ with some very promising documentation. However, the webcam drivers makes it highly compatible with most libraries (i.e: openCV)
-* I tried my hand at El-Gato HD60S capture device and experienced notably higher latency. The device requires special drivers that only work on Windows, and the [ElGato SDK](https://github.com/elgatosf/gamecapture) is much less documented.
-* Happauge's PCIe board has upward of 5 seconds of delay; making any game unplayable
-* WebRTC is the best candidate for low-latency communication due to its common usage in private video chat rooms.
+### How This Works
+You enter the Twitch stream, and wait in line. When you're up, a low-latency video 
+connection of my Switch is streamed to your browser at an undisclosed URL. You can use a USB 
+controller or your  keyboard to directly control my Nintendo Switch for a few minutes! 
+When the time passes, the controls are passed to the next person in line.
+
+The results are streamed onto Twitch. As a viewer I can see the game progress from start to 
+completition; passing through the hands of people from all over the globe.
+
+...This is how Animal Crossing should be played. 
+
+### This is NOT typical "Twitch Plays"
+Twitch Plays works by players entering in commands through Twitch Chat. The commands 
+for input (A/B/Up/Down) are gathered over a window of time (say 15 seconds), and the
+most commonly inputted command is relayed to the device. Kinda like an Ouji Board.
+
+Random Twitch Plays allows for players to plug in their controller or keyboard, and assume
+direct control for a period of time. Eventually the controls are passed to the next player in line.
+
+### Giving Credit Where Credit is Due
+* My Fiancée is in love with Animal Crossing, and I dedicate this little project to her.
+* Switch Controller Relay [forked from this legend](https://github.com/Phroon/switch-controller) 
+* [Kurento Media Server](https://github.com/Kurento/kurento-media-server) SDK for making WebRTC connections only a mild thorn in my side
