@@ -1,7 +1,7 @@
 {
   "kurento": "ws://localhost:8888/kurento",
-  "gamePadInPort": 8889,
-  "gamePadOutPort": 8887,
+  "gamePadInPort": 8443,
+  "gamePadOutPort": 8444,
   "httpsKey": "keys/server.key",
   "httpsCert": "keys/server.crt"
 }

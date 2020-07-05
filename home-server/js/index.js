@@ -19,7 +19,7 @@ function main(mediaServerURL) {
                 return onError(error);
 
             ws.sendMessage({
-                id: 'presenter',
+                id: 'offer',
                 sdpOffer: offerSdp
             });
         });
@@ -81,4 +81,4 @@ function dispose() {
     }
 }
 
-main('wss://localhost:8443/one2many');
+main('ws://localhost:8444/out');
