@@ -9,19 +9,9 @@ const https = require('https');
 const util = require('util');
 const kurentoify = util.promisify(kurento);
 const NO_PRESENTER_MSG = 'No active presenter. Try again later...';
+const parseConfig = require('./configParser');
 
-
-const argv = minimist(process.argv.slice(2), {
-    default: {
-        as_uri: 'https://localhost:8443/',
-        ws_uri: 'ws://localhost:8888/kurento'
-    }
-});
-
-const options = {
-  key:  fs.readFileSync('keys/server.key'),
-  cert: fs.readFileSync('keys/server.crt')
-};
+const config = parseConfig(`config/${process.env.CONTEXT_ENV || 'local'}.json`);
 
 const app = express();
 
@@ -37,17 +27,25 @@ let viewers = [];
 /*
  * Server startup
  */
-var asUrl = url.parse(argv.as_uri);
-var port = asUrl.port;
-var server = https.createServer(options, app).listen(port, function() {
+
+const ssLoptions = {key:  fs.readFileSync(config.httpsKey), cert: fs.readFileSync(config.httpsCert)};
+const server = https.createServer(ssLoptions, app).listen(config.gamePadInPort, () => {
     console.log('Kurento Tutorial started');
-    console.log('Open ' + url.format(asUrl) + ' with a WebRTC capable browser');
+    console.log(`Open https://localhost:${config.gamePadInPort}/ with a WebRTC capable browser`);
 });
 
 const wss = new ws.Server({
     server : server,
-    path : '/one2many'
+    path : '/in'
 });
+
+const wssOut = new ws.Server({
+	port: config.gamePadOutPort,
+	path: '/out'
+}, () => {
+	console.log('we out here: ws://localhost:' + config.gamePadOutPort + '/out');
+});
+
 
 function nextUniqueId() {
 	idCounter++;
@@ -79,23 +77,7 @@ wss.on('connection', (_ws) => {
         console.log('Connection ' + sessionId + ' received message ', message);
 
         switch (message.id) {
-        case 'presenter':
-			startPresenter(sessionId, _ws, message.sdpOffer).then(sdpAnswer => {
-				_ws.sendJson({
-					id : 'presenterResponse',
-					response : 'accepted',
-					sdpAnswer : sdpAnswer
-				});
-			}).catch(error => {
-				_ws.sendJson({
-					id : 'presenterResponse',
-					response : 'rejected',
-					message : error
-				});
-			});
-			break;
-
-        case 'viewer':
+        case 'offer':
 			startViewer(sessionId, _ws, message.sdpOffer).then(sdpAnswer => {
 				_ws.sendJson({
 					id : 'viewerResponse',
@@ -129,6 +111,62 @@ wss.on('connection', (_ws) => {
     });
 });
 
+
+wssOut.on('connection', (_ws) => {
+	const sessionId = nextUniqueId();
+	console.log('Connection received with sessionId ' + sessionId);
+	_ws.sendJson = function(msg){
+		this.send(JSON.stringify(msg));
+	};
+
+    _ws.on('error', (error) => {
+        console.log('Connection ' + sessionId + ' error. ' + error.toString());
+        stop(sessionId);
+    });
+
+    _ws.on('close', () => {
+        console.log('Connection ' + sessionId + ' closed');
+        stop(sessionId);
+    });
+
+    _ws.on('message', (_message) => {
+        const message = JSON.parse(_message);
+        console.log('Connection ' + sessionId + ' received message ', message);
+
+        switch (message.id) {
+        case 'offer':
+			startPresenter(sessionId, _ws, message.sdpOffer).then(sdpAnswer => {
+				_ws.sendJson({
+					id : 'presenterResponse',
+					response : 'accepted',
+					sdpAnswer : sdpAnswer
+				});
+			}).catch(error => {
+				_ws.sendJson({
+					id : 'presenterResponse',
+					response : 'rejected',
+					message : error
+				});
+			});
+			break;
+
+        case 'stop':
+            stop(sessionId);
+            break;
+
+        case 'onIceCandidate':
+            onIceCandidate(sessionId, message.candidate);
+            break;
+
+        default:
+            _ws.sendJson({
+                id : 'error',
+                message : 'Invalid message ' + message
+            });
+            break;
+        }
+    });
+});
 /*
  * Definition of functions
  */
@@ -140,7 +178,7 @@ function getKurentoClient() {
 			return resolve(kurentoClient);
 		}
 
-		kurentoify(argv.ws_uri).then(_kurentoClient => {
+		kurentoify(config.kurento).then(_kurentoClient => {
 			kurentoClient = _kurentoClient;
 			_kurentoClient.creatify = util.promisify(_kurentoClient.create);
 			resolve(_kurentoClient);

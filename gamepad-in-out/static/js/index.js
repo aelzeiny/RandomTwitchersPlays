@@ -15,7 +15,7 @@
  *
  */
 
-var ws = new WebSocket('wss://' + location.host + '/one2many');
+var ws = new WebSocket('wss://' + location.host + '/in');
 var video;
 var webRtcPeer;
 
@@ -122,7 +122,7 @@ function onOfferViewer(error, offerSdp) {
 	if (error) return onError(error)
 
 	var message = {
-		id : 'viewer',
+		id : 'offer',
 		sdpOffer : offerSdp
 	}
 	sendMessage(message);
