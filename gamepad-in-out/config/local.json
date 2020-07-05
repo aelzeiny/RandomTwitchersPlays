@@ -7,5 +7,5 @@
   "httpsCert": "keys/server.crt",
   "dbPath": ":memory:",
   "twitchChannel": "RandomTwitchersPlay",
-  "twitchBotPassword": "$TWITCH_OAUTH_SECRET"
+  "twitchBotToken": "$TWITCH_OAUTH_SECRET"
 }

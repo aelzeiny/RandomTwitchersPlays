@@ -1,6 +1,6 @@
 const tmi = require('tmi.js');
 const db = require('./db');
-const { host, twitchChannel, twitchBotPassword } = require('./configs');
+const { host, twitchChannel, twitchBotToken } = require('./configs');
 
 
 const client = new tmi.client({
@@ -11,7 +11,7 @@ const client = new tmi.client({
 	},
     identity: {
         username: twitchChannel,
-        password: twitchBotPassword
+        password: twitchBotToken
     },
     channels: [twitchChannel]
 });
