@@ -18,4 +18,5 @@ function parseConfig(configPath) {
     return config;
 }
 
-module.exports = parseConfig;
+
+module.exports = parseConfig(`config/${process.env.CONTEXT_ENV || 'local'}.json`);

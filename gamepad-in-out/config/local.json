@@ -1,7 +1,11 @@
 {
   "kurento": "ws://localhost:8888/kurento",
+  "host": "https://localhost:8443",
   "gamePadInPort": 8443,
   "gamePadOutPort": 8444,
   "httpsKey": "keys/server.key",
-  "httpsCert": "keys/server.crt"
+  "httpsCert": "keys/server.crt",
+  "dbPath": ":memory:",
+  "twitchChannel": "RandomTwitchersPlay",
+  "twitchBotPassword": "$TWITCH_OAUTH_SECRET"
 }

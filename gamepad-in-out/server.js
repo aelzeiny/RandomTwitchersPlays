@@ -1,18 +1,13 @@
 const path = require('path');
-const url = require('url');
 const express = require('express');
-const minimist = require('minimist');
 const ws = require('ws');
 const kurento = require('kurento-client');
-const fs    = require('fs');
+const fs = require('fs');
 const https = require('https');
 const util = require('util');
 const kurentoify = util.promisify(kurento);
 const NO_PRESENTER_MSG = 'No active presenter. Try again later...';
-const parseConfig = require('./configParser');
-
-const config = parseConfig(`config/${process.env.CONTEXT_ENV || 'local'}.json`);
-
+const config = require('./configs');
 const app = express();
 
 /*
