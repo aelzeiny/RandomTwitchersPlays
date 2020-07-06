@@ -9,6 +9,8 @@ const kurentoify = util.promisify(kurento);
 const NO_PRESENTER_MSG = 'No active presenter. Try again later...';
 const config = require('./configs');
 const app = express();
+const queryString = require('query-string');
+const { search:dbSearch } = require('./db');
 
 /*
  * Definition of global variables.
@@ -17,12 +19,11 @@ let idCounter = 0;
 const candidatesQueue = {};
 let kurentoClient = null;
 let presenter = null;
-let viewers = [];
+let viewers = {};
 
 /*
  * Server startup
  */
-
 const ssLoptions = {key:  fs.readFileSync(config.httpsKey), cert: fs.readFileSync(config.httpsCert)};
 const server = https.createServer(ssLoptions, app).listen(config.gamePadInPort, () => {
     console.log('Kurento Tutorial started');
@@ -41,17 +42,14 @@ const wssOut = new ws.Server({
 	console.log('we out here: ws://localhost:' + config.gamePadOutPort + '/out');
 });
 
-
-function nextUniqueId() {
-	idCounter++;
-	return idCounter.toString();
-}
-
 /*
  * Management of WebSocket messages
  */
-wss.on('connection', (_ws) => {
-	const sessionId = nextUniqueId();
+wss.on('connection', (_ws, req) => {
+	const { query } = queryString.parseUrl(req.url);
+	if ((!('id' in query)) || !isAuthenticated(query['id']))
+		return _ws.close(401, 'Unauthorized');
+	const sessionId = query['id'];
 	console.log('Connection received with sessionId ' + sessionId);
 	_ws.sendJson = function(msg){
 		this.send(JSON.stringify(msg));
@@ -165,6 +163,14 @@ wssOut.on('connection', (_ws) => {
 /*
  * Definition of functions
  */
+
+// Authentication
+function isAuthenticated(uuid) {
+	const record = dbSearch(uuid);
+	if (!record)
+		return false;
+	return !record.startedAt;
+}
 
 // Recover kurentoClient for the first time.
 function getKurentoClient() {
