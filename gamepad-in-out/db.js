@@ -55,6 +55,16 @@ function getUUID(username) {
     });
 }
 
+function search(uuid) {
+    return new Promise(((resolve, reject) => {
+        db.get('SELECT * FROM queue WHERE uuid = ?', uuid, (err, record) => {
+            if (err)
+                return reject(err);
+            return resolve(record);
+        });
+    }))
+}
+
 
 function enqueue(username) {
     return new Promise(((resolve, reject) => {
@@ -92,6 +102,6 @@ function dequeueUser(username) {
 }
 
 
-module.exports = { close, enqueue, getQueueUsernames, dequeue, dequeueUser};
+module.exports = { close, enqueue, getQueueUsernames, search, dequeue, dequeueUser};
 
 

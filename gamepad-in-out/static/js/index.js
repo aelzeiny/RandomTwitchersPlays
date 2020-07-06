@@ -15,7 +15,7 @@
  *
  */
 
-var ws = new WebSocket('wss://' + location.host + '/in');
+var ws = new WebSocket('wss://' + location.host + '/in?param=lol');
 var video;
 var webRtcPeer;
 
@@ -121,29 +121,26 @@ function viewer() {
 function onOfferViewer(error, offerSdp) {
 	if (error) return onError(error)
 
-	var message = {
-		id : 'offer',
-		sdpOffer : offerSdp
-	}
-	sendMessage(message);
+	sendMessage({
+		id: 'offer',
+		sdpOffer: offerSdp
+	});
 }
 
 function onIceCandidate(candidate) {
 	   console.log('Local candidate' + JSON.stringify(candidate));
 
-	   var message = {
+	   sendMessage({
 	      id : 'onIceCandidate',
 	      candidate : candidate
-	   }
-	   sendMessage(message);
+	   });
 }
 
 function stop() {
 	if (webRtcPeer) {
-		var message = {
-				id : 'stop'
-		}
-		sendMessage(message);
+		sendMessage({
+			id: 'stop'
+		});
 		dispose();
 	}
 }

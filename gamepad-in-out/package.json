@@ -9,6 +9,7 @@
   "dependencies": {
     "express": "^4.17.0",
     "kurento-client": "git+https://github.com/Kurento/kurento-client-js.git",
+    "query-string": "^6.13.1",
     "sqlite3": "^5.0.0",
     "tmi.js": "^1.5.0",
     "uuid": "^8.2.0",
