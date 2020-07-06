@@ -3,14 +3,14 @@ const express = require('express');
 const ws = require('ws');
 const kurento = require('kurento-client');
 const fs = require('fs');
-const https = require('https');
+const https = require('http');
 const util = require('util');
 const kurentoify = util.promisify(kurento);
 const NO_PRESENTER_MSG = 'No active presenter. Try again later...';
 const config = require('./configs');
 const app = express();
 const queryString = require('query-string');
-const { search:dbSearch } = require('./db');
+const { search:dbSearch, enqueue:dbEnqueue, dequeue:dbDequeue} = require('./db');
 
 /*
  * Definition of global variables.
@@ -25,6 +25,8 @@ let viewers = {};
  * Server startup
  */
 const ssLoptions = {key:  fs.readFileSync(config.httpsKey), cert: fs.readFileSync(config.httpsCert)};
+// const ssLoptions = {};
+
 const server = https.createServer(ssLoptions, app).listen(config.gamePadInPort, () => {
     console.log('Kurento Tutorial started');
     console.log(`Open https://localhost:${config.gamePadInPort}/ with a WebRTC capable browser`);
@@ -46,9 +48,9 @@ const wssOut = new ws.Server({
  * Management of WebSocket messages
  */
 wss.on('connection', (_ws, req) => {
-	const { query } = queryString.parseUrl(req.url);
-	if ((!('id' in query)) || !isAuthenticated(query['id']))
-		return _ws.close(401, 'Unauthorized');
+	// const { query } = queryString.parseUrl(req.url);
+	// if ((!('id' in query)) || !isAuthenticated(query['id']))
+	// 	return _ws.close(401, 'Unauthorized');
 	const sessionId = query['id'];
 	console.log('Connection received with sessionId ' + sessionId);
 	_ws.sendJson = function(msg){
@@ -365,5 +367,12 @@ function onIceCandidate(sessionId, _candidate) {
         candidatesQueue[sessionId].push(candidate);
     }
 }
+
+
+app.get('/api/:uuid', async (req, res) => {
+	const { uuid } = req.params;
+	const userInfo = await dbSearch(uuid);
+	return res.json(userInfo);
+});
 
 app.use(express.static(path.join(__dirname, 'static')));
