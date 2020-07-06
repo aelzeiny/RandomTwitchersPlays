@@ -66,16 +66,16 @@ function search(uuid) {
 }
 
 
-function enqueue(username) {
+function enqueue(username, uuid=null) {
     return new Promise(((resolve, reject) => {
-        getUUID().then(existingRecord => {
+        getUUID(username).then(existingRecord => {
             if (existingRecord)
                 return resolve(existingRecord.uuid);
-            const uuid = generateUUID();
-            db.run(`INSERT INTO queue (uuid, username) VALUES (?, ?)`, uuid, username, (err) => {
+            const _uuid = uuid || generateUUID();
+            db.run(`INSERT INTO queue (uuid, username) VALUES (?, ?)`, _uuid, username, (err) => {
                 if (err)
                     return reject(err);
-                return resolve(uuid);
+                return resolve(_uuid);
             });
         }).catch(reject);
     }));

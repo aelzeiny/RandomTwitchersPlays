@@ -23,7 +23,7 @@ const cmds = {
             `Welcome ${username}! I sent you a private message. Please check your whispers for instructions.`,
             `/w @${username} We made you a secret URL. Please don't share it with anyone, or someone else can take your spot in line.`,
             `/w @${username} Follow me to the URL below for further instructions.`,
-            `/w @${username} ${host}/${uuid}`
+            `/w @${username} ${host}/queue/${uuid}`
         ];
     },
     '!leave': async (username) => {
