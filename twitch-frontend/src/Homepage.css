@@ -1,0 +1,35 @@
+.well {
+    background-color: #202020;
+    height: 480px;
+}
+
+.button-div {
+    text-align: center;
+}
+
+.button-div button {
+    margin: 0 8px;
+}
+
+.modal-content {
+    background-color: #202020;
+    color: #f5efff;
+}
+
+.modal-header {
+    border-bottom-color: transparent;
+    font-family: 'Twitchy', serif;
+    text-shadow: 3px 3px 1px #9147ff;
+}
+
+.modal-header button {
+    color: white;
+}
+
+.modal-footer {
+    border-top-color: transparent;
+}
+
+.emphasis {
+    font-weight: bold;
+}

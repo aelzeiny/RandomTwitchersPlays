@@ -1,0 +1,21 @@
+@font-face {
+  font-family: "Twitchy";
+  src: url("fonts/TwitchyTV.eot"); /* IE9 Compat Modes */
+  src: url("fonts/TwitchyTV.eot?#iefix") format("embedded-opentype"), /* IE6-IE8 */
+    url("fonts/TwitchyTV.otf") format("opentype"), /* Open Type Font */
+    url("fonts/TwitchyTV.svg") format("svg"), /* Legacy iOS */
+    url("fonts/TwitchyTV.ttf") format("truetype"), /* Safari, Android, iOS */
+    url("fonts/TwitchyTV.woff") format("woff"), /* Modern Browsers */
+    url("fonts/TwitchyTV.woff2") format("woff2"); /* Modern Browsers */
+  font-weight: normal;
+  font-style: normal;
+}
+
+.title {
+  font-family: Twitchy, serif;
+  text-align: center;
+  text-shadow: 2px 9px 1px black;
+  color: white;
+  letter-spacing: -3px;
+  margin-bottom: 56px;
+}

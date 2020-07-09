@@ -1,0 +1,23 @@
+.centered {
+    display: flex;
+    width: 50%;
+    height: 50vh;
+    margin: auto;
+    align-items: center;
+    justify-content: center;
+}
+
+.header {
+    background-color: #5f3a98;
+    text-align: center;
+    font-family: 'Twitchy', serif;
+    text-shadow: 3px 3px 1px #9147ff;
+    margin: auto;
+    padding: 16px;
+    width: 300px;
+}
+
+.header h3 {
+    position: relative;
+    top: -5px;
+}
