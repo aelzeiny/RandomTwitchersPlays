@@ -1,0 +1,67 @@
+service: random-twitchers-play
+
+provider:
+    name: aws
+    runtime: python3.8
+    websocketApiName: random-twitchers-broadcast
+    websocketApiRouteSelectionExpressi3/on: $request.body.action
+    iamRoleStatements:
+        - Effect: Allow
+          Action:
+              - "execute-api:ManageConnections"
+              - "execute-api:Invoke"
+          Resource:
+              - "arn:aws:execute-api:*:*:**/@connections/*"
+    vpc:
+        securityGroupIds:
+            - sg-032721f6f2294fd9a
+        subnetIds:
+            - subnet-05798f675e5af045f
+            - subnet-0ae23843b73f4d790
+
+plugins:
+  - serverless-python-requirements
+custom:
+    pythonRequirements:
+        dockerizePip: true
+        noDeploy: []
+
+functions:
+    connectionManager:
+        handler: handler.connection_manager
+        events:
+            - websocket:
+                route: $connect
+            - websocket:
+                route: $disconnect
+    defaultMessage:
+        handler: handler.default_message
+        events:
+            - websocket:
+                route: $default
+
+    broadcast:
+        handler: handler.broadcast_status
+        events:
+            - http:
+                path: broadcast
+                method: post
+
+    join:
+        handler: handler.join_queue
+        events:
+            - http:
+                path: queue
+                method: put
+    leave:
+        handler: handler.leave_queue
+        events:
+            - http:
+                path: queue
+                method: delete
+    next:
+        handler: handler.next_queue
+        events:
+            - http:
+                path: queue
+                method: post
