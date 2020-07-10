@@ -11,11 +11,18 @@ function main(mediaServerURL) {
         // ENCODE ALL OUTGOING MESSAGES AS A JWT
         const header = window.encodeBase64(JSON.stringify({alg: "HS256", typ: "JWT"}));
         const payload = window.encodeBase64(JSON.stringify(message));
-        const signature = CryptoJS.HmacSHA256(header + '.' + payload, window.superSecret);
-        ws.send({
-            id: 'presenter',
+        let signature = CryptoJS.enc.Base64.stringify(
+            CryptoJS.HmacSHA256(header + '.' + payload, window.superSecret)
+        );
+        // base64 -> base64URL
+        signature = signature.split('+').join('-')
+            .split('/').join('_')
+            .replace(/(=+$)/g, "");
+        console.log('sending message');
+        ws.send(JSON.stringify({
+            user: 'presenter',
             jwt: `${header}.${payload}.${signature}`
-        });
+        }));
     };
     let video = document.getElementById('video');
     let options = {localVideo: video, onicecandidate: onIceCandidate};
@@ -90,4 +97,4 @@ function dispose() {
     }
 }
 
-// main('wss://localhost:8443/handshake');
+main('wss://localhost:8443/handshake');
