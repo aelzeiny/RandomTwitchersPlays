@@ -15,7 +15,7 @@ function App() {
             </div>
             <Switch>
                 <Route path="/queue/:uuid" render={() => <Queue/>}/>
-                <Route path="/stream/:uuid" render={() => <Play/>}/>
+                <Route path="/play/:uuid" render={() => <Play/>}/>
                 <Route path="/" render={() => <Homepage/>}/>
             </Switch>
         </div>
