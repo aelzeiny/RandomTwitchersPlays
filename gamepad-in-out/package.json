@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "express": "^4.17.0",
+    "jsonwebtoken": "^8.5.1",
     "kurento-client": "git+https://github.com/Kurento/kurento-client-js.git",
     "query-string": "^6.13.1",
     "sqlite3": "^5.0.0",
