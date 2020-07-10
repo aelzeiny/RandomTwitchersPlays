@@ -18,7 +18,9 @@
     "react-fontawesome": "^1.7.1",
     "react-router-dom": "^5.2.0",
     "react-scripts": "3.4.1",
-    "react-twitch-embed": "^2.1.0"
+    "react-twitch-embed": "^2.1.0",
+    "rxjs": "^6.6.0",
+    "use-state-with-callback": "^1.0.18"
   },
   "scripts": {
     "start": "react-scripts start",
