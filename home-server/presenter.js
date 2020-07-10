@@ -1,35 +1,93 @@
-/*
-    Problem: I need to broadcast my nintendo switch video from my PC to Kurento.
-    Solution A: RTP streaming + FFMPEG. The issue with this is latency; I can't get it below 1 sec delay.
-    Solution B: A WebRTC connection VIA a browser. The issue here is that I can't monitor the process very easily in CLI
-    Solution C: A WebRTC connection VIA a chrome headless browser. That way supervisord can keep track of the PID & I
-                don't have to search for another WebRTC implementation. Let's see if this works...
+const TIMEOUT_SECONDS = 60;
 
-    Presenter.js uses puppeteer to control a chrome headless browser that runs an RTC connection. Is this really the
-    best way to get a performant & stable WebRTC implementation? Something tells me that I'm an idiot, but here we go
-    anyway.
+let ws;
+let webRtcPeer;
+let lastMessage = new Date();
 
-     Edit: Nope... didn't work for some reason. Not able to broadcast video, just websocket messages. Scrap this idea.
-*/
+function main(mediaServerURL) {
+    ws = new WebSocket(mediaServerURL);
+    ws.onmessage = onSocketMessage;
+    ws.sendMessage = (message) => {
+        // ENCODE ALL OUTGOING MESSAGES AS A JWT
+        const header = window.encodeBase64(JSON.stringify({alg: "HS256", typ: "JWT"}));
+        const payload = window.encodeBase64(JSON.stringify(message));
+        const signature = CryptoJS.HmacSHA256(header + '.' + payload, window.superSecret);
+        ws.send({
+            id: 'presenter',
+            jwt: `${header}.${payload}.${signature}`
+        });
+    };
+    let video = document.getElementById('video');
+    let options = {localVideo: video, onicecandidate: onIceCandidate};
 
-const puppeteer = require('puppeteer');
-const site = `file://${__dirname}/static/index.html`;
+    webRtcPeer = kurentoUtils.WebRtcPeer.WebRtcPeerSendonly(options, function (error) {
+        if (error) return onError(error);
 
-(async () => {
-  const browser = await puppeteer.launch();
-  const page = await browser.newPage();
-  console.log(site);
-  await page.goto(site);
+        this.generateOffer((error, offerSdp) => {
+            if (error)
+                return onError(error);
 
-  await page.evaluate(`main("wss://localhost:8443/one2many")`);
+            ws.sendMessage({
+                id: 'presenter',
+                sdpOffer: offerSdp
+            });
+        });
+    });
+}
 
-  setInterval(async () => {
-    const isAlive = await page.evaluate(`healthCheck()`);
-    // await page.screenshot({path: 'heartbeat.png'});
-    if (!isAlive) {
-      console.log('ERROR OCCURRED: CONNECTION TIMED OUT');
-      await browser.close();
-      process.exit(1);
+function healthCheck() {
+    return !(!lastMessage || !webRtcPeer || !ws || (new Date() - lastMessage) / 1000 > TIMEOUT_SECONDS);
+}
+
+function onSocketMessage(message) {
+    lastMessage = new Date();
+    const parsedMessage = JSON.parse(message.data);
+    switch (parsedMessage.id) {
+        case 'presenterResponse':
+            presenterResponse(parsedMessage);
+            break;
+        case 'stopCommunication':
+            dispose();
+            break;
+        case 'iceCandidate':
+            webRtcPeer.addIceCandidate(parsedMessage.candidate)
+            break;
     }
-  }, 5000);
-})();
+}
+
+window.onbeforeunload = function () {
+    if (ws)
+        ws.close();
+}
+
+function presenterResponse(message) {
+    if (message.response !== 'accepted') {
+        dispose();
+    } else {
+        webRtcPeer.processAnswer(message.sdpAnswer);
+    }
+}
+
+function onIceCandidate(candidate) {
+    ws.sendMessage({
+        id: 'onIceCandidate',
+        candidate: candidate
+    });
+}
+
+function stop() {
+    if (webRtcPeer) {
+        var message = {id: 'stop'};
+        ws.sendMessage(message);
+        dispose();
+    }
+}
+
+function dispose() {
+    if (webRtcPeer) {
+        webRtcPeer.dispose();
+        webRtcPeer = null;
+    }
+}
+
+// main('wss://localhost:8443/handshake');

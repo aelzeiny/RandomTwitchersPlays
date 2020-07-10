@@ -20,6 +20,7 @@
   ],
   "dependencies": {
     "webrtc-adapter": "v6.4.0",
-    "kurento-utils": "master"
+    "kurento-utils": "master",
+    "crypto-js": "^4.0.0"
   }
 }
