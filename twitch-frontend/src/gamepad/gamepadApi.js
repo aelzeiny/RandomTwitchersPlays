@@ -1,5 +1,9 @@
 import isEqual from 'lodash.isequal';
+import { Subject } from 'rxjs';
+
 const switchApi = require('./switchApi');
+
+export const switchObservable = new Subject();
 
 let gamepadInterval = null;
 let keyboardDownEvent = null;
@@ -32,7 +36,7 @@ function getGamepadLoop(gamepad) {
             document.dispatchEvent(switchEvent);
         }
         lastInput = newInput;
-    }
+    };
 }
 
 /**
@@ -72,67 +76,99 @@ const switchKeyboardMapping = {
     'e': switchApi.BUTTON_RB,
     'z': switchApi.BUTTON_LTRIGGER,
     'c': switchApi.BUTTON_RTRIGGER,
-    'tab': switchApi.BUTTON_CAPTURE,
+    '`': switchApi.BUTTON_CAPTURE,
+    '1': switchApi.HAT_UP,
+    '2': switchApi.HAT_LEFT,
+    '3': switchApi.HAT_DOWN,
+    '4': switchApi.HAT_RIGHT
 };
 
 function getKeyboardEvents() {
     let lastInput = {};
+    lastInput[switchApi.AXIS_LX] = 0;
+    lastInput[switchApi.AXIS_LY] = 0;
+    lastInput[switchApi.AXIS_RX] = 0;
+    lastInput[switchApi.AXIS_RY] = 0;
 
     const newKeyDown = (e) => {
-        if (e.defaultPrevented || e.repeat)
-            return;
-
-        switch (e.key.toLowerCase()) {
+        const newInput = {...lastInput};
+        const eKey = e.key.toLowerCase();
+        switch (eKey) {
             case "down": // IE/Edge
             case "arrowdown":
-                lastInput[switchApi.AXIS_LY] = -1;
+                newInput[switchApi.AXIS_LY] = -1;
                 break;
             case "up": // IE/Edge
             case "arrowup":
-                lastInput[switchApi.AXIS_LY] = 1;
+                newInput[switchApi.AXIS_LY] = 1;
                 break;
             case "left": // IE/Edge
             case "arrowleft":
-                lastInput[switchApi.AXIS_LX] = -1;
+                newInput[switchApi.AXIS_LX] = -1;
                 break;
             case "right": // IE/Edge
             case "arrowright":
-                lastInput[switchApi.AXIS_LX] = 1;
+                newInput[switchApi.AXIS_LX] = 1;
+                break;
+            case "j":
+                newInput[switchApi.AXIS_RX] = -1;
+                break;
+            case "l":
+                newInput[switchApi.AXIS_RX] = 1;
+                break;
+            case "k":
+                newInput[switchApi.AXIS_RY] = -1;
+                break;
+            case "i":
+                newInput[switchApi.AXIS_RY] = 1;
                 break;
             default:
-                if (e.key in switchKeyboardMapping)
-                    lastInput[switchKeyboardMapping[e.key]] = true;
-                return;
+                if (eKey in switchKeyboardMapping) {
+                    newInput[switchKeyboardMapping[eKey]] = true;
+                }
         }
-        const switchEvent = new CustomEvent('switchMessage', lastInput);
-        document.dispatchEvent(switchEvent);
+        if (!isEqual(newInput, lastInput)) {
+            lastInput = newInput;
+            switchObservable.next(newInput);
+        }
     };
 
     const newKeyUp = (e) => {
-        if (e.defaultPrevented || e.repeat)
-            return;
-
-        switch (e.key.toLowerCase()) {
+        const newInput = {...lastInput};
+        const eKey = e.key.toLowerCase();
+        switch (eKey) {
             case "down": // IE/Edge
             case "arrowdown":
             case "up": // IE/Edge
             case "arrowup":
-                lastInput[switchApi.AXIS_LY] = 0;
+                newInput[switchApi.AXIS_LY] = 0;
                 break;
             case "left": // IE/Edge
             case "arrowleft":
             case "right": // IE/Edge
             case "arrowright":
-                lastInput[switchApi.AXIS_LX] = 0;
+                newInput[switchApi.AXIS_LX] = 0;
+                break;
+
+            case "j":
+            case "l":
+                newInput[switchApi.AXIS_RX] = 0;
+                break;
+            case "k":
+            case "i":
+                newInput[switchApi.AXIS_RY] = 0;
                 break;
             default:
-                if (e.key in switchKeyboardMapping && e.key in lastInput)
-                    delete lastInput[switchKeyboardMapping[e.key]];
-                return;
+                if (eKey in switchKeyboardMapping && switchKeyboardMapping[eKey] in newInput)
+                    delete newInput[switchKeyboardMapping[eKey]];
         }
-        const switchEvent = new CustomEvent('switchMessage', lastInput);
-        document.dispatchEvent(switchEvent);
+        if (!isEqual(newInput, lastInput)) {
+            lastInput = newInput;
+            switchObservable.next(newInput);
+        }
     };
 
     return [newKeyDown, newKeyUp];
 }
+
+updateController(null);

@@ -49,7 +49,7 @@ export default function GamepadSelection({ gamepadSelectedCallback }) {
         } else {
             console.log('Gamepads not supported in this browser');
         }
-    }, [gamepads]);
+    }, [gamepads, setGamepads]);
 
     const switchGamepad = (newGamePad) => {
         if (gamepads.selected === newGamePad)
@@ -65,21 +65,21 @@ export default function GamepadSelection({ gamepadSelectedCallback }) {
             <div className="btn-group">
                 <button className="btn btn-secondary btn-lg dropdown-toggle" type="button" data-toggle="dropdown"
                         aria-haspopup="true" aria-expanded="false">
-                    <FA name={(gamepads.selected) ? 'gamepad' : 'keyboard'}/>
+                    <i className={`fas fa-${(gamepads.selected) ? 'gamepad' : 'keyboard'}`}/>
                     {(gamepads.selected) ? gamepads.selected.id : 'Keyboard'}
                 </button>
                 <div className="dropdown-menu" aria-labelledby="dropdownMenuLink">
-                    <a className="dropdown-item"
-                       active={!gamepads.selected}
+                    <button className="dropdown-item"
+                       active={!gamepads.selected ? 'true' : 'false'}
                        onClick={() => switchGamepad(null)}>
                         <FA name='keyboard'/> Keyboard
-                    </a>
-                    {gamepads.map((gamepad) => (
-                        <a className="dropdown-item"
+                    </button>
+                    {gamepads.length && gamepads.map((gamepad) => (
+                        <button className="dropdown-item"
                            active={gamepad === gamepads.selected}
                            onClick={() => switchGamepad(gamepad)}>
                             <FA name='gamepad'/> {gamepad.id}
-                        </a>
+                        </button>
                     ))}
                 </div>
             </div>
