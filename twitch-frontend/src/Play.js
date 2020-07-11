@@ -23,7 +23,7 @@ function Play() {
 
         function viewerResponse(message) {
             if (message.response !== 'accepted') {
-                var errorMsg = message.message ? message.message : 'Unknow error';
+                const errorMsg = message.message ? message.message : 'Unknow error';
                 console.warn('Call not accepted for the following reason: ' + errorMsg);
                 webRtcPeer.dispose();
                 setLoadState({state: STATE_STOPPED});
@@ -84,14 +84,16 @@ function Play() {
                     console.error('Unrecognized message', parsedMessage);
             }
         };
-        return () => window.stop();
+        return () => {
+            ws.close();
+            webRtcPeer.dispose();
+        }
     }, [uuid, loadState, setLoadState]);
     return (
         <div className='video-holder'>
             <video ref={videoRef} id='video' key='video-play' autoPlay width="940px" height="480px"
                    style={{backgroundColor: 'black'}}
-                   poster={loadingScreen}
-            />
+                   poster={loadingScreen}/>
         </div>
     );
 }
