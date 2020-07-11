@@ -1,9 +1,9 @@
-import React, {useEffect, useRef, useState} from 'react';
-
-import { WebRtcPeer } from 'kurento-utils'
-import './App.css';
-import { useParams } from 'react-router-dom';
+import './Play.css';
 import loadingScreen from './nook_loading.jpg';
+
+import React, { useEffect, useRef, useState } from 'react';
+import { WebRtcPeer } from 'kurento-utils'
+import { useParams } from 'react-router-dom';
 
 
 const STATE_LOADING = 'loading';
@@ -12,75 +12,86 @@ const STATE_STOPPED = 'stopped';
 
 
 function Play() {
-    const videoRef = useRef(null);
     const uuid = useParams().uuid;
+    const videoRef = useRef();
     const [loadState, setLoadState] = useState({state: STATE_LOADING});
 
     useEffect(() => {
-        // Load websocket connection to this host. The UUID authenticates.
-        const ws = new WebSocket('ws://' + window.location.host + `/in?uuid=${uuid}`);
-        let webRtcPeer = null;
-        ws.sendMessage = (message) => ws.send(JSON.stringify(message));
+        const ws = new WebSocket('wss://localhost:8443/handshake?id=lol');
+        ws.sendMessage = (objMsg) => ws.send(JSON.stringify(objMsg));
+        let webRtcPeer;
 
-        ws.onopen = () => {
-            // Load the WebRTC Connection
-            const webRtcOptions = {
-                remoteVideo: videoRef.current,
-                onicecandidate: (candidate) => {
-                   console.log('Local candidate' + JSON.stringify(candidate));
-                   ws.sendMessage({id: 'onIceCandidate', candidate: candidate});
-                }
-            };
-            webRtcPeer = WebRtcPeer.WebRtcPeerRecvonly(webRtcOptions, function(error) {
-			if(error)
-			    return setLoadState({state: STATE_ERROR, error: error});
-
-			this.generateOffer((error, offserSdp) => {
-			    if (error)
-			        return setLoadState({state: STATE_ERROR, error: error});
-			    ws.sendMessage({
-                    id: 'offer',
-                    sdpOffer: offserSdp
-                });
-            });
-		});
-        };
-        const viewerResponse = (message) => {
+        function viewerResponse(message) {
             if (message.response !== 'accepted') {
-                const errorMsg = message.message ? message.message : 'Unknow error';
+                var errorMsg = message.message ? message.message : 'Unknow error';
                 console.warn('Call not accepted for the following reason: ' + errorMsg);
-                setLoadState({state: STATE_ERROR, error: message});
+                webRtcPeer.dispose();
+                setLoadState({state: STATE_STOPPED});
             } else {
                 webRtcPeer.processAnswer(message.sdpAnswer);
+            }
+        }
+        ws.onopen = () => {
+            if (!webRtcPeer) {
+                const options = {
+                    remoteVideo: videoRef.current,
+                    onicecandidate: (candidate => {
+                        ws.sendMessage({
+                            id: 'onIceCandidate',
+                            candidate: candidate
+                        });
+                    })
+                }
+
+                webRtcPeer = WebRtcPeer.WebRtcPeerRecvonly(options, function(error) {
+                    if (error) {
+                        console.error(error);
+                        setLoadState({state: STATE_ERROR, error: error});
+                        return;
+                    }
+
+                    this.generateOffer((error, offerSdp) => {
+                        if (error) {
+                            console.error(error);
+                            setLoadState({state: STATE_ERROR, error: error});
+                            return;
+                        }
+
+                        ws.sendMessage({
+                            id: 'viewer',
+                            sdpOffer: offerSdp
+                        });
+                    });
+                });
             }
         };
         ws.onmessage = (message) => {
             const parsedMessage = JSON.parse(message.data);
+            console.info('Received message: ' + message.data);
 
             switch (parsedMessage.id) {
-            case 'viewerResponse':
-                viewerResponse(parsedMessage);
-                break;
-            case 'stopCommunication':
-                setLoadState({state: STATE_STOPPED});
-                break;
-            case 'iceCandidate':
-                webRtcPeer.addIceCandidate(parsedMessage.candidate)
-                break;
-            default:
-                console.error('Unrecognized message', parsedMessage);
+                case 'viewerResponse':
+                    viewerResponse(parsedMessage);
+                    break;
+                case 'stopCommunication':
+                    webRtcPeer.dispose();
+                    setLoadState({state: STATE_STOPPED});
+                    break;
+                case 'iceCandidate':
+                    webRtcPeer.addIceCandidate(parsedMessage.candidate)
+                    break;
+                default:
+                    console.error('Unrecognized message', parsedMessage);
             }
-        }
-        return () => {
-            ws.close();
-            if (webRtcPeer)
-                webRtcPeer.dispose();
         };
-    }, [uuid, setLoadState]);
+        return () => window.stop();
+    }, [uuid, loadState, setLoadState]);
     return (
-        <div>
-            <h3>{loadState.state}</h3>
-            <video ref={videoRef} autoPlay width="640px" height="480px" poster={loadingScreen}/>
+        <div className='video-holder'>
+            <video ref={videoRef} id='video' key='video-play' autoPlay width="940px" height="480px"
+                   style={{backgroundColor: 'black'}}
+                   poster={loadingScreen}
+            />
         </div>
     );
 }
