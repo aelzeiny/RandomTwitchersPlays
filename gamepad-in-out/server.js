@@ -78,13 +78,13 @@ wss.on('connection', (_ws) => {
 
     _ws.on('message', async (_message) => {
         let message = JSON.parse(_message);
-        console.log('Connection ' + sessionId + ' received message ', message);
 
         if (message.user === 'presenter') {
         	message = await verifyPresenter(message);
         	if (!message)
         		return _ws.close(1003, 'Invalid Authentication as presenter');
 		}
+        console.log('Connection ' + sessionId + ' received message ', message);
 
         switch (message.id) {
         case 'presenter':
@@ -348,3 +348,4 @@ function verifyPresenter(message) {
 }
 
 app.use(express.static(path.join(__dirname, 'static')));
+// app.use(express.static(path.join(__dirname, '../twitch-frontend/build')));
