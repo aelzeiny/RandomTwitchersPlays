@@ -5,6 +5,7 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.lang.NonNull;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken;
@@ -25,28 +26,34 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     private static final String jwt_secret = System.getenv(JWT_SECRET_ENV);
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
-                                    FilterChain chain) throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request, @NonNull HttpServletResponse response,
+                                    @NonNull FilterChain chain) throws ServletException, IOException {
         final String requestTokenHeader = request.getHeader("Authorization");
         assert jwt_secret != null && !jwt_secret.isEmpty();
         if (requestTokenHeader != null && requestTokenHeader.startsWith("Bearer ")) {
             String jwtToken = requestTokenHeader.substring("Bearer ".length());
-            try {
-                Jwts.parserBuilder()
-                        .setSigningKey(jwt_secret.getBytes(StandardCharsets.UTF_8))
-                        .build()
-                        .parseClaimsJws(jwtToken);
-
+            if (JwtRequestFilter.verifyJwt(jwtToken)) {
                 PreAuthenticatedAuthenticationToken token = new PreAuthenticatedAuthenticationToken(
-                        "homeServer", jwt_secret
+                        "homeServer",
+                        jwt_secret
                 );
                 token.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 token.setAuthenticated(true);
                 SecurityContextHolder.getContext().setAuthentication(token);
-            } catch (JwtException e) {
-                log.info("Invalid JWT: {}", jwtToken);
             }
         }
         chain.doFilter(request, response);
+    }
+
+    public static boolean verifyJwt(String jwt) {
+        try {
+            Jwts.parserBuilder()
+                    .setSigningKey(jwt_secret.getBytes(StandardCharsets.UTF_8))
+                    .build()
+                    .parseClaimsJws(jwt);
+            return true;
+        } catch (JwtException e) {
+            return false;
+        }
     }
 }

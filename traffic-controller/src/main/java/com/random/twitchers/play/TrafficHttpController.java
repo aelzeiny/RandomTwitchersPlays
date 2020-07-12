@@ -26,7 +26,7 @@ public class TrafficHttpController {
     public String listUsers() {
         Gson gson = new GsonBuilder().create();
         List<String> users = registry.getUsers();
-        log.info("Joined Users: {}", String.join(",", users));
+        log.info("Joined Users: {}", String.join(", ", users));
         return gson.toJson(registry.getUsers());
     }
 
