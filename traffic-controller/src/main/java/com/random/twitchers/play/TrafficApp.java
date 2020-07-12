@@ -27,7 +27,7 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 
 @SpringBootApplication
 @EnableWebSocket
-public class GroupCallApp implements WebSocketConfigurer {
+public class TrafficApp implements WebSocketConfigurer {
 
   @Bean
   public UserRegistry registry() {
@@ -40,8 +40,8 @@ public class GroupCallApp implements WebSocketConfigurer {
   }
 
   @Bean
-  public CallHandler groupCallHandler() {
-    return new CallHandler();
+  public TrafficWebsocketsHandler trafficHandler() {
+    return new TrafficWebsocketsHandler();
   }
 
   @Bean
@@ -50,11 +50,11 @@ public class GroupCallApp implements WebSocketConfigurer {
   }
 
   public static void main(String[] args) throws Exception {
-    SpringApplication.run(GroupCallApp.class, args);
+    SpringApplication.run(TrafficApp.class, args);
   }
 
   @Override
   public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-    registry.addHandler(groupCallHandler(), "/groupcall");
+    registry.addHandler(trafficHandler(), "/traffic");
   }
 }

@@ -1,6 +1,6 @@
 package com.random.twitchers.play.security;
 
-import com.random.twitchers.play.CallHandler;
+import com.random.twitchers.play.TrafficWebsocketsHandler;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import org.slf4j.Logger;
@@ -20,7 +20,7 @@ import java.nio.charset.StandardCharsets;
 
 @Component
 public class JwtRequestFilter extends OncePerRequestFilter {
-    private static final Logger log = LoggerFactory.getLogger(CallHandler.class);
+    private static final Logger log = LoggerFactory.getLogger(TrafficWebsocketsHandler.class);
     private static final String JWT_SECRET_ENV = "PRESENTER_SUPER_SECRET";
     private static final String jwt_secret = System.getenv(JWT_SECRET_ENV);
 
