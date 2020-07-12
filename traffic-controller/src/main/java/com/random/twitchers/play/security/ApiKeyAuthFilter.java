@@ -6,9 +6,10 @@ import javax.servlet.http.HttpServletRequest;
 
 
 public class ApiKeyAuthFilter extends AbstractPreAuthenticatedProcessingFilter {
-    private String principalRequestHeader = "Authorization";
+    private final String principalRequestHeader;
 
     public ApiKeyAuthFilter(String principalRequestHeader) {
+        super();
         this.principalRequestHeader = principalRequestHeader;
     }
 
