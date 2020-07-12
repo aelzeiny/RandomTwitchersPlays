@@ -27,7 +27,7 @@ window.onbeforeunload = function() {
 function register() {
 	name = document.getElementById('name').value;
 	document.getElementById('join').style.display = 'none';
-	ws = new WebSocket('wss://' + location.host + `/groupcall?id=${name}`);
+	ws = new WebSocket('wss://' + location.host + `/traffic?id=${name}`);
 
 	ws.onopen = () => {
 		const message = {

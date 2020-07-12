@@ -39,9 +39,9 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 
-public class CallHandler extends TextWebSocketHandler {
+public class TrafficWebsocketsHandler extends TextWebSocketHandler {
 
-  private static final Logger log = LoggerFactory.getLogger(CallHandler.class);
+  private static final Logger log = LoggerFactory.getLogger(TrafficWebsocketsHandler.class);
 
   private static final Gson gson = new GsonBuilder().create();
 

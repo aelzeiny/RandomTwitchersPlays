@@ -3,8 +3,6 @@ package com.random.twitchers.play;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
-import com.google.gson.reflect.TypeToken;
 import com.random.twitchers.play.dto.TwitchUserDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,8 +14,8 @@ import java.util.List;
 
 @RestController
 @RequestMapping(path="/api/", produces="application/json")
-public class GroupCallApi {
-    private static final Logger log = LoggerFactory.getLogger(CallHandler.class);
+public class TrafficHttpController {
+    private static final Logger log = LoggerFactory.getLogger(TrafficHttpController.class);
 
     private static final Gson gson = new GsonBuilder().create();
 

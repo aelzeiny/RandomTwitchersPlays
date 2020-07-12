@@ -20,7 +20,7 @@
 	<!-- Project configuration -->
 	<properties>
 		<demo.port>8443</demo.port>
-		<start-class>org.kurento.backend.traffic.GroupCallApp</start-class>
+		<start-class>org.kurento.backend.traffic.TrafficApp</start-class>
 	</properties>
 
 	<dependencies>
