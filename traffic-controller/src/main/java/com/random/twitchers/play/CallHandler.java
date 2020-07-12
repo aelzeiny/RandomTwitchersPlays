@@ -55,19 +55,18 @@ public class CallHandler extends TextWebSocketHandler {
   public void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
     final JsonObject jsonMessage = gson.fromJson(message.getPayload(), JsonObject.class);
 
-
     if (!session.isOpen()) {
       return;
     }
 
     Optional<UserSession> nullableUser = registry.getBySession(session);
     if (nullableUser.isPresent()) {
-      log.debug("Incoming message from user '{}': {}", nullableUser.get().getName(), jsonMessage);
+      log.debug("Incoming message from user '{}': {}", nullableUser.get().getUserId(), jsonMessage);
     } else {
       log.debug("Incoming message from new user: {}", jsonMessage);
     }
     if (jsonMessage.get("id").getAsString().equals("joinRoom")) {
-      joinRoom(jsonMessage, session);
+      joinRoom(session);
       return;
     }
 
@@ -100,17 +99,13 @@ public class CallHandler extends TextWebSocketHandler {
   public void afterConnectionEstablished(WebSocketSession session) throws IOException {
     URI endpoint = session.getUri();
     if (endpoint != null && endpoint.getQuery() != null) {
-      List<NameValuePair> params = URLEncodedUtils.parse(endpoint, StandardCharsets.UTF_8);
-      Optional<NameValuePair> tuple = params.stream().filter(el -> el.getName().equals("id")).findFirst();
-      // User must identify themselves based off of connection url
-      if (!tuple.isPresent()) {
+      Optional<String> userId = getIdFromSession(session);
+      if (!userId.isPresent()) {
         session.close(CloseStatus.NOT_ACCEPTABLE);
         return;
       }
-
       // User must be whitelisted
-      String username = tuple.get().getValue();
-      if (!registry.isWhitelisted(username)) {
+      if (!registry.isWhitelisted(userId.get())) {
         session.close(CloseStatus.NOT_ACCEPTABLE);
         return;
       }
@@ -133,17 +128,30 @@ public class CallHandler extends TextWebSocketHandler {
       roomManager.getRoom().leave(user.get());
   }
 
-  private void joinRoom(JsonObject params, WebSocketSession session) throws IOException {
-    final String name = params.get("name").getAsString();
-    log.info("PARTICIPANT {}: trying to join", name);
+  private void joinRoom(WebSocketSession session) throws IOException {
+    final String userId = getIdFromSession(session).orElseThrow(IllegalArgumentException::new);
+    final String twitchTag = registry.getTwitchTag(userId);
+    log.info("PARTICIPANT {}: trying to join as {}", userId, twitchTag);
 
     Room room = roomManager.getRoom();
-    final UserSession user = room.join(name, session);
+    final UserSession user = room.join(userId, twitchTag, session);
     registry.register(user);
   }
 
   private void leaveRoom(UserSession user) throws IOException {
     final Room room = roomManager.getRoom();
     room.leave(user);
+  }
+
+  private Optional<String> getIdFromSession(WebSocketSession session) {
+    URI endpoint = session.getUri();
+    if (endpoint == null || endpoint.getQuery() != null)
+      return Optional.empty();
+    List<NameValuePair> params = URLEncodedUtils.parse(endpoint, StandardCharsets.UTF_8);
+    Optional<NameValuePair> tuple = params.stream().filter(el -> el.getName().equals("id")).findFirst();
+    // User must identify themselves based off of connection url
+    if (!tuple.isPresent())
+      return Optional.empty();
+    return Optional.of(tuple.get().getValue());
   }
 }

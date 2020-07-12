@@ -19,17 +19,19 @@ package com.random.twitchers.play;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
+import com.random.twitchers.play.dto.TwitchUserDTO;
 import org.springframework.web.socket.WebSocketSession;
 
 public class UserRegistry {
 
   private final ConcurrentHashMap<String, UserSession> usersByName = new ConcurrentHashMap<>();
   private final ConcurrentHashMap<String, UserSession> usersBySessionId = new ConcurrentHashMap<>();
-  private Set<String> whitelist = new HashSet<>();
+  private final Map<String, String> whitelist = new ConcurrentHashMap<>();
 
   public void register(UserSession user) {
-    usersByName.put(user.getName(), user);
+    usersByName.put(user.getUserId(), user);
     usersBySessionId.put(user.getSession().getId(), user);
   }
 
@@ -45,10 +47,6 @@ public class UserRegistry {
     return usersByName.containsKey(name);
   }
 
-  public void setWhitelist(List<String> names) { this.whitelist = new HashSet<>(names); }
-
-  public boolean isWhitelisted(String name) { return this.whitelist.contains(name); }
-
   public Optional<UserSession> getBySession(WebSocketSession session) {
     String sessId = session.getId();
     if (!usersBySessionId.containsKey(sessId))
@@ -59,10 +57,27 @@ public class UserRegistry {
   public Optional<UserSession> removeBySession(WebSocketSession session) {
     Optional<UserSession> user = getBySession(session);
     if (user.isPresent()) {
-      usersByName.remove(user.get().getName());
+      usersByName.remove(user.get().getUserId());
       usersBySessionId.remove(session.getId());
     }
     return user;
   }
 
+  public boolean isWhitelisted(String userId) {
+    return this.whitelist.containsKey(userId);
+  }
+
+  public String getTwitchTag(String userId) {
+    return this.whitelist.get(userId);
+  }
+
+  public void setWhitelist(List<TwitchUserDTO> names) {
+    this.whitelist.clear();
+    this.whitelist.putAll(
+      names.stream().collect(Collectors.toConcurrentMap(
+              TwitchUserDTO::getUserId,
+              TwitchUserDTO::getTwitchTag
+      ))
+    );
+  }
 }

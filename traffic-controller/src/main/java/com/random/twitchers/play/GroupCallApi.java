@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
+import com.random.twitchers.play.dto.TwitchUserDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,28 +22,25 @@ public class GroupCallApi {
     private static final Gson gson = new GsonBuilder().create();
 
     @Autowired
-    private RoomManager roomManager;
-
-    @Autowired
     private UserRegistry registry;
 
     @GetMapping("/users")
     public String listUsers() {
         Gson gson = new GsonBuilder().create();
+        List<String> users = registry.getUsers();
+        log.info("Joined Users: {}", String.join(",", users));
         return gson.toJson(registry.getUsers());
     }
 
     @PostMapping(path="/users", consumes="application/json")
     public String updateUserWhitelist(@RequestBody String userList) throws IOException {
         final ObjectMapper mapper = new ObjectMapper();
-        final List<String> usernames = mapper.readValue(
+        final List<TwitchUserDTO> users = mapper.readValue(
             userList,
-            mapper.getTypeFactory().constructCollectionType(List.class, String.class)
+            mapper.getTypeFactory().constructCollectionType(List.class, TwitchUserDTO.class)
         );
-        registry.setWhitelist(usernames);
+        registry.setWhitelist(users);
 
-        JsonObject jsonObject = new JsonObject();
-        jsonObject.addProperty("users", gson.toJson(registry.getUsers()));
-        return jsonObject.toString();
+        return gson.toJson(registry.getUsers());
     }
 }
