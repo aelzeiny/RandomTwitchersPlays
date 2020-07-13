@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { switchObservable } from './gamepadApi';
+import { compressInput } from './switchApi';
 
 
 export default function GamepadDisplay() {
@@ -7,6 +8,7 @@ export default function GamepadDisplay() {
 
     useEffect(() => {
         const yeetle = (inputObjState) => {
+            console.log(compressInput(inputObjState));
             setSwitchState(inputObjState);
         }
         const subscription = switchObservable.subscribe(yeetle);

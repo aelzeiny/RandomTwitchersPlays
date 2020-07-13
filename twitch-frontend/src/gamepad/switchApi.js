@@ -76,6 +76,7 @@ export function compressInput(inputObj) {
     const button = compressButtons(inputObj);
     const hat = compressHats(inputObj);
     const axes = compressAxes(inputObj);
+    console.log(button, hat, axes);
     return struct.pack('>BHBBBB', [hat, button, ...axes]);
 }
 
@@ -98,6 +99,12 @@ function compressButtons(inputObj) {
 /**
  * Given an input object with HAT_* keys, return a number that indicates
  * its pressed values.
+ * The hat mapping converts the pressed keys into the following format.
+ * 0/2/4/6 represent the Up, Right, Down, and Left button on the DPAD. 8 is unpressed.
+ *
+ * 7 0 1
+ * 6 8 2
+ * 5 4 3
  * @param inputObj object containing pressed controller inputs
  * @returns {number} A hat-code mapping
  */
@@ -115,8 +122,8 @@ function compressHats(inputObj) {
  * Given an input object with AXIS_* keys, return an array of numbers
  * indicating which axes are moved.
  * @param inputObj object containing mapped values
- * @returns {number[]} 128 is neutral, 0 and 256 are the extreme ranges
+ * @returns {number[]} 128 is neutral, 0 and 255 are the extreme ranges
  */
 function compressAxes(inputObj) {
-    return axisMapping.map((key) => Math.round(inputObj[key] * 256));
+    return axisMapping.map((key) => Math.floor(inputObj[key] * 127.9 + 128));
 }
