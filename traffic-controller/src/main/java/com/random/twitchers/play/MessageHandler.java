@@ -49,6 +49,9 @@ public abstract class MessageHandler {
         }
     }
 
+    /**
+     * Deregistration is handled down-stream
+     */
     protected void leaveRoom() throws IOException {
         session.close(CloseStatus.NORMAL);
     }
@@ -57,9 +60,11 @@ public abstract class MessageHandler {
         final String senderName = jsonMessage.get("sender").getAsString();
         final String sdpOffer = jsonMessage.get("sdpOffer").getAsString();
 
-        final UserSession sender = registry.getById(senderName).orElseThrow(IllegalArgumentException::new);
-        final UserSession user = registry.getBySession(session).orElseThrow(IllegalArgumentException::new);
-        user.receiveVideoFrom(sender, sdpOffer);
+        final Optional<UserSession> nullableSender = registry.getById(senderName);
+        final Optional<UserSession> nullableUser = registry.getBySession(session);
+
+        if (nullableUser.isPresent() && nullableSender.isPresent())
+            nullableUser.get().receiveVideoFrom(nullableSender.get(), sdpOffer);
     }
 
     protected void iceCandidate() {
@@ -75,7 +80,7 @@ public abstract class MessageHandler {
 
     public static Optional<String> getParamFromSession(WebSocketSession session, String param) {
         URI endpoint = session.getUri();
-        if (endpoint == null || endpoint.getQuery() != null)
+        if (endpoint == null || endpoint.getQuery() == null)
             return Optional.empty();
         List<NameValuePair> params = URLEncodedUtils.parse(endpoint, StandardCharsets.UTF_8);
         Optional<NameValuePair> tuple = params.stream().filter(el -> el.getName().equals(param)).findFirst();
