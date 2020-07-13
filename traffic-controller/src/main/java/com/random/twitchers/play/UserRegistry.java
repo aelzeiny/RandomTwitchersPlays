@@ -64,6 +64,10 @@ public class UserRegistry {
         return !this.whitelist.containsKey(userId);
     }
 
+    public String getTwitchTag(String userId) {
+        return this.whitelist.get(userId);
+    }
+
     public void setWhitelist(List<TwitchUserDTO> names) {
         this.whitelist.clear();
         this.whitelist.putAll(

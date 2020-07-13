@@ -1,45 +1,22 @@
-/*
- * (C) Copyright 2014 Kurento (http://kurento.org/)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
-
 let ws;
 var participants = {};
 var name;
 
 window.onbeforeunload = function() {
-	if (ws && ws.connectionState === 1)
-		ws.close();
+	ws.close();
 };
 
 function register() {
 	name = document.getElementById('name').value;
+	document.getElementById('room-header').innerText = 'ROOM';
 	document.getElementById('join').style.display = 'none';
 	ws = new WebSocket('wss://' + location.host + `/traffic?id=${name}`);
 
-	ws.onopen = () => {
-		const message = {
-			id: 'joinRoom',
-			name: name
-		};
-		sendMessage(message);
-	};
+	document.getElementById('room').setAttribute('style', '');
 
 	ws.onmessage = function(message) {
 		var parsedMessage = JSON.parse(message.data);
-		console.info('Received message: ' + message.data);
+		console.info('Received message:', parsedMessage.id, message.data);
 
 		switch (parsedMessage.id) {
 			case 'existingParticipants':
@@ -100,23 +77,23 @@ function onExistingParticipants(msg) {
 			}
 		}
 	};
-	console.log(name + " registered in room");
+	console.log(name + " registered in room ");
 	var participant = new Participant(name);
 	participants[name] = participant;
 	var video = participant.getVideoElement();
 
 	var options = {
-	      localVideo: video,
-	      mediaConstraints: constraints,
-	      onicecandidate: participant.onIceCandidate.bind(participant)
-	    }
+		localVideo: video,
+		mediaConstraints: constraints,
+		onicecandidate: participant.onIceCandidate.bind(participant)
+	}
 	participant.rtcPeer = new kurentoUtils.WebRtcPeer.WebRtcPeerSendonly(options,
 		function (error) {
-		  if(error) {
-			  return console.error(error);
-		  }
-		  this.generateOffer (participant.offerToReceiveVideo.bind(participant));
-	});
+			if(error) {
+				return console.error(error);
+			}
+			this.generateOffer (participant.offerToReceiveVideo.bind(participant));
+		});
 
 	msg.data.forEach(receiveVideo);
 }
@@ -141,17 +118,17 @@ function receiveVideo(sender) {
 	var video = participant.getVideoElement();
 
 	var options = {
-      remoteVideo: video,
-      onicecandidate: participant.onIceCandidate.bind(participant)
-    }
+		remoteVideo: video,
+		onicecandidate: participant.onIceCandidate.bind(participant)
+	}
 
 	participant.rtcPeer = new kurentoUtils.WebRtcPeer.WebRtcPeerRecvonly(options,
-			function (error) {
-			  if(error) {
-				  return console.error(error);
-			  }
-			  this.generateOffer (participant.offerToReceiveVideo.bind(participant));
-	});;
+		function (error) {
+			if(error) {
+				return console.error(error);
+			}
+			this.generateOffer (participant.offerToReceiveVideo.bind(participant));
+		});;
 }
 
 function onParticipantLeft(request) {

@@ -56,13 +56,22 @@ public class TrafficWebsocketsHandler extends TextWebSocketHandler {
                 } else if (registry.getById(userId.get()).isPresent()) {
                     socketError(session, "User ID is already connected");
                 } else {
+                    // Add to room & registry
+                    UserSession userSession = this.roomManager.getRoom().join(
+                        userId.get(),
+                        registry.getTwitchTag(userId.get()),
+                        session
+                    );
+                    this.registry.register(userSession);
+
                     // Filter expired sessions
                     List<UserSession> expiredSessions = registry.getUsers().stream()
                         .filter(u -> registry.notWhitelisted(u))
                         .map(u -> registry.getById(u).orElseThrow(IllegalArgumentException::new))
                         .collect(Collectors.toList());
                     for (UserSession sess : expiredSessions) {
-                        sess.close();
+                        this.cleanupUser(sess.getSession());
+                        sess.getSession().close(CloseStatus.NORMAL);
                     }
                 }
             }
@@ -91,10 +100,14 @@ public class TrafficWebsocketsHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionClosed(@NonNull WebSocketSession session,@NonNull CloseStatus status) {
+        cleanupUser(session);
+    }
+
+    private void cleanupUser(WebSocketSession session) {
         Optional<UserSession> user = registry.removeBySession(session);
         Room room = this.roomManager.getRoom();
         if (user.isPresent()) {
-            log.error("User {}@{}: has exited the room", user.get().getUserId(), user.get().getTwitchTag());
+            log.info("User {}@{}: has exited the room", user.get().getUserId(), user.get().getTwitchTag());
             room.leave(user.get());
         }
     }

@@ -126,20 +126,22 @@ public class UserSession implements Closeable {
         log.debug("PARTICIPANT {}: canceling video reception from {}", this.userId, senderName);
         final WebRtcEndpoint incoming = incomingMedia.remove(senderName);
 
-        log.debug("PARTICIPANT {}: removing endpoint for {}", this.userId, senderName);
-        incoming.release(new Continuation<Void>() {
-            @Override
-            public void onSuccess(Void result) {
-                log.trace("PARTICIPANT {}: Released successfully incoming EP for {}",
-                        UserSession.this.userId, senderName);
-            }
+        if (incoming != null) {
+            log.debug("PARTICIPANT {}: removing endpoint for {}", this.userId, senderName);
+            incoming.release(new Continuation<Void>() {
+                @Override
+                public void onSuccess(Void result) {
+                    log.trace("PARTICIPANT {}: Released successfully incoming EP for {}",
+                            UserSession.this.userId, senderName);
+                }
 
-            @Override
-            public void onError(Throwable cause) {
-                log.warn("PARTICIPANT {}: Could not release incoming EP for {}", UserSession.this.userId,
-                        senderName);
-            }
-        });
+                @Override
+                public void onError(Throwable cause) {
+                    log.warn("PARTICIPANT {}: Could not release incoming EP for {}", UserSession.this.userId,
+                            senderName);
+                }
+            });
+        }
     }
 
     @Override
