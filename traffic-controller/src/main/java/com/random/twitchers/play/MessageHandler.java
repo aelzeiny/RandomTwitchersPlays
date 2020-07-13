@@ -1,7 +1,9 @@
 package com.random.twitchers.play;
 
 
-import com.google.gson.JsonObject;
+import com.google.gson.*;
+import com.google.gson.reflect.TypeToken;
+import com.random.twitchers.play.dto.GamepadInputDTO;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.kurento.client.IceCandidate;
@@ -11,10 +13,13 @@ import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public abstract class MessageHandler {
     protected static final Logger log = LoggerFactory.getLogger(TrafficWebsocketsHandler.class);
@@ -22,6 +27,7 @@ public abstract class MessageHandler {
     public static final String ACTION_RECEIVE_VID = "receiveVideoFrom";
     public static final String ACTION_ICE_CANDIDATE = "onIceCandidate";
     public static final String ACTION_LEAVE_ROOM = "leaveRoom";
+    public static final String ACTION_GAMEPAD_INPUT = "gamepad";
 
     protected final WebSocketSession session;
     protected final JsonObject jsonMessage;
@@ -46,6 +52,10 @@ public abstract class MessageHandler {
                 break;
             case MessageHandler.ACTION_ICE_CANDIDATE:
                 this.iceCandidate();
+                break;
+            case MessageHandler.ACTION_GAMEPAD_INPUT:
+                this.gamepadInput();
+                break;
         }
     }
 
@@ -75,6 +85,26 @@ public abstract class MessageHandler {
             IceCandidate cand = new IceCandidate(candidate.get("candidate").getAsString(),
                     candidate.get("sdpMid").getAsString(), candidate.get("sdpMLineIndex").getAsInt());
             user.get().addCandidate(cand, jsonMessage.get("name").getAsString());
+        }
+    }
+
+    protected void gamepadInput() throws IOException {
+        Type oneThiccShortyType = new TypeToken<short[]>() {}.getType();
+        short[] byteBuffer = new Gson().fromJson(jsonMessage.get("input"), oneThiccShortyType);
+        GamepadInput userInput = GamepadInput.parse(byteBuffer);
+        Optional<UserSession> nullableUser = registry.getBySession(session);
+        Optional<UserSession> nullablePresenter = registry.getPresenter();
+        if (nullableUser.isPresent() && nullablePresenter.isPresent()) {
+            nullableUser.get().setGamepadInput(userInput);
+            Room room = rooms.getRoom();
+            List<GamepadInput> allInputs = room.getParticipants().stream()
+                    .map(UserSession::getGamepadInput)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+            GamepadInput majorityInput = GamepadInput.majorityFactory(allInputs);
+
+            String gamepadMsg = new Gson().toJson(new GamepadInputDTO(ACTION_GAMEPAD_INPUT, majorityInput.compress()));
+            nullablePresenter.get().sendMessage(gamepadMsg);
         }
     }
 
