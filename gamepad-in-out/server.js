@@ -1,16 +1,31 @@
 const path = require('path');
+const url = require('url');
 const express = require('express');
+const minimist = require('minimist');
 const ws = require('ws');
 const kurento = require('kurento-client');
-const fs = require('fs');
-const https = require('http');
+const fs    = require('fs');
+const https = require('https');
 const util = require('util');
 const kurentoify = util.promisify(kurento);
 const NO_PRESENTER_MSG = 'No active presenter. Try again later...';
-const config = require('./configs');
+const { presenterJWTSecret } = require('./configs');
+const jwt = require('jsonwebtoken');
+
+
+const argv = minimist(process.argv.slice(2), {
+    default: {
+        as_uri: 'https://localhost:8443/',
+        ws_uri: 'ws://localhost:8888/kurento'
+    }
+});
+
+const options = {
+  key:  fs.readFileSync('keys/server.key'),
+  cert: fs.readFileSync('keys/server.crt')
+};
+
 const app = express();
-const queryString = require('query-string');
-const { search:dbSearch, enqueue:dbEnqueue, dequeue:dbDequeue} = require('./db');
 
 /*
  * Definition of global variables.
@@ -19,39 +34,33 @@ let idCounter = 0;
 const candidatesQueue = {};
 let kurentoClient = null;
 let presenter = null;
-let viewers = {};
+let viewers = [];
 
 /*
  * Server startup
  */
-const ssLoptions = {key:  fs.readFileSync(config.httpsKey), cert: fs.readFileSync(config.httpsCert)};
-// const ssLoptions = {};
-
-const server = https.createServer(ssLoptions, app).listen(config.gamePadInPort, () => {
+var asUrl = url.parse(argv.as_uri);
+var port = asUrl.port;
+var server = https.createServer(options, app).listen(port, function() {
     console.log('Kurento Tutorial started');
-    console.log(`Open https://localhost:${config.gamePadInPort}/ with a WebRTC capable browser`);
+    console.log('Open ' + url.format(asUrl) + ' with a WebRTC capable browser');
 });
 
 const wss = new ws.Server({
     server : server,
-    path : '/in'
+    path : '/handshake'
 });
 
-const wssOut = new ws.Server({
-	port: config.gamePadOutPort,
-	path: '/out'
-}, () => {
-	console.log('we out here: ws://localhost:' + config.gamePadOutPort + '/out');
-});
+function nextUniqueId() {
+	idCounter++;
+	return idCounter.toString();
+}
 
 /*
  * Management of WebSocket messages
  */
-wss.on('connection', (_ws, req) => {
-	// const { query } = queryString.parseUrl(req.url);
-	// if ((!('id' in query)) || !isAuthenticated(query['id']))
-	// 	return _ws.close(401, 'Unauthorized');
-	const sessionId = query['id'];
+wss.on('connection', (_ws) => {
+	const sessionId = nextUniqueId();
 	console.log('Connection received with sessionId ' + sessionId);
 	_ws.sendJson = function(msg){
 		this.send(JSON.stringify(msg));
@@ -67,12 +76,34 @@ wss.on('connection', (_ws, req) => {
         stop(sessionId);
     });
 
-    _ws.on('message', (_message) => {
-        const message = JSON.parse(_message);
+    _ws.on('message', async (_message) => {
+        let message = JSON.parse(_message);
+
+        if (message.user === 'presenter') {
+        	message = await verifyPresenter(message);
+        	if (!message)
+        		return _ws.close(1003, 'Invalid Authentication as presenter');
+		}
         console.log('Connection ' + sessionId + ' received message ', message);
 
         switch (message.id) {
-        case 'offer':
+        case 'presenter':
+			startPresenter(sessionId, _ws, message.sdpOffer).then(sdpAnswer => {
+				_ws.sendJson({
+					id : 'presenterResponse',
+					response : 'accepted',
+					sdpAnswer : sdpAnswer
+				});
+			}).catch(error => {
+				_ws.sendJson({
+					id : 'presenterResponse',
+					response : 'rejected',
+					message : error
+				});
+			});
+			break;
+
+        case 'viewer':
 			startViewer(sessionId, _ws, message.sdpOffer).then(sdpAnswer => {
 				_ws.sendJson({
 					id : 'viewerResponse',
@@ -106,73 +137,9 @@ wss.on('connection', (_ws, req) => {
     });
 });
 
-
-wssOut.on('connection', (_ws) => {
-	const sessionId = nextUniqueId();
-	console.log('Connection received with sessionId ' + sessionId);
-	_ws.sendJson = function(msg){
-		this.send(JSON.stringify(msg));
-	};
-
-    _ws.on('error', (error) => {
-        console.log('Connection ' + sessionId + ' error. ' + error.toString());
-        stop(sessionId);
-    });
-
-    _ws.on('close', () => {
-        console.log('Connection ' + sessionId + ' closed');
-        stop(sessionId);
-    });
-
-    _ws.on('message', (_message) => {
-        const message = JSON.parse(_message);
-        console.log('Connection ' + sessionId + ' received message ', message);
-
-        switch (message.id) {
-        case 'offer':
-			startPresenter(sessionId, _ws, message.sdpOffer).then(sdpAnswer => {
-				_ws.sendJson({
-					id : 'presenterResponse',
-					response : 'accepted',
-					sdpAnswer : sdpAnswer
-				});
-			}).catch(error => {
-				_ws.sendJson({
-					id : 'presenterResponse',
-					response : 'rejected',
-					message : error
-				});
-			});
-			break;
-
-        case 'stop':
-            stop(sessionId);
-            break;
-
-        case 'onIceCandidate':
-            onIceCandidate(sessionId, message.candidate);
-            break;
-
-        default:
-            _ws.sendJson({
-                id : 'error',
-                message : 'Invalid message ' + message
-            });
-            break;
-        }
-    });
-});
 /*
  * Definition of functions
  */
-
-// Authentication
-function isAuthenticated(uuid) {
-	const record = dbSearch(uuid);
-	if (!record)
-		return false;
-	return !record.startedAt;
-}
 
 // Recover kurentoClient for the first time.
 function getKurentoClient() {
@@ -181,7 +148,7 @@ function getKurentoClient() {
 			return resolve(kurentoClient);
 		}
 
-		kurentoify(config.kurento).then(_kurentoClient => {
+		kurentoify(argv.ws_uri).then(_kurentoClient => {
 			kurentoClient = _kurentoClient;
 			_kurentoClient.creatify = util.promisify(_kurentoClient.create);
 			resolve(_kurentoClient);
@@ -368,11 +335,17 @@ function onIceCandidate(sessionId, _candidate) {
     }
 }
 
-
-app.get('/api/:uuid', async (req, res) => {
-	const { uuid } = req.params;
-	const userInfo = await dbSearch(uuid);
-	return res.json(userInfo);
-});
+function verifyPresenter(message) {
+	return new Promise(((resolve) => {
+		return jwt.verify(message.jwt, presenterJWTSecret, (err, decoded) => {
+			if (err) {
+				console.log('Invalid credentials to be a presenter: ', err);
+				return resolve(null);
+			}
+			resolve(decoded);
+		});
+	}))
+}
 
 app.use(express.static(path.join(__dirname, 'static')));
+// app.use(express.static(path.join(__dirname, '../twitch-frontend/build')));
