@@ -7,6 +7,7 @@
 node_modules
 env
 bower_components
+target
 
 # other
 *.db
@@ -45,3 +46,6 @@ var/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# my super-secret key
+home-server/super_secret.js

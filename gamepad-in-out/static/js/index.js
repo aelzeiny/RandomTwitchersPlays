@@ -15,7 +15,7 @@
  *
  */
 
-var ws = new WebSocket('wss://' + location.host + '/in?param=lol');
+var ws = new WebSocket('wss://' + location.host + '/handshake?id=lol');
 var video;
 var webRtcPeer;
 
@@ -122,7 +122,7 @@ function onOfferViewer(error, offerSdp) {
 	if (error) return onError(error)
 
 	sendMessage({
-		id: 'offer',
+		id: 'viewer',
 		sdpOffer: offerSdp
 	});
 }
