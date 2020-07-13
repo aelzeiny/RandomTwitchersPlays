@@ -31,6 +31,8 @@ public class UserSession implements Closeable {
     private final WebRtcEndpoint outgoingMedia;
     private final ConcurrentMap<String, WebRtcEndpoint> incomingMedia = new ConcurrentHashMap<>();
 
+    private GamepadInput gamepadInput;
+
     public UserSession(final String userId, final String twitchTag, final WebSocketSession session, MediaPipeline pipeline) {
         this.pipeline = pipeline;
         this.userId = userId;
@@ -67,6 +69,14 @@ public class UserSession implements Closeable {
 
     public WebSocketSession getSession() {
         return session;
+    }
+
+    public GamepadInput getGamepadInput() {
+        return this.gamepadInput;
+    }
+
+    public void setGamepadInput(GamepadInput input) {
+        this.gamepadInput = input;
     }
 
     public void receiveVideoFrom(UserSession sender, String sdpOffer) throws IOException {
@@ -183,9 +193,13 @@ public class UserSession implements Closeable {
     }
 
     public void sendMessage(JsonObject message) throws IOException {
+        this.sendMessage(message.toString());
+    }
+
+    public void sendMessage(String message) throws IOException {
         log.debug("USER {}: Sending message {}", userId, message);
         synchronized (session) {
-            session.sendMessage(new TextMessage(message.toString()));
+            session.sendMessage(new TextMessage(message));
         }
     }
 

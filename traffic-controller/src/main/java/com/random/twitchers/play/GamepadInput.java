@@ -1,5 +1,10 @@
 package com.random.twitchers.play;
 
+
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+
+import java.util.List;
+
 public class GamepadInput {
     private static final short BUTTON_HOME_MASK = 1 << 12;
     private static final short BUTTON_CAPTURE_MASK = 1 << 13;
@@ -23,6 +28,10 @@ public class GamepadInput {
         this.hatMask = hatMask;
         this.buttonMask = buttonMask;
         this.axes = axes;
+    }
+
+    public static GamepadInput majorityFactory(List<GamepadInput> allInputs) {
+//        throw new NotImplementedException("I have to work at my real job for a while.");
     }
 
     /**
