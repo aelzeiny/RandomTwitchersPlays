@@ -1,6 +1,6 @@
 import struct from 'python-struct';
 
-export const BUTTON_Y = 'X';
+export const BUTTON_Y = 'Y';
 export const BUTTON_B = 'B';
 export const BUTTON_A = 'A';
 export const BUTTON_X = 'X';
@@ -76,8 +76,16 @@ export function compressInput(inputObj) {
     const button = compressButtons(inputObj);
     const hat = compressHats(inputObj);
     const axes = compressAxes(inputObj);
-    console.log(button, hat, axes);
     return struct.pack('>BHBBBB', [hat, button, ...axes]);
+}
+
+export function decompressInput(byteArr) {
+    const buffer = struct.unpack('>BHBBBB', byteArr);
+    return {
+        ...decompressButtons(buffer[0]),
+        ...decompressHats(buffer[1]),
+        ...decompressAxes(buffer.slice(2))
+    }
 }
 
 /**
@@ -94,6 +102,17 @@ function compressButtons(inputObj) {
             buttonSum += 1 << i;
     }
     return buttonSum;
+}
+
+function decompressButtons(buttonSum) {
+    const inputObj = {}
+    for (let i = 0; i < buttonMapping.length; i++) {
+        const isPressed = buttonSum & 1;
+        if (isPressed)
+            inputObj[buttonMapping[i]] = true;
+        buttonSum >>= 1;
+    }
+    return inputObj;
 }
 
 /**
@@ -118,6 +137,25 @@ function compressHats(inputObj) {
     return hatCodeMapping[hatSum];
 }
 
+function decompressHats(hatMapping) {
+    let hatSum = 0;
+    if (hatMapping % 2 !== 0) {
+        hatSum |= 1 << Math.floor((hatMapping - 1) / 2);
+        hatSum |= 1 << Math.floor((hatMapping + 1) % 8 / 2);
+    } else {
+        hatSum |= 1 << Math.floor(hatMapping / 2);
+    }
+
+    const inputObj = {}
+    for (let i = 0; i < hatMapping.length; i++) {
+        const isPressed = hatSum & 1;
+        if (isPressed)
+            inputObj[hatMapping[i]] = true;
+        hatSum >>= 1;
+    }
+    return inputObj;
+}
+
 /**
  * Given an input object with AXIS_* keys, return an array of numbers
  * indicating which axes are moved.
@@ -126,4 +164,12 @@ function compressHats(inputObj) {
  */
 function compressAxes(inputObj) {
     return axisMapping.map((key) => Math.floor(inputObj[key] * 127.9 + 128));
+}
+
+function decompressAxes(axisBuffer) {
+    const inputObj = {};
+    for (let i = 0; i < axisMapping.length; i++) {
+        inputObj[axisMapping[i]] = (axisBuffer[i] - 128) / 127.9;
+    }
+    return inputObj;
 }

@@ -67,7 +67,7 @@ function getGamepadInput() {
 const switchKeyboardMapping = {
     'enter': switchApi.BUTTON_START,
     'esc': switchApi.BUTTON_SELECT,
-    'escape': switchApi.BUTTON_SELECT,
+    'shift': switchApi.BUTTON_SELECT,
 
     'up': switchApi.BUTTON_X,
     'arrowup': switchApi.BUTTON_X, // IE/Edge
