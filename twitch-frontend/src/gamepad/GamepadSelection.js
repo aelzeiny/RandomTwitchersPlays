@@ -61,7 +61,7 @@ export default function GamepadSelection({ gamepadSelectedCallback }) {
     }
 
     return (
-        <div>
+        <div className="gamepad-selection">
             <div className="btn-group">
                 <button className="btn btn-secondary btn-lg dropdown-toggle" type="button" data-toggle="dropdown"
                         aria-haspopup="true" aria-expanded="false">

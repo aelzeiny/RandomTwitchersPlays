@@ -1,6 +1,5 @@
 .twitch-embedder {
     display: flex;
     justify-content: center;
-    margin-bottom: 28px;
     background-color: #101213;
 }
