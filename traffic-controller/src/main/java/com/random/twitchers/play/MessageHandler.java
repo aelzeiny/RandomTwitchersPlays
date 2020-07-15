@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -101,7 +102,16 @@ public abstract class MessageHandler {
                     .map(UserSession::getGamepadInput)
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList());
-            GamepadInput majorityInput = GamepadInput.majorityFactory(allInputs);
+
+            GamepadInput majorityInput;
+            if (allInputs.isEmpty())
+                return;
+            if (allInputs.size() == 1)
+                majorityInput = allInputs.get(0);
+            else if (allInputs.size() == 2)
+                majorityInput = GamepadInput.majorityFactory(allInputs.get(0), allInputs.get(1));
+            else
+                majorityInput = GamepadInput.majorityFactory(allInputs.get(0), allInputs.get(1), allInputs.get(2));
 
             String gamepadMsg = new Gson().toJson(new GamepadInputDTO(ACTION_GAMEPAD_INPUT, majorityInput.compress()));
             nullablePresenter.get().sendMessage(gamepadMsg);

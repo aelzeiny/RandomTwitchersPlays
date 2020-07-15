@@ -3,6 +3,7 @@ package com.random.twitchers.play;
 
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class GamepadInput {
@@ -20,18 +21,14 @@ public class GamepadInput {
                     BUTTON_CAPTURE_MASK // XOR operation to set the CAPTURE button to 0
     );
     private static final short[] hatMapping = new short[] {8, 0, 2, 1, 4, 8, 3, 8, 6, 7, 8, 8, 5, 8, 8};
-    public short hatMask;
-    private short buttonMask;
-    private short[] axes;
+    private final short hatMask;
+    private final short buttonMask;
+    private final short[] axes;
 
     protected GamepadInput(short hatMask, short buttonMask, short[] axes) {
         this.hatMask = hatMask;
         this.buttonMask = buttonMask;
         this.axes = axes;
-    }
-
-    public static GamepadInput majorityFactory(List<GamepadInput> allInputs) {
-//        throw new NotImplementedException("I have to work at my real job for a while.");
     }
 
     /**
@@ -131,5 +128,48 @@ public class GamepadInput {
      */
     private short getHatMapping() {
         return hatMapping[this.hatMask];
+    }
+
+    /**
+     * Find the "median" gamepad input given 2 players
+     */
+    public static GamepadInput majorityFactory(GamepadInput x, GamepadInput y) {
+        short hatMask = (short) (x.hatMask & y.hatMask);
+        short buttonMask = (short) (x.buttonMask & y.buttonMask);
+        short[] axes = averageAxes(new short[][]{ x.axes, y.axes });
+        return new GamepadInput(hatMask, buttonMask, axes);
+    }
+
+    /**
+     * Find the "median" gamepad input given 3 players
+     */
+    public static GamepadInput majorityFactory(GamepadInput x, GamepadInput y, GamepadInput z) {
+        short hatMask = (short) ((x.hatMask & y.hatMask) | (y.hatMask & z.hatMask) | (x.hatMask & z.hatMask));
+        short buttonMask = (short) (
+                (x.buttonMask & y.buttonMask) | (y.buttonMask & z.buttonMask) | (x.buttonMask & z.buttonMask)
+        );
+        short[] axes = averageAxes(new short[][]{ x.axes, y.axes, z.axes });
+        return new GamepadInput(hatMask, buttonMask, axes);
+    }
+
+    /**
+     * In the future we can support N majority in O(N*numberOfButtons) time; so basically still O(N)
+     * https://en.wikipedia.org/wiki/Majority_function
+     */
+    public static GamepadInput majorityFactory(List<GamepadInput> inputs) {
+        throw new NotImplementedException();
+    }
+
+    private static short[] averageAxes(short[][] axes) {
+        short[] answer = new short[4];
+        for (short[] axis : axes) {
+            for (int j = 0; j < axis.length; j++) {
+                answer[j] += axis[j];
+            }
+        }
+
+        for (int i = 0; i < answer.length; i++)
+            answer[i] /= axes.length;
+        return answer;
     }
 }
