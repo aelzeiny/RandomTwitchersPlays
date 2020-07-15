@@ -9,12 +9,14 @@ import { updateController, switchObservable } from "./gamepad/gamepadApi";
 
 function Queue() {
     return (
-        <div className='queue-div'>
-            <div className='gamepad-div container'>
+        <div className='queue-div row'>
+            <div className='gamepad-div col-lg-3'>
                 <GamepadSelection gamepadSelectedCallback={updateController}/>
                 <GamepadDisplay observable={switchObservable}/>
             </div>
-            <TwitchStream chat={true}/>
+            <div className='col-lg-9'>
+                <TwitchStream chat={true}/>
+            </div>
         </div>
     );
 }

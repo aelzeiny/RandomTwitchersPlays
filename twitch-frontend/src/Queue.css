@@ -17,18 +17,28 @@
     width: 300px;
 }
 
+
 .header h3 {
     position: relative;
     top: -5px;
 }
 
 .queue-div {
-    background-color: #6130aa;
+    background-color: #101213;
+    margin-left: 0;
+    margin-right: 0;
 }
 
 .gamepad-div {
     display: flex;
-    padding: 16px;
+    box-sizing: border-box;
+    padding: 0;
     color: white;
+    flex-direction: column;
     justify-content: space-around;
+    align-items: center;
+}
+
+.gamepad-selection {
+    text-align: center;
 }
