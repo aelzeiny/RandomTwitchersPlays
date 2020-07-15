@@ -21,3 +21,14 @@
     position: relative;
     top: -5px;
 }
+
+.queue-div {
+    background-color: #6130aa;
+}
+
+.gamepad-div {
+    display: flex;
+    padding: 16px;
+    color: white;
+    justify-content: space-around;
+}
