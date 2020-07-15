@@ -68,19 +68,25 @@ const switchKeyboardMapping = {
     'enter': switchApi.BUTTON_START,
     'esc': switchApi.BUTTON_SELECT,
     'escape': switchApi.BUTTON_SELECT,
-    'a': switchApi.BUTTON_Y,
-    's': switchApi.BUTTON_B,
-    'd': switchApi.BUTTON_A,
-    'w': switchApi.BUTTON_X,
+
+    'up': switchApi.BUTTON_X,
+    'arrowup': switchApi.BUTTON_X, // IE/Edge
+    'left': switchApi.BUTTON_Y,
+    'arrowleft': switchApi.BUTTON_Y, // IE/Edge
+    'down': switchApi.BUTTON_B,
+    'arrowdown': switchApi.BUTTON_B, // IE/Edge
+    'right': switchApi.BUTTON_A,
+    'arrowright': switchApi.BUTTON_A, // IE/Edge
+
     'q': switchApi.BUTTON_LB,
     'e': switchApi.BUTTON_RB,
     'z': switchApi.BUTTON_LTRIGGER,
     'c': switchApi.BUTTON_RTRIGGER,
     '`': switchApi.BUTTON_CAPTURE,
     '1': switchApi.HAT_UP,
-    '2': switchApi.HAT_LEFT,
+    '2': switchApi.HAT_RIGHT,
     '3': switchApi.HAT_DOWN,
-    '4': switchApi.HAT_RIGHT
+    '4': switchApi.HAT_LEFT,
 };
 
 function getKeyboardEvents() {
@@ -94,20 +100,16 @@ function getKeyboardEvents() {
         const newInput = {...lastInput};
         const eKey = e.key.toLowerCase();
         switch (eKey) {
-            case "down": // IE/Edge
-            case "arrowdown":
+            case "s":
                 newInput[switchApi.AXIS_LY] = -1;
                 break;
-            case "up": // IE/Edge
-            case "arrowup":
+            case "w":
                 newInput[switchApi.AXIS_LY] = 1;
                 break;
-            case "left": // IE/Edge
-            case "arrowleft":
+            case "a":
                 newInput[switchApi.AXIS_LX] = -1;
                 break;
-            case "right": // IE/Edge
-            case "arrowright":
+            case "d":
                 newInput[switchApi.AXIS_LX] = 1;
                 break;
             case "j":
@@ -137,16 +139,12 @@ function getKeyboardEvents() {
         const newInput = {...lastInput};
         const eKey = e.key.toLowerCase();
         switch (eKey) {
-            case "down": // IE/Edge
-            case "arrowdown":
-            case "up": // IE/Edge
-            case "arrowup":
+            case "w":
+            case "s":
                 newInput[switchApi.AXIS_LY] = 0;
                 break;
-            case "left": // IE/Edge
-            case "arrowleft":
-            case "right": // IE/Edge
-            case "arrowright":
+            case "a":
+            case "d":
                 newInput[switchApi.AXIS_LX] = 0;
                 break;
 
