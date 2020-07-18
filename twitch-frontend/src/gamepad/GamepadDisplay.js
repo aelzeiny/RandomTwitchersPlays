@@ -1,7 +1,7 @@
 import controllerImg from '../img/controller_transp.png';
 import './GamepadDisplay.css';
 
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import * as switchApi from './switchApi';
 
 
