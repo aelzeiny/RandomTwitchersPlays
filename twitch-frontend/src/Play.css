@@ -1,6 +1,43 @@
-.video-holder {
+.play-div {
+    background-color: #101213;
+    margin-left: 0;
+    margin-right: 0;
+
+    height: 480px;
+}
+
+#presenter {
+    height: 480px;
+}
+
+.players-div {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    max-height: 100%;
+    align-items: center;
+}
+
+.player-div {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background-color: indigo;
+    border: 1px solid white;
+
     display: flex;
     justify-content: center;
-    margin-bottom: 28px;
-    background-color: #101213;
+    flex-direction: column;
+    font-family: Twitchy, serif;
+    color: white;
+    text-align: center;
+}
+
+.player-div video {
+    display: none;
+    border-radius: 50%;
+}
+
+.player-div span {
+    margin-top: -16px;
 }
