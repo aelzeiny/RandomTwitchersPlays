@@ -1,8 +1,11 @@
 import './Play.css';
-// import loadingScreen from './nook_loading.jpg';
+import loadingScreen from './nook_loading.jpg';
 
 import React from 'react';
 import { WebRtcPeer } from 'kurento-utils';
+import GamepadSelection from "./gamepad/GamepadSelection";
+import GamepadDisplay from "./gamepad/GamepadDisplay";
+import {switchObservable, updateController} from "./gamepad/gamepadApi";
 
 WebSocket.prototype.sendMessage = function (msg) {
     const jsonMessage = JSON.stringify(msg);
@@ -17,7 +20,8 @@ export default class Play extends React.Component {
         this.id = this.props.match.params.uuid;
 
         this.state = {
-            players: new Set()
+            players: new Set(),
+            presenter: null
         };
         this.webRtc = {};
         this.ws = null;
@@ -171,7 +175,6 @@ export default class Play extends React.Component {
     }
 
     renderPlayer(player) {
-        console.log('rendering ' + player);
         if (!(player in this.webRtc)) {
             this.webRtc[player] = {
                 video: React.createRef(),
@@ -179,20 +182,56 @@ export default class Play extends React.Component {
             };
             console.log('webrtcing ' + player);
         }
-        const assignInstance = instance => { this.webRtc[player].video = instance };
         return (
-            <video key={player}
-                   ref={assignInstance}
+            <div key={player} className='player-div'>
+                <span>{player}</span>
+                <video key={player}
+                   className='player-vid'
+                   ref={instance => { this.webRtc[player].video = instance }}
                    autoPlay={true}
                    controls={false}/>
+            </div>
         );
+    }
+
+    renderPresenter() {
+        if (this.state.presenter) {
+            if (!(this.state.presenter in this.webRtc)) {
+                this.webRtc[this.state.presenter] = {
+                    video: React.createRef(),
+                    rtcPeer: null
+                }
+            }
+        }
+
+        const assignRefIfExists = (instance) => {
+            if (this.state.presenter)
+                this.webRtc[this.state.presenter].video = instance;
+        }
+
+        return <video id='presenter'
+                      key='presenter'
+                      ref={assignRefIfExists}
+                      autoPlay={true}
+                      poster={loadingScreen}/>
     }
 
     render() {
         console.log('i rendered');
         return (
-            <div>
-                {Array.from(this.state.players).map((player) => this.renderPlayer(player))}
+            <div className='play-div row'>
+                <div className='gamepad-div col-lg-3'>
+                    <GamepadSelection gamepadSelectedCallback={updateController}/>
+                    <GamepadDisplay observable={switchObservable}/>
+                </div>
+                <div className='col-lg-7'>
+                    {this.renderPresenter()}
+                </div>
+                <div className='players-div col-lg-2'>{
+                    Array.from(this.state.players)
+                        .filter(player => player !== this.state.presenter)
+                        .map((player) => this.renderPlayer(player))
+                }</div>
             </div>
         );
     }
