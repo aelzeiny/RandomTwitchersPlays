@@ -10,7 +10,13 @@ function register() {
 	name = document.getElementById('name').value;
 	document.getElementById('room-header').innerText = 'ROOM';
 	document.getElementById('join').style.display = 'none';
-	ws = new WebSocket('wss://' + location.host + `/traffic?id=${name}`);
+	console.log('ws://' + location.host + `/traffic?id=${name}`);
+	ws = new WebSocket('ws://' + location.host + `/traffic?id=${name}`);
+	ws.sendMessage = function sendMessage(message) {
+		const jsonMessage = JSON.stringify(message);
+		console.log('Sending message: ' + jsonMessage);
+		ws.send(jsonMessage);
+	};
 
 	document.getElementById('room').setAttribute('style', '');
 
@@ -55,17 +61,6 @@ function receiveVideoResponse(result) {
 	});
 }
 
-function callResponse(message) {
-	if (message.response != 'accepted') {
-		console.info('Call not accepted by peer. Closing call');
-		stop();
-	} else {
-		webRtcPeer.processAnswer(message.sdpAnswer, function (error) {
-			if (error) return console.error (error);
-		});
-	}
-}
-
 function onExistingParticipants(msg) {
 	var constraints = {
 		audio : true,
@@ -99,8 +94,8 @@ function onExistingParticipants(msg) {
 }
 
 function leaveRoom() {
-	sendMessage({
-		id : 'leaveRoom'
+	ws.sendMessage({
+		id: 'leaveRoom'
 	});
 
 	for ( var key in participants) {
@@ -122,13 +117,15 @@ function receiveVideo(sender) {
 		onicecandidate: participant.onIceCandidate.bind(participant)
 	}
 
-	participant.rtcPeer = new kurentoUtils.WebRtcPeer.WebRtcPeerRecvonly(options,
+	participant.rtcPeer = new kurentoUtils.WebRtcPeer.WebRtcPeerRecvonly(
+		options,
 		function (error) {
 			if(error) {
 				return console.error(error);
 			}
 			this.generateOffer (participant.offerToReceiveVideo.bind(participant));
-		});;
+		}
+	);
 }
 
 function onParticipantLeft(request) {
@@ -138,8 +135,3 @@ function onParticipantLeft(request) {
 	delete participants[request.name];
 }
 
-function sendMessage(message) {
-	var jsonMessage = JSON.stringify(message);
-	console.log('Sending message: ' + jsonMessage);
-	ws.send(jsonMessage);
-}
