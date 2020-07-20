@@ -76,14 +76,14 @@ export function compressInput(inputObj) {
     const button = compressButtons(inputObj);
     const hat = compressHats(inputObj);
     const axes = compressAxes(inputObj);
-    return struct.pack('>BHBBBB', [hat, button, ...axes]);
+    return Array.from(struct.pack('>BHBBBB', [hat, button, ...axes]));
 }
 
 export function decompressInput(byteArr) {
-    const buffer = struct.unpack('>BHBBBB', byteArr);
+    const buffer = struct.unpack('>BHBBBB', Buffer.from(byteArr));
     return {
-        ...decompressButtons(buffer[0]),
-        ...decompressHats(buffer[1]),
+        ...decompressHats(buffer[0]),
+        ...decompressButtons(buffer[1]),
         ...decompressAxes(buffer.slice(2))
     }
 }
@@ -137,16 +137,19 @@ function compressHats(inputObj) {
     return hatCodeMapping[hatSum];
 }
 
-function decompressHats(hatMapping) {
-    let hatSum = 0;
-    if (hatMapping % 2 !== 0) {
-        hatSum |= 1 << Math.floor((hatMapping - 1) / 2);
-        hatSum |= 1 << Math.floor((hatMapping + 1) % 8 / 2);
+function decompressHats(hatMappingCode) {
+    let hatSum;
+    if (hatMappingCode === 8) {
+        hatSum = 0;
+    } else if (hatMappingCode % 2 !== 0) {
+        hatSum = 1 << Math.floor((hatMappingCode - 1) / 2);
+        hatSum |= 1 << Math.floor((hatMappingCode + 1) % 8 / 2);
     } else {
-        hatSum |= 1 << Math.floor(hatMapping / 2);
+        hatSum = 1 << Math.floor(hatMappingCode / 2);
     }
 
-    const inputObj = {}
+
+    const inputObj = {};
     for (let i = 0; i < hatMapping.length; i++) {
         const isPressed = hatSum & 1;
         if (isPressed)

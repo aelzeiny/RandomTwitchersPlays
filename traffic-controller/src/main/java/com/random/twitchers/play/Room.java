@@ -54,6 +54,22 @@ public class Room implements Closeable {
         user.close();
     }
 
+    public void broadcast(String newParticipantMsg) throws IOException {
+        this.broadcast(newParticipantMsg, null);
+    }
+
+    public void broadcast(String newParticipantMsg, String skipUserId) throws IOException {
+        for (final UserSession participant : participants.values()) {
+            if (participant.getUserId().equals(skipUserId))
+                continue;
+            try {
+                participant.sendMessage(newParticipantMsg);
+            } catch (final IOException e) {
+                log.debug("ROOM: participant {} could not be notified", participant.getUserId(), e);
+            }
+        }
+    }
+
     private void joinRoom(UserSession newParticipant) {
         final JsonObject newParticipantMsg = new JsonObject();
         newParticipantMsg.addProperty("id", "newParticipantArrived");

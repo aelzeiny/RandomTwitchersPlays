@@ -28,7 +28,7 @@ public abstract class MessageHandler {
     public static final String ACTION_RECEIVE_VID = "receiveVideoFrom";
     public static final String ACTION_ICE_CANDIDATE = "onIceCandidate";
     public static final String ACTION_LEAVE_ROOM = "leaveRoom";
-    public static final String ACTION_GAMEPAD_INPUT = "gamepad";
+    public static final String ACTION_GAMEPAD_INPUT = "switchInput";
 
     protected final WebSocketSession session;
     protected final JsonObject jsonMessage;
@@ -94,8 +94,7 @@ public abstract class MessageHandler {
         short[] byteBuffer = new Gson().fromJson(jsonMessage.get("input"), oneThiccShortyType);
         GamepadInput userInput = GamepadInput.parse(byteBuffer);
         Optional<UserSession> nullableUser = registry.getBySession(session);
-        Optional<UserSession> nullablePresenter = registry.getPresenter();
-        if (nullableUser.isPresent() && nullablePresenter.isPresent()) {
+        if (nullableUser.isPresent()) {
             nullableUser.get().setGamepadInput(userInput);
             Room room = rooms.getRoom();
             List<GamepadInput> allInputs = room.getParticipants().stream()
@@ -113,8 +112,13 @@ public abstract class MessageHandler {
             else
                 majorityInput = GamepadInput.majorityFactory(allInputs.get(0), allInputs.get(1), allInputs.get(2));
 
-            String gamepadMsg = new Gson().toJson(new GamepadInputDTO(ACTION_GAMEPAD_INPUT, majorityInput.compress()));
-            nullablePresenter.get().sendMessage(gamepadMsg);
+            GamepadInputDTO gamepadDto = new GamepadInputDTO(
+                nullableUser.get().getUserId(),
+                userInput.compress(),
+                majorityInput.compress()
+            );
+            String gamepadMsg = new Gson().toJson(gamepadDto);
+            room.broadcast(gamepadMsg);
         }
     }
 

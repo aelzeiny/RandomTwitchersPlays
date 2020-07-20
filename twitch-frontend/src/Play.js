@@ -6,6 +6,8 @@ import { WebRtcPeer } from 'kurento-utils';
 import GamepadSelection from "./gamepad/GamepadSelection";
 import GamepadDisplay from "./gamepad/GamepadDisplay";
 import {switchObservable, updateController} from "./gamepad/gamepadApi";
+import { compressInput, decompressInput } from "./gamepad/switchApi";
+import { Subject } from 'rxjs';
 
 WebSocket.prototype.sendMessage = function (msg) {
     const jsonMessage = JSON.stringify(msg);
@@ -25,10 +27,17 @@ export default class Play extends React.Component {
         };
         this.webRtc = {};
         this.ws = null;
+        this.switchInputSubscription = null;
     }
 
     componentDidMount() {
         this.ws = new WebSocket('ws://' + window.location.host + `/traffic?id=${this.id}`);
+        this.switchInputSubscription = switchObservable.subscribe((input) => {
+            this.ws.sendMessage({
+                id: 'switchInput',
+                input: compressInput(input)
+            });
+        });
 	    this.ws.onmessage = (message) => {
             const parsedMessage = JSON.parse(message.data);
             console.info('Received message:', parsedMessage.id);
@@ -49,17 +58,24 @@ export default class Play extends React.Component {
                 case 'iceCandidate':
                     this.addIceCandidate(parsedMessage);
                     break;
+                case 'switchInput':
+                    this.onSwitchInput(parsedMessage);
+                    break;
                 default:
                     console.error('Unrecognized message', parsedMessage);
             }
 	    }
 
+	    setTimeout(() => { this.setState({presenter: 'presenter' }) }, 1000)
+
+
 	    this.ws.onclose = () => {
-	        this.props.history.push('/');
+	        // this.props.history.push('/');
         };
     }
 
     componentWillUnmount() {
+        this.switchInputSubscription.unsubscribe();
         this.ws.sendMessage({
             id: 'leaveRoom'
         });
@@ -126,13 +142,13 @@ export default class Play extends React.Component {
 
     receiveVideo({ name } ) {
         this.setState({
-            players: new Set([name, ...this.state.players])
+            players: new Set([...this.state.players, name])
         });
     }
 
     onExistingParticipants({ data }) {
         this.setState({
-            players: new Set([this.id, ...data, ...this.state.players])
+            players: new Set([this.id, ...this.state.players, ...data])
         });
     }
 
@@ -174,17 +190,42 @@ export default class Play extends React.Component {
 		});
     }
 
-    renderPlayer(player) {
-        if (!(player in this.webRtc)) {
-            this.webRtc[player] = {
-                video: React.createRef(),
-                rtcPeer: null
-            };
-            console.log('webrtcing ' + player);
+    onSwitchInput({ name, input, commonInput } ) {
+        if (this.state.presenter && this.webRtc[this.state.presenter]) {
+            const switchCommonInput = decompressInput(commonInput);
+            this.webRtc[this.state.presenter].observable.next(switchCommonInput);
         }
+        if (name in this.state.players && this.webRtc[name] && name !== this.id) {
+            const switchInput = decompressInput(input);
+            this.webRtc[name].observable.next(switchInput);
+        }
+    }
+
+    initWebRtc() {
+        const playersToInit = [];
+        for (let player of this.state.players)
+            if (!(player in this.webRtc))
+                playersToInit.push(player);
+
+        if (!(this.state.presenter in this.webRtc))
+            playersToInit.push(this.state.presenter);
+
+        for (let player of playersToInit) {
+            if (!(player in this.webRtc)) {
+                this.webRtc[player] = {
+                    video: React.createRef(),
+                    rtcPeer: null,
+                    observable: (player === this.id) ? switchObservable : new Subject()
+                };
+            }
+        }
+    }s
+
+    renderPlayer(player) {
         return (
             <div key={player} className='player-div'>
                 <span>{player}</span>
+                <GamepadDisplay observable={this.webRtc[player].observable}/>
                 <video key={player}
                    className='player-vid'
                    ref={instance => { this.webRtc[player].video = instance }}
@@ -195,15 +236,6 @@ export default class Play extends React.Component {
     }
 
     renderPresenter() {
-        if (this.state.presenter) {
-            if (!(this.state.presenter in this.webRtc)) {
-                this.webRtc[this.state.presenter] = {
-                    video: React.createRef(),
-                    rtcPeer: null
-                }
-            }
-        }
-
         const assignRefIfExists = (instance) => {
             if (this.state.presenter)
                 this.webRtc[this.state.presenter].video = instance;
@@ -217,21 +249,21 @@ export default class Play extends React.Component {
     }
 
     render() {
-        console.log('i rendered');
+        this.initWebRtc();
         return (
             <div className='play-div row'>
-                <div className='gamepad-div col-lg-3'>
-                    <GamepadSelection gamepadSelectedCallback={updateController}/>
-                    <GamepadDisplay observable={switchObservable}/>
+                <div className='play-left-div col-lg-3'>
+                    {this.state.presenter && <GamepadDisplay observable={this.webRtc[this.state.presenter].observable}/>}
                 </div>
                 <div className='col-lg-7'>
                     {this.renderPresenter()}
                 </div>
-                <div className='players-div col-lg-2'>{
-                    Array.from(this.state.players)
+                <div className='players-div col-lg-2'>
+                    <GamepadSelection gamepadSelectedCallback={updateController}/>
+                    {Array.from(this.state.players)
                         .filter(player => player !== this.state.presenter)
-                        .map((player) => this.renderPlayer(player))
-                }</div>
+                        .map((player) => this.renderPlayer(player))}
+                </div>
             </div>
         );
     }

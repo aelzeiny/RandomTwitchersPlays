@@ -111,7 +111,9 @@ public class GamepadInput {
      */
     private static short getHatMask(short mapping) {
         short mask = 0;
-        if (mapping % 2 != 0) {
+        if (mapping == 8)
+            return 0;
+        else if (mapping % 2 != 0) {
             mask |= 1 << (mapping - 1) / 2;
             mask |= 1 << (mapping + 1) % 8 / 2;
         } else {

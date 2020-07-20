@@ -64,7 +64,7 @@ export default function GamepadSelection({ gamepadSelectedCallback }) {
         <div className="gamepad-selection">
             <div className="btn-group">
                 <button className="btn btn-secondary btn-lg dropdown-toggle" type="button" data-toggle="dropdown"
-                        aria-haspopup="true" aria-expanded="false">
+                        aria-haspopup="true" aria-expanded="false" style={{backgroundColor: 'transparent'}}>
                     <i className={`fas fa-${(gamepads.selected) ? 'gamepad' : 'keyboard'}`}/>
                     {(gamepads.selected) ? gamepads.selected.id : 'Keyboard'}
                 </button>

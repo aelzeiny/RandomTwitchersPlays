@@ -16,28 +16,51 @@
     justify-content: space-around;
     max-height: 100%;
     align-items: center;
+    color: white;
 }
 
 .player-div {
+    position: relative;
     width: 150px;
     height: 150px;
     border-radius: 50%;
-    background-color: indigo;
-    border: 1px solid white;
+    background-color: transparent;
+    border: 1px solid #6c757d;
 
     display: flex;
     justify-content: center;
+    align-items: center;
     flex-direction: column;
     font-family: Twitchy, serif;
     color: white;
     text-align: center;
 }
 
+.player-div span {
+    position: absolute;
+    bottom: 0;
+    top: -22px;
+}
+
 .player-div video {
     display: none;
     border-radius: 50%;
+    position: absolute;
+    width: 150px;
+    height: 150px;
 }
 
-.player-div span {
-    margin-top: -16px;
+.player-div svg {
+    left: 0;
+}
+
+.player-div .gamepad-background {
+    width: 80%;
+    margin: auto;
+}
+
+.play-left-div {
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
