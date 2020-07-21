@@ -112,7 +112,7 @@ public class Room implements Closeable {
             try {
                 participant.cancelVideoFrom(name);
                 participant.sendMessage(participantLeftJson);
-            } catch (final IOException e) {
+            } catch (final IOException | IllegalStateException e) {
                 unnotifiedParticipants.add(participant.getUserId());
             }
         }

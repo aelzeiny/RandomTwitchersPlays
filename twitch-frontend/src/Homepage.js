@@ -18,13 +18,18 @@ function HelpModal() {
               </div>
               <div className="modal-body">
                   <p>
-                      <span className='emphasis'>Random Twitchers Play</span> is a place where the Twitch community
+                      <span className='emphasis'>Twitch Arena</span> is a place where the Twitch community
                       passes one controller.
                   </p>
 
                   <p>
                       Every few minutes someone new enters the spotlight, and takes control of the same Nintendo Switch.
-                      When the time has passed, the controls are passed to the next person in line.<br/>
+                      When their time passes, the controls are passed to the next person in line.<br/>
+                  </p>
+
+                  <p>
+                      But there's a twist. There are 3 people controlling the same Switch at the same time. These players
+                      must collaborate via voice-chat in order to accomplish their objectives.
                   </p>
 
                   <p>

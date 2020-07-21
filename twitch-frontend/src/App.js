@@ -12,7 +12,7 @@ function App() {
     <Router>
         <div className="app">
             <div>
-                <h1 className='title'>Random Twitchers <br/>Play</h1>
+                <h1 className='title'>Twitch Arena</h1>
             </div>
             <Switch>
                 <Route path="/queue/:uuid" render={(props) => <Queue {...props}/>}/>
