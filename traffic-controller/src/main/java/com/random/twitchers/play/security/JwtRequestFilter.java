@@ -22,19 +22,19 @@ import java.nio.charset.StandardCharsets;
 public class JwtRequestFilter extends OncePerRequestFilter {
     private static final Logger log = LoggerFactory.getLogger(TrafficWebsocketsHandler.class);
     private static final String JWT_SECRET_ENV = "PRESENTER_SUPER_SECRET";
-    private static final String jwt_secret = System.getenv(JWT_SECRET_ENV);
+    private static final String jwtSecret = System.getenv(JWT_SECRET_ENV);
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, @NonNull HttpServletResponse response,
                                     @NonNull FilterChain chain) throws ServletException, IOException {
         final String requestTokenHeader = request.getHeader("Authorization");
-        assert jwt_secret != null && !jwt_secret.isEmpty();
+        assert jwtSecret != null && !jwtSecret.isEmpty();
         if (requestTokenHeader != null && requestTokenHeader.startsWith("Bearer ")) {
             String jwtToken = requestTokenHeader.substring("Bearer ".length());
             if (JwtRequestFilter.verifyJwt(jwtToken)) {
                 PreAuthenticatedAuthenticationToken token = new PreAuthenticatedAuthenticationToken(
                         "homeServer",
-                        jwt_secret
+                        jwtSecret
                 );
                 token.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 token.setAuthenticated(true);
@@ -55,7 +55,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
     public static Jws<Claims> parseJwt(String jwt) throws JwtException {
         return Jwts.parserBuilder()
-            .setSigningKey(jwt_secret.getBytes(StandardCharsets.UTF_8))
+            .setSigningKey(jwtSecret.getBytes(StandardCharsets.UTF_8))
             .build()
             .parseClaimsJws(jwt);
     }
