@@ -43,7 +43,7 @@
 }
 
 .player-div video {
-    display: none;
+    /*display: none;*/
     border-radius: 50%;
     position: absolute;
     width: 150px;

@@ -40,7 +40,7 @@ export default class Play extends React.Component {
         });
 	    this.ws.onmessage = (message) => {
             const parsedMessage = JSON.parse(message.data);
-            console.info('Received message:', parsedMessage.id);
+            console.info('Received message:', parsedMessage.id, parsedMessage);
 
             switch (parsedMessage.id) {
                 case 'newParticipantArrived':
@@ -65,9 +65,6 @@ export default class Play extends React.Component {
                     console.error('Unrecognized message', parsedMessage);
             }
 	    }
-
-	    setTimeout(() => { this.setState({presenter: 'presenter' }) }, 1000)
-
 
 	    this.ws.onclose = () => {
 	        // this.props.history.push('/');
@@ -140,21 +137,24 @@ export default class Play extends React.Component {
         }
     }
 
-    receiveVideo({ name } ) {
+    receiveVideo({ name, isPresenter } ) {
         this.setState({
-            players: new Set([...this.state.players, name])
+            players: new Set([...this.state.players, name]),
+            presenter: isPresenter ? name : this.state.presenter
         });
     }
 
-    onExistingParticipants({ data }) {
+    onExistingParticipants({ data, presenter }) {
         this.setState({
-            players: new Set([this.id, ...this.state.players, ...data])
+            players: new Set([this.id, ...this.state.players, ...data]),
+            presenter: presenter
         });
     }
 
-    onParticipantLeft({ name }) {
+    onParticipantLeft({ name, isPresenter }) {
         this.setState({
-            players: new Set(Array.from(this.state.players).filter(el => el !== name))
+            players: new Set(Array.from(this.state.players).filter(el => el !== name)),
+            presenter: isPresenter ? null : this.state.presenter
         });
     }
 
@@ -190,7 +190,7 @@ export default class Play extends React.Component {
 		});
     }
 
-    onSwitchInput({ name, input, commonInput } ) {
+    onSwitchInput({ name, input, commonInput }) {
         if (this.state.presenter && this.webRtc[this.state.presenter]) {
             const switchCommonInput = decompressInput(commonInput);
             this.webRtc[this.state.presenter].observable.next(switchCommonInput);
@@ -202,16 +202,9 @@ export default class Play extends React.Component {
     }
 
     initWebRtc() {
-        const playersToInit = [];
-        for (let player of this.state.players)
-            if (!(player in this.webRtc))
-                playersToInit.push(player);
-
-        if (!(this.state.presenter in this.webRtc))
-            playersToInit.push(this.state.presenter);
-
-        for (let player of playersToInit) {
+        for (let player of this.state.players) {
             if (!(player in this.webRtc)) {
+                console.log('yeeting', player);
                 this.webRtc[player] = {
                     video: React.createRef(),
                     rtcPeer: null,
@@ -237,14 +230,16 @@ export default class Play extends React.Component {
 
     renderPresenter() {
         const assignRefIfExists = (instance) => {
-            if (this.state.presenter)
+            if (this.state.presenter) {
                 this.webRtc[this.state.presenter].video = instance;
+            }
         }
 
         return <video id='presenter'
                       key='presenter'
                       ref={assignRefIfExists}
                       autoPlay={true}
+                      controls={false}
                       poster={loadingScreen}/>
     }
 

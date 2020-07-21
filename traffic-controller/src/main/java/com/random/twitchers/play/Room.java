@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -26,6 +27,7 @@ public class Room implements Closeable {
     private final Logger log = LoggerFactory.getLogger(Room.class);
 
     private final ConcurrentMap<String, UserSession> participants = new ConcurrentHashMap<>();
+    private Optional<UserSession> presenter = Optional.empty();
     private final MediaPipeline pipeline;
 
     public Room(MediaPipeline pipeline) {
@@ -39,13 +41,19 @@ public class Room implements Closeable {
         this.close();
     }
 
-    public UserSession join(String userName, String twitchTag, WebSocketSession session) throws IOException {
+    public UserSession join(String userName, String twitchTag, WebSocketSession session, boolean isPresenter) throws IOException {
         log.info("ROOM {}: adding participant {}", userName, userName);
         final UserSession participant = new UserSession(userName, twitchTag, session, this.pipeline);
-        joinRoom(participant);
+        if (isPresenter)
+            this.presenter = Optional.of(participant);
+        joinRoom(participant, isPresenter);
         participants.put(participant.getUserId(), participant);
         sendParticipantNames(participant);
         return participant;
+    }
+
+    public Optional<UserSession> getPresenter() {
+        return this.presenter;
     }
 
     public void leave(UserSession user) {
@@ -54,26 +62,27 @@ public class Room implements Closeable {
         user.close();
     }
 
-    public void broadcast(String newParticipantMsg) throws IOException {
-        this.broadcast(newParticipantMsg, null);
+    public void broadcast(String message) throws IOException {
+        this.broadcast(message, null);
     }
 
-    public void broadcast(String newParticipantMsg, String skipUserId) throws IOException {
+    public void broadcast(String message, String skipUserId) throws IOException {
         for (final UserSession participant : participants.values()) {
             if (participant.getUserId().equals(skipUserId))
                 continue;
             try {
-                participant.sendMessage(newParticipantMsg);
+                participant.sendMessage(message);
             } catch (final IOException e) {
                 log.debug("ROOM: participant {} could not be notified", participant.getUserId(), e);
             }
         }
     }
 
-    private void joinRoom(UserSession newParticipant) {
+    private void joinRoom(UserSession newParticipant, boolean isPresenter) {
         final JsonObject newParticipantMsg = new JsonObject();
         newParticipantMsg.addProperty("id", "newParticipantArrived");
         newParticipantMsg.addProperty("name", newParticipant.getUserId());
+        newParticipantMsg.addProperty("isPresenter", isPresenter);
 
         log.debug("ROOM: notifying other participants of new participant {}", newParticipant.getUserId());
 
@@ -87,7 +96,10 @@ public class Room implements Closeable {
     }
 
     private void removeParticipant(String name) {
+        boolean isPresenter = this.presenter.isPresent() && this.presenter.get().getUserId().equals(name);
         participants.remove(name);
+        if (isPresenter)
+            this.presenter = Optional.empty();
 
         log.debug("ROOM: notifying all users that {} is leaving the room", name);
 
@@ -95,6 +107,7 @@ public class Room implements Closeable {
         final JsonObject participantLeftJson = new JsonObject();
         participantLeftJson.addProperty("id", "participantLeft");
         participantLeftJson.addProperty("name", name);
+        participantLeftJson.addProperty("isPresenter", isPresenter);
         for (final UserSession participant : participants.values()) {
             try {
                 participant.cancelVideoFrom(name);
@@ -111,7 +124,6 @@ public class Room implements Closeable {
     }
 
     public void sendParticipantNames(UserSession user) throws IOException {
-
         final JsonArray participantsArray = new JsonArray();
         for (final UserSession participant : this.getParticipants()) {
             if (!participant.equals(user)) {
@@ -123,8 +135,11 @@ public class Room implements Closeable {
         final JsonObject existingParticipantsMsg = new JsonObject();
         existingParticipantsMsg.addProperty("id", "existingParticipants");
         existingParticipantsMsg.add("data", participantsArray);
-        log.debug("PARTICIPANT {}: sending a list of {} participants", user.getUserId(),
-                participantsArray.size());
+        if (this.presenter.isPresent())
+            existingParticipantsMsg.addProperty("presenter", this.presenter.get().getUserId());
+        else
+            existingParticipantsMsg.add("presenter", null);
+        log.debug("PARTICIPANT {}: sending a list of {} participants", user.getUserId(), participantsArray.size());
         user.sendMessage(existingParticipantsMsg);
     }
 

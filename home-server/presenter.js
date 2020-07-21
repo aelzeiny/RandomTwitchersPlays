@@ -97,4 +97,4 @@ function dispose() {
     }
 }
 
-main('wss://localhost:8443/handshake');
+main('ws://localhost:8443/traffic');

@@ -4,6 +4,7 @@ package com.random.twitchers.play;
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import com.random.twitchers.play.dto.GamepadInputDTO;
+import com.random.twitchers.play.security.JwtRequestFilter;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.kurento.client.IceCandidate;

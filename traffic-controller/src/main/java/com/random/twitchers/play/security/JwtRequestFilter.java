@@ -1,8 +1,7 @@
 package com.random.twitchers.play.security;
 
 import com.random.twitchers.play.TrafficWebsocketsHandler;
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
@@ -47,13 +46,17 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
     public static boolean verifyJwt(String jwt) {
         try {
-            Jwts.parserBuilder()
-                    .setSigningKey(jwt_secret.getBytes(StandardCharsets.UTF_8))
-                    .build()
-                    .parseClaimsJws(jwt);
+            JwtRequestFilter.parseJwt(jwt);
             return true;
         } catch (JwtException e) {
             return false;
         }
+    }
+
+    public static Jws<Claims> parseJwt(String jwt) throws JwtException {
+        return Jwts.parserBuilder()
+            .setSigningKey(jwt_secret.getBytes(StandardCharsets.UTF_8))
+            .build()
+            .parseClaimsJws(jwt);
     }
 }

@@ -13,20 +13,10 @@ public class UserRegistry {
     private final ConcurrentHashMap<String, UserSession> usersById = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, UserSession> usersBySessionId = new ConcurrentHashMap<>();
     private final Map<String, String> whitelist = new ConcurrentHashMap<>();
-    private UserSession presenter;
 
     public void register(UserSession user) {
         usersById.put(user.getUserId(), user);
         usersBySessionId.put(user.getSession().getId(), user);
-    }
-
-    public void registerPresenter(UserSession presenter) {
-        this.presenter = presenter;
-        this.register(presenter);
-    }
-
-    public Optional<UserSession> getPresenter() {
-        return Optional.ofNullable(this.presenter);
     }
 
     public List<String> getUsers() {
@@ -36,8 +26,6 @@ public class UserRegistry {
     }
 
     public Optional<UserSession> getById(String id) {
-        if (id.equals(UserRegistry.PRESENTER_ID))
-            return Optional.ofNullable(presenter);
         return Optional.ofNullable(usersById.get(id));
     }
 
@@ -53,9 +41,6 @@ public class UserRegistry {
         if (user.isPresent()) {
             usersById.remove(user.get().getUserId());
             usersBySessionId.remove(session.getId());
-            if (presenter != null && session == presenter.getSession()) {
-                this.presenter = null;
-            }
         }
         return user;
     }

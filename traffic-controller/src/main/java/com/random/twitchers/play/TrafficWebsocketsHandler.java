@@ -34,6 +34,7 @@ public class TrafficWebsocketsHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws IOException {
         URI endpoint = session.getUri();
+        Room room = roomManager.getRoom();
         if (endpoint != null && endpoint.getQuery() != null) {
             Optional<String> userId = MessageHandler.getParamFromSession(session, "id");
             Optional<String> jwt = MessageHandler.getParamFromSession(session, "jwt");
@@ -41,12 +42,16 @@ public class TrafficWebsocketsHandler extends TextWebSocketHandler {
             if (jwt.isPresent()) {
                 if (!JwtRequestFilter.verifyJwt(jwt.get())) {
                     session.close(CloseStatus.NOT_ACCEPTABLE);
-                } else if (registry.getPresenter().isPresent()) {
+                } else if (room.getPresenter().isPresent()) {
                     socketError(session, "PRESENTER has already connected");
                 } else {
-                    UserSession presenterSession = this.roomManager.getRoom()
-                            .join(UserRegistry.PRESENTER_ID, UserRegistry.PRESENTER_ID, session);
-                    this.registry.registerPresenter(presenterSession);
+                    UserSession presenterSession = room.join(
+                            UserRegistry.PRESENTER_ID,
+                            UserRegistry.PRESENTER_ID,
+                            session,
+                            true
+                    );
+                    this.registry.register(presenterSession);
                 }
             }
             // User must be whitelisted
@@ -57,10 +62,11 @@ public class TrafficWebsocketsHandler extends TextWebSocketHandler {
                     socketError(session, "User ID is already connected");
                 } else {
                     // Add to room & registry
-                    UserSession userSession = this.roomManager.getRoom().join(
+                    UserSession userSession = room.join(
                         userId.get(),
                         registry.getTwitchTag(userId.get()),
-                        session
+                        session,
+                        false
                     );
                     this.registry.register(userSession);
 
