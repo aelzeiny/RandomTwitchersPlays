@@ -30,6 +30,7 @@ const toJwt = (message, secret) => {
 
 export default function Present () {
     const [secret, setSecret] = useState('');
+    const [proxy, setProxy] = useState('ws://localhost:9999');
     const vidRef = useRef();
     const name = '!PRESENTER';
     let rtcPeer;
@@ -38,6 +39,7 @@ export default function Present () {
         e.target.setAttribute('disabled', true);
         const jwt = toJwt({name: name}, secret);
         let ws = new WebSocket('ws://' + window.location.host + `/traffic?jwt=${jwt}`);
+        const wsProxy = new WebSocket(proxy);
 
         const receiveVideoResponse = ({ sdpAnswer }) => {
             rtcPeer.processAnswer (sdpAnswer, function (error) {
@@ -54,7 +56,7 @@ export default function Present () {
         };
 
         const onSwitchInput = ({ commonInput }) => {
-            console.log('>>>', commonInput);
+            wsProxy.sendMessage(commonInput);
         };
 
         const offerToReceiveVideo = (error, offerSdp) => {
@@ -77,13 +79,13 @@ export default function Present () {
                     if (isPresenter)
                         receiveVideoResponse(parsedMessage);
                     else
-                        console.log("Message filtered: ", parsedMessage);
+                        console.log("Message filtered: ", parsedMessage.id, parsedMessage.name);
                     break;
                 case 'iceCandidate':
                     if (isPresenter)
                         addIceCandidate(parsedMessage);
                     else
-                        console.log("Message filtered: ", parsedMessage);
+                        console.log("Message filtered: ", parsedMessage.id, parsedMessage.name);
                     break;
                 case 'switchInput':
                     onSwitchInput(parsedMessage);
@@ -96,7 +98,7 @@ export default function Present () {
 	    ws.onclose = () => {
 	        if (e.target)
                 e.target.setAttribute('disabled', false);
-	        console.log('we out');
+	        console.error('we out');
         };
 
 	    ws.onopen = () => {
@@ -136,15 +138,30 @@ export default function Present () {
     }
     return (
         <div className='container present-div'>
-            <div className="form-group">
-                <label htmlFor="jwtInput">256-bit Secret Key</label>
-                <input type="password"
-                       className="form-control"
-                       id="jwtInput"
-                       placeholder="JWT Token"
-                       value={secret}
-                       onChange={(e) => setSecret(e.target.value)}/>
-                <button type="button" className="btn btn-dark" onClick={connect}>Connect</button>
+            <div className="row form-group">
+                <div className="col-lg-5">
+                    <label htmlFor="proxyInput">Proxy</label>
+                    <input type="text"
+                           className="form-control"
+                           id="proxyInput"
+                           placeholder="ws://localhost:9999"
+                           value={proxy}
+                           onChange={(e) => setProxy(e.target.value)}/>
+                </div>
+                <div className="col-lg-6">
+                    <label htmlFor="secretInput">256-bit Secret Key</label>
+                    <input type="password"
+                           className="form-control"
+                           id="secretInput"
+                           placeholder="Super Secret Key"
+                           value={secret}
+                           onChange={(e) => setSecret(e.target.value)}/>
+                </div>
+                <div className="col-lg-1" id="connect-div">
+                    <button type="button"
+                            className="btn btn-dark"
+                            onClick={connect}>Connect</button>
+                </div>
             </div>
             <video key='presenter'
                    ref={vidRef}

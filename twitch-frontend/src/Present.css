@@ -5,3 +5,9 @@
 .present-div {
     text-align: center;
 }
+
+#connect-div {
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-start;
+}
