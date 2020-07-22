@@ -1,4 +1,4 @@
-package com.random.twitchers.play;
+package live.twitch.arena;
 
 import java.io.IOException;
 import java.net.URI;
@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import com.random.twitchers.play.security.JwtRequestFilter;
+import live.twitch.arena.security.JwtRequestFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

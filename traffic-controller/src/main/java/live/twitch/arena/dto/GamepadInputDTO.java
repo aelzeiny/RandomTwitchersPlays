@@ -1,6 +1,6 @@
-package com.random.twitchers.play.dto;
+package live.twitch.arena.dto;
 
-import com.random.twitchers.play.MessageHandler;
+import live.twitch.arena.MessageHandler;
 
 public class GamepadInputDTO {
     private final String name;

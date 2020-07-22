@@ -1,9 +1,6 @@
-package com.random.twitchers.play;
+package live.twitch.arena;
 
 
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
-
-import java.util.ArrayList;
 import java.util.List;
 
 public class GamepadInput {
@@ -159,7 +156,7 @@ public class GamepadInput {
      * https://en.wikipedia.org/wiki/Majority_function
      */
     public static GamepadInput majorityFactory(List<GamepadInput> inputs) {
-        throw new NotImplementedException();
+        throw new IllegalArgumentException("Not Implemented");
     }
 
     private static short[] averageAxes(short[][] axes) {

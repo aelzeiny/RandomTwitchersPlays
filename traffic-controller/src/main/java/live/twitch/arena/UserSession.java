@@ -1,4 +1,4 @@
-package com.random.twitchers.play;
+package live.twitch.arena;
 
 import java.io.Closeable;
 import java.io.IOException;

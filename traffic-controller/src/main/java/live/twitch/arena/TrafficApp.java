@@ -1,6 +1,7 @@
-package com.random.twitchers.play;
+package live.twitch.arena;
 
 import org.kurento.client.KurentoClient;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -14,6 +15,8 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 @SpringBootApplication
 @EnableWebSocket
 public class TrafficApp implements WebSocketConfigurer {
+    @Value("${kurento.url}")
+    private String kurentoUrl;
 
     @Bean
     public UserRegistry registry() {
@@ -32,7 +35,7 @@ public class TrafficApp implements WebSocketConfigurer {
 
     @Bean
     public KurentoClient kurentoClient() {
-        return KurentoClient.create();
+        return KurentoClient.create(kurentoUrl);
     }
 
     public static void main(String[] args) {
@@ -51,11 +54,11 @@ class WebConfiguration implements WebMvcConfigurer {
 
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {
-//        registry.addViewController("/{spring:\\w+}")
-//                .setViewName("forward:/");
-//        registry.addViewController("/**/{spring:\\w+}")
-//                .setViewName("forward:/");
-//        registry.addViewController("/{spring:\\w+}/**{spring:?!(\\.js|\\.css)$}")
-//                .setViewName("forward:/");
+        registry.addViewController("/{spring:\\w+}")
+                .setViewName("forward:/");
+        registry.addViewController("/**/{spring:\\w+}")
+                .setViewName("forward:/");
+        registry.addViewController("/{spring:\\w+}/**{spring:?!(\\.js|\\.css)$}")
+                .setViewName("forward:/");
     }
 }

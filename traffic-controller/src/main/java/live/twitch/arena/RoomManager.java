@@ -1,4 +1,4 @@
-package com.random.twitchers.play;
+package live.twitch.arena;
 
 import org.kurento.client.KurentoClient;
 import org.springframework.beans.factory.annotation.Autowired;

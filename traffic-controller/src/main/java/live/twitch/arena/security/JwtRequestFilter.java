@@ -1,6 +1,6 @@
-package com.random.twitchers.play.security;
+package live.twitch.arena.security;
 
-import com.random.twitchers.play.TrafficWebsocketsHandler;
+import live.twitch.arena.TrafficWebsocketsHandler;
 import io.jsonwebtoken.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -26,7 +26,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build && mv ./build ../traffic-controller/src/main/resources/static",
+    "build": "react-scripts build && rm -rf ../traffic-controller/src/main/resources/static && mv ./build ../traffic-controller/src/main/resources/static",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {

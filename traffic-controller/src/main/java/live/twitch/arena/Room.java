@@ -1,4 +1,4 @@
-package com.random.twitchers.play;
+package live.twitch.arena;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -27,7 +27,7 @@ public class Room implements Closeable {
     private final Logger log = LoggerFactory.getLogger(Room.class);
 
     private final ConcurrentMap<String, UserSession> participants = new ConcurrentHashMap<>();
-    private Optional<UserSession> presenter = Optional.empty();
+    private UserSession presenter = null;
     private final MediaPipeline pipeline;
 
     public Room(MediaPipeline pipeline) {
@@ -45,7 +45,7 @@ public class Room implements Closeable {
         log.info("ROOM {}: adding participant {}", userName, userName);
         final UserSession participant = new UserSession(userName, twitchTag, session, this.pipeline);
         if (isPresenter)
-            this.presenter = Optional.of(participant);
+            this.presenter = participant;
         joinRoom(participant, isPresenter);
         participants.put(participant.getUserId(), participant);
         sendParticipantNames(participant);
@@ -53,7 +53,7 @@ public class Room implements Closeable {
     }
 
     public Optional<UserSession> getPresenter() {
-        return this.presenter;
+        return Optional.ofNullable(this.presenter);
     }
 
     public void leave(UserSession user) {
@@ -62,11 +62,11 @@ public class Room implements Closeable {
         user.close();
     }
 
-    public void broadcast(String message) throws IOException {
+    public void broadcast(String message) {
         this.broadcast(message, null);
     }
 
-    public void broadcast(String message, String skipUserId) throws IOException {
+    public void broadcast(String message, String skipUserId) {
         for (final UserSession participant : participants.values()) {
             if (participant.getUserId().equals(skipUserId))
                 continue;
@@ -96,10 +96,10 @@ public class Room implements Closeable {
     }
 
     private void removeParticipant(String name) {
-        boolean isPresenter = this.presenter.isPresent() && this.presenter.get().getUserId().equals(name);
+        boolean isPresenter = this.getPresenter().isPresent() && this.presenter.getUserId().equals(name);
         participants.remove(name);
         if (isPresenter)
-            this.presenter = Optional.empty();
+            this.presenter = null;
 
         log.debug("ROOM: notifying all users that {} is leaving the room", name);
 
@@ -135,8 +135,8 @@ public class Room implements Closeable {
         final JsonObject existingParticipantsMsg = new JsonObject();
         existingParticipantsMsg.addProperty("id", "existingParticipants");
         existingParticipantsMsg.add("data", participantsArray);
-        if (this.presenter.isPresent())
-            existingParticipantsMsg.addProperty("presenter", this.presenter.get().getUserId());
+        if (this.getPresenter().isPresent())
+            existingParticipantsMsg.addProperty("presenter", this.presenter.getUserId());
         else
             existingParticipantsMsg.add("presenter", null);
         log.debug("PARTICIPANT {}: sending a list of {} participants", user.getUserId(), participantsArray.size());

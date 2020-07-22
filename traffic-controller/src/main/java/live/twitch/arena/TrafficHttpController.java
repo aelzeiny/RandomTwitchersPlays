@@ -1,9 +1,9 @@
-package com.random.twitchers.play;
+package live.twitch.arena;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.random.twitchers.play.dto.TwitchUserDTO;
+import live.twitch.arena.dto.TwitchUserDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -1,10 +1,9 @@
-package com.random.twitchers.play;
+package live.twitch.arena;
 
 
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
-import com.random.twitchers.play.dto.GamepadInputDTO;
-import com.random.twitchers.play.security.JwtRequestFilter;
+import live.twitch.arena.dto.GamepadInputDTO;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.kurento.client.IceCandidate;
@@ -12,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -90,7 +88,7 @@ public abstract class MessageHandler {
         }
     }
 
-    protected void gamepadInput() throws IOException {
+    protected void gamepadInput() {
         Type oneThiccShortyType = new TypeToken<short[]>() {}.getType();
         short[] byteBuffer = new Gson().fromJson(jsonMessage.get("input"), oneThiccShortyType);
         GamepadInput userInput = GamepadInput.parse(byteBuffer);

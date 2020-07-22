@@ -1,8 +1,8 @@
-package com.random.twitchers.play;
+package live.twitch.arena;
 
-import com.random.twitchers.play.security.ApiKeyAuthFilter;
-import com.random.twitchers.play.security.JwtAuthenticationEntryPoint;
-import com.random.twitchers.play.security.JwtRequestFilter;
+import live.twitch.arena.security.ApiKeyAuthFilter;
+import live.twitch.arena.security.JwtAuthenticationEntryPoint;
+import live.twitch.arena.security.JwtRequestFilter;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;

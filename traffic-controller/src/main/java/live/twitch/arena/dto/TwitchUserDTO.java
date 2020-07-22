@@ -1,4 +1,4 @@
-package com.random.twitchers.play.dto;
+package live.twitch.arena.dto;
 
 public class TwitchUserDTO {
     private String userId;

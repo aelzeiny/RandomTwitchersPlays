@@ -9,18 +9,18 @@
 		<artifactId>kurento-parent-pom</artifactId>
 		<version>6.13.0</version>
 	</parent>
-	<groupId>org.kurento.backend</groupId>
-	<artifactId>kurento-random-twitchers</artifactId>
+	<groupId>live.twitch.arena</groupId>
+	<artifactId>TwitchArena</artifactId>
 	<packaging>jar</packaging>
 
 	<!-- Project-level information -->
-	<name>Random Twitchers Backend</name>
-	<description>WebRTC many to many video call</description>
+	<name>Twitch Arena</name>
+	<description>Random Twitchers Pass the Controls</description>
 
 	<!-- Project configuration -->
 	<properties>
-		<demo.port>8443</demo.port>
-		<start-class>org.kurento.backend.traffic.TrafficApp</start-class>
+		<app.port>8443</app.port>
+		<start-class>live.twitch.arena.TrafficApp</start-class>
 	</properties>
 
 	<dependencies>
@@ -88,10 +88,6 @@
 			<groupId>org.kurento</groupId>
 			<artifactId>kurento-client</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>org.kurento</groupId>
-			<artifactId>kurento-utils-js</artifactId>
-		</dependency>
 	</dependencies>
 
 	<build>
@@ -99,6 +95,13 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<goals>
+							<goal>repackage</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -106,6 +109,27 @@
 				<configuration>
 					<source>8</source>
 					<target>8</target>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>com.spotify</groupId>
+				<artifactId>dockerfile-maven-plugin</artifactId>
+				<version>1.4.13</version>
+				<executions>
+					<execution>
+						<id>default</id>
+						<goals>
+							<goal>build</goal>
+							<goal>push</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<repository>aelzeiny/twitch-arena</repository>
+					<tag>${project.version}</tag>
+					<buildArgs>
+						<JAR_FILE>${project.build.finalName}.jar</JAR_FILE>
+					</buildArgs>
 				</configuration>
 			</plugin>
 		</plugins>

@@ -1,4 +1,4 @@
-package com.random.twitchers.play.security;
+package live.twitch.arena.security;
 
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;

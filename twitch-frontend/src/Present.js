@@ -36,10 +36,11 @@ export default function Present () {
     let rtcPeer;
 
     const connect = (e) => {
-        e.target.setAttribute('disabled', true);
+        const bttn = e.target;
+        bttn.setAttribute('disabled', true);
         const jwt = toJwt({name: name}, secret);
         let ws = new WebSocket('ws://' + window.location.host + `/traffic?jwt=${jwt}`);
-        const wsProxy = new WebSocket(proxy);
+        // const wsProxy = new WebSocket(proxy);
 
         const receiveVideoResponse = ({ sdpAnswer }) => {
             rtcPeer.processAnswer (sdpAnswer, function (error) {
@@ -56,7 +57,7 @@ export default function Present () {
         };
 
         const onSwitchInput = ({ commonInput }) => {
-            wsProxy.sendMessage(commonInput);
+            // wsProxy.sendMessage(commonInput);
         };
 
         const offerToReceiveVideo = (error, offerSdp) => {
@@ -95,10 +96,9 @@ export default function Present () {
             }
 	    }
 
-	    ws.onclose = () => {
-	        if (e.target)
-                e.target.setAttribute('disabled', false);
-	        console.error('we out');
+	    ws.onclose = (err) => {
+            bttn.removeAttribute('disabled');
+	        console.error('we out', err);
         };
 
 	    ws.onopen = () => {

@@ -1,10 +1,10 @@
-package com.random.twitchers.play;
+package live.twitch.arena;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import com.random.twitchers.play.dto.TwitchUserDTO;
+import live.twitch.arena.dto.TwitchUserDTO;
 import org.springframework.web.socket.WebSocketSession;
 
 public class UserRegistry {
