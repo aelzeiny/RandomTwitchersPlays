@@ -39,7 +39,7 @@ export default function Present () {
         const bttn = e.target;
         bttn.setAttribute('disabled', true);
         const jwt = toJwt({name: name}, secret);
-        let ws = new WebSocket('ws://' + window.location.host + `/traffic?jwt=${jwt}`);
+        let ws = new WebSocket('wss://' + window.location.host + `/traffic?jwt=${jwt}`);
         // const wsProxy = new WebSocket(proxy);
 
         const receiveVideoResponse = ({ sdpAnswer }) => {

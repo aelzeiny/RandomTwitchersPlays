@@ -20,7 +20,7 @@ Random Twitch Plays allows for players to plug in their controller or keyboard, 
 direct control for a period of time. Eventually the controls are passed to the next player in line.
 
 ### Architecture
-![architecture](./architecture-queue.png)
+![architecture](architecture-queue.png)
 ![architecture](architecture-stream.png)
 
 #### Controller Inputs

@@ -31,7 +31,7 @@ export default class Play extends React.Component {
     }
 
     componentDidMount() {
-        this.ws = new WebSocket('ws://' + window.location.host + `/traffic?id=${this.id}`);
+        this.ws = new WebSocket('wss://' + window.location.host + `/traffic?id=${this.id}`);
         this.switchInputSubscription = switchObservable.subscribe((input) => {
             this.ws.sendMessage({
                 id: 'switchInput',

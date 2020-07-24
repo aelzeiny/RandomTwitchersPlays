@@ -6,6 +6,7 @@
 # Build Dirs
 node_modules
 env
+venv
 bower_components
 target
 traffic-controller/src/main/resources/static
