@@ -1,13 +1,15 @@
+import json
 import os
 from twitchio.ext import commands
 from twitchio.dataclasses import Context
 import requests
-import json
+import websockets
 
 
 TWITCH_CHANNEL = 'RandomTwitchersPlay'
 BOT_NICK = 'RandomTwitchersPlay'
 session = requests.session()
+WS_URL = 'wss://4tylj6rpwi.execute-api.us-east-1.amazonaws.com/dev'
 APP_URL = 'https://twitcharena.live'
 API_URL = 'https://zei6n2gg47.execute-api.us-east-1.amazonaws.com/dev'
 
@@ -43,11 +45,6 @@ async def event_message(ctx):
 
     if 'hello' in ctx.content.lower():
         await ctx.channel.send(f"Hi, @{ctx.author.name}!")
-
-
-@bot.command(name='test')
-async def test(ctx: Context):
-    await ctx.send_me('test passed!')
 
 
 @bot.command(name='join')
@@ -105,6 +102,17 @@ async def position(ctx):
         await ctx.send(f'@{ctx.author.name} is #{data["position"]} in the queue.')
 
 
+async def queue_listener():
+    async with websockets.connect(WS_URL) as websocket:
+        while True:
+            queue_usernames = json.loads(await websocket.recv())
+            up_next = ', '.join([f"#{i + 1} @{d}" for i, d in enumerate(queue_usernames)])
+            await bot._ws.send_privmsg(  # noqa
+                TWITCH_CHANNEL,
+                f'Comming up: {up_next}'
+            )
+
+
 async def __send_whisper(self, username: str, content: str):
     ws = self._get_socket
     channel, _ = self._get_channel()
@@ -117,4 +125,5 @@ Context.send_whisper = __send_whisper
 
 
 if __name__ == "__main__":
+    bot.loop.create_task(queue_listener())
     bot.run()

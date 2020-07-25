@@ -124,7 +124,7 @@ def _join_queue(username) -> UUID:
 
     redis.set(new_user_id.bytes, username)  # UUID -> User
     redis.rpush(REDIS_QUEUE, username)  # ADD to Queue
-    _update_publishers()  # Notify listeners that Q has changed
+    _broadcast_status()  # Notify listeners that Q has changed
     return new_user_id
 
 
@@ -159,7 +159,7 @@ def _leave_queue(username):
     redis.lrem(REDIS_QUEUE, 1, username)  # REMOVE from Queue
     if open_socket_conn_ids:  # Remove from open connections
         redis.zrem(REDIS_CONN_SET, *open_socket_conn_ids)
-    _update_publishers()
+    _broadcast_status()
     return True
 
 
@@ -179,13 +179,17 @@ def default_message(*_, **__):
 
 
 @jsonify
-def broadcast_status(event, context):
+def broadcast_status(*_, **__):
     """
     Return the 10 most recent chat messages.
     """
+    _broadcast_status()
+
+
+def _broadcast_status():
     all_conn_ids = redis.zrange(REDIS_CONN_SET, 0, -1)
     gatewayapi = _get_api_gateway_client()
-    data = {'queue': [username.decode('utf8') for username in redis.lrange(REDIS_QUEUE, 0, 15)]}
+    data = [username.decode('utf8') for username in redis.lrange(REDIS_QUEUE, 0, 15)]
     logger.debug(f'sending: {data} to {len(all_conn_ids)} open connections')
     for conn_id_bytes in all_conn_ids:
         gatewayapi.post_to_connection(
