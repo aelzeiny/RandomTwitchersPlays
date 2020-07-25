@@ -102,6 +102,28 @@ async def position(ctx):
         await ctx.send(f'@{ctx.author.name} is #{data["position"]} in the queue.')
 
 
+@bot.command(name='help', aliases=['h', 'ayuda', 'halp'])
+async def helper(ctx):
+    await ctx.send_me("!join to enter the queue")
+    await ctx.send_me("!queue to track your status")
+    await ctx.send_me("!leave to exit the queue")
+    await ctx.send_me("!cheer @<user> to add time")
+    await ctx.send_me("!kick @<user> to kick")
+    await ctx.send_me("!help to see this again")
+
+
+@bot.command(name='ban', aliases=['kick', 'boot', 'kill'])
+async def ban(ctx):
+    # TODO Add banning abilities
+    ctx.send('Not implemented yet. Sorry m8.')
+
+
+@bot.command(name='cheer', aliases=['add', 'love' 'reward'])
+async def cheer(ctx):
+    # TODO Add cheering abilities
+    ctx.send('Not implemented yet. Sorry m8.')
+
+
 async def queue_listener():
     async with websockets.connect(WS_URL) as websocket:
         while True:
