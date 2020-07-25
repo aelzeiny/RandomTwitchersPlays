@@ -102,10 +102,36 @@ async def position(ctx):
         await ctx.send(f'@{ctx.author.name} is #{data["position"]} in the queue.')
 
 
+@bot.command(name='help', aliases=['h', 'ayuda', 'halp'])
+async def helper(ctx):
+    await ctx.send_me("!join to enter the queue")
+    await ctx.send_me("!queue to track your status")
+    await ctx.send_me("!leave to exit the queue")
+    await ctx.send_me("!cheer @<user> to add time")
+    await ctx.send_me("!kick @<user> to kick")
+    await ctx.send_me("!help to see this again")
+
+
+@bot.command(name='ban', aliases=['kick', 'boot', 'kill'])
+async def ban(ctx):
+    # TODO Add banning abilities
+    ctx.send('Not implemented yet. Sorry m8.')
+
+
+@bot.command(name='cheer', aliases=['add', 'love' 'reward'])
+async def cheer(ctx):
+    # TODO Add cheering abilities
+    ctx.send('Not implemented yet. Sorry m8.')
+
+
 async def queue_listener():
+    """
+    This task just listens in on the app's websocket for changes in the Q, and posts them
+    to the channel
+    """
     async with websockets.connect(WS_URL) as websocket:
         while True:
-            queue_usernames = json.loads(await websocket.recv())
+            queue_usernames = json.loads(await websocket.recv())[:5]
             up_next = ', '.join([f"#{i + 1} @{d}" for i, d in enumerate(queue_usernames)])
             await bot._ws.send_privmsg(  # noqa
                 TWITCH_CHANNEL,
