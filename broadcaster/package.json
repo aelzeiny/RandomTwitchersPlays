@@ -2,6 +2,9 @@
   "name": "random-twitchers-play",
   "description": "",
   "version": "0.1.0",
+  "scripts": {
+    "build": "serverless deploy"
+  },
   "dependencies": {},
   "devDependencies": {
     "serverless-python-requirements": "^5.1.0"

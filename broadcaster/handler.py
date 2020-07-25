@@ -47,7 +47,7 @@ def jsonify(func: Callable[..., Union[Union[dict, str], Tuple[Union[dict, str], 
         except Exception as e:
             logger.error(str(e))
             logger.debug(traceback.format_exc())
-            return {"statusCode": 500, "body": json.dumps({'error': e})}
+            return {"statusCode": 500, "body": json.dumps({'error': str(e)})}
     return wrap
 
 
@@ -195,9 +195,36 @@ def broadcast_status(event, context):
     return data
 
 
-def _update_publishers():
-    top_15 = ','.join([str(x) for x in redis.lrange(REDIS_QUEUE, 0, 15)])
-    redis.publish(REDIS_CHANNEL, top_15)
+@jsonify
+def status_queue(*_, **__):
+    """
+    Return the 10 most recent chat messages.
+    """
+    def is_connected(username: bytes):
+        uuid = redis.get(username).decode('utf8')
+        num_conn = redis.scard(_redis_open_sockets_key(uuid))
+        return num_conn != 0
+
+    data = [
+        {
+            'username': username.decode('utf8'),
+            'is_connected': is_connected(username)
+        }
+        for username in redis.lrange(REDIS_QUEUE, 0, 5)
+    ]
+    return data
+
+
+@jsonify
+def position_queue(event, _):
+    """Get the index of the given username."""
+    if 'pathParameters' not in event or 'username' not in event['pathParameters']:
+        return 'No username provided', 400
+    username = event['pathParameters']['username']
+    if not redis.get(username):
+        return {'position': -1}
+    index = list(redis.lrange(REDIS_QUEUE, 0, -1)).index(username.encode('utf8'))
+    return {'position': index + 1}
 
 
 def _redis_open_sockets_key(uuid: UUID):

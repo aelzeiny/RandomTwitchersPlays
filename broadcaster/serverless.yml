@@ -53,6 +53,22 @@ functions:
             - http:
                 path: queue
                 method: put
+    status:
+        handler: handler.status_queue
+        events:
+            - http:
+                path: queue
+                method: get
+    position:
+        handler: handler.position_queue
+        events:
+            - http:
+                  path: user/{username}
+                  method: get
+                  request:
+                      parameters:
+                          paths:
+                              username: true
     leave:
         handler: handler.leave_queue
         events:
