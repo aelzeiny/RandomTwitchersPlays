@@ -2,6 +2,7 @@ package live.twitch.arena;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -30,6 +31,7 @@ public class UserSession implements Closeable {
 
     private final WebRtcEndpoint outgoingMedia;
     private final ConcurrentMap<String, WebRtcEndpoint> incomingMedia = new ConcurrentHashMap<>();
+    private final LocalDateTime createdDttm;
 
     private GamepadInput gamepadInput;
 
@@ -39,6 +41,7 @@ public class UserSession implements Closeable {
         this.session = session;
         this.outgoingMedia = new WebRtcEndpoint.Builder(pipeline).build();
         this.twitchTag = twitchTag;
+        this.createdDttm = LocalDateTime.now();
 
         this.outgoingMedia.addIceCandidateFoundListener(event -> {
             JsonObject response = new JsonObject();
@@ -212,6 +215,10 @@ public class UserSession implements Closeable {
                 webRtc.addIceCandidate(candidate);
             }
         }
+    }
+
+    public LocalDateTime getCreatedDttm() {
+        return this.createdDttm;
     }
 
     @Override

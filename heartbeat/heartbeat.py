@@ -33,6 +33,5 @@ async def init_heartbeat():
 
             api.stream_update(*to_add, *(whitelisted_users - expired_next_users))
 
-
         # sleep it out
         await asyncio.sleep(HEARTBEAT_SECS)
