@@ -169,7 +169,7 @@ def next_queue(*_, **__):
     user_id = UUID(bytes=redis.get(username))
     exists = _leave_queue(username)
     if not exists:
-        return None
+        return {'uuid': None, 'username': None}
     return {'uuid': str(user_id), 'username': username.decode('utf8')}
 
 

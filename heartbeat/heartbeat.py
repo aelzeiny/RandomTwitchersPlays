@@ -29,7 +29,13 @@ async def init_heartbeat():
         # Fill up users from queue
         if len(next_users) < len(expired_users) + len(expired_next_users):
             users_to_fill = len(expired_users) - len(next_users) + len(expired_next_users)
-            to_add = [api.queue_rotate() for _ in range(users_to_fill)]
+            to_add = []
+            for _ in range(users_to_fill):
+                up_next = api.queue_rotate()
+                if not up_next:
+                    break
+                to_add.append(up_next)
+
             new_whitelisted_users = [
                 (u, twitch_id)
                 for u, twitch_id, _ in whitelisted_user_sessions

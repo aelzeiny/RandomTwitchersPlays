@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 import websockets
 from requests import session
@@ -74,10 +74,12 @@ class AppApi:
         data = response.json()
         return [(d['username'], d['is_connected']) for d in data]
 
-    def queue_rotate(self) -> Tuple[str, str]:
+    def queue_rotate(self) -> Optional[Tuple[str, str]]:
         response = self.api_session.post(f'{API_URL}/queue')
         response.raise_for_status()
         data = response.json()
+        if not data['payload']['uuid'] or not data['payload']['username']:
+            return None
         return data['payload']['uuid'], data['payload']['username']
 
     def queue_broadcast(self):
