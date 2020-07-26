@@ -2,7 +2,6 @@ import json
 import os
 from twitchio.ext import commands
 from twitchio.dataclasses import Context
-from heartbeat import init_heartbeat
 from apis import AppApi
 
 
@@ -132,6 +131,5 @@ Context.send_whisper = __send_whisper
 
 
 if __name__ == "__main__":
-    bot.loop.create_task(init_heartbeat())
     bot.loop.create_task(queue_listener())
     bot.run()

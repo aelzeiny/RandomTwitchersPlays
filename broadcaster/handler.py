@@ -166,10 +166,10 @@ def _leave_queue(username):
 @jsonify
 def next_queue(*_, **__):
     username = redis.lindex(REDIS_QUEUE, 0)
-    user_id = UUID(bytes=redis.get(username))
-    exists = _leave_queue(username)
-    if not exists:
+    if not username:
         return {'uuid': None, 'username': None}
+    user_id = UUID(bytes=redis.get(username))
+    _leave_queue(username)
     return {'uuid': str(user_id), 'username': username.decode('utf8')}
 
 

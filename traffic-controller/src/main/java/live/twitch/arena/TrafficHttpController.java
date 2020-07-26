@@ -45,8 +45,8 @@ public class TrafficHttpController {
         for (String userId : userSessions.keySet()) {
             JsonObject userElement = new JsonObject();
             userElement.addProperty("userId", userId);
-            userElement.addProperty("time", userSessions.get(userId).first);
-            userElement.addProperty("twitchTag", userSessions.get(userId).second);
+            userElement.addProperty("twitchTag", userSessions.get(userId).first);
+            userElement.addProperty("time", userSessions.get(userId).second);
             streamList.add(userElement);
         }
         return streamList;

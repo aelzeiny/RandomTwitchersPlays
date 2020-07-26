@@ -1,3 +1,6 @@
+import asyncio
+import functools
+import traceback
 from typing import List, Tuple, Optional
 
 import websockets
@@ -40,9 +43,12 @@ class AppApi:
         """
         response = self.app_session.get(APP_INTERNAL_URL)
         response.raise_for_status()
-        return response.json()
+        data = response.json()
+        stream = [(d['userId'], d['twitchTag'], d['time']) for d in data['stream']]
+        whitelist = [(d['userId'], d['twitchTag'], d['time']) for d in data['whitelist']]
+        return stream, whitelist
 
-    def stream_update(self, *usernames: List[Tuple[str, str]]):
+    def stream_update(self, usernames: List[Tuple[str, str]]):
         user_data = [{'userId': uuid, 'twitchTag': tag} for uuid, tag in usernames]
         response = self.app_session.post(APP_INTERNAL_URL, data=json.dumps(user_data))
         response.raise_for_status()
@@ -78,9 +84,9 @@ class AppApi:
         response = self.api_session.post(f'{API_URL}/queue')
         response.raise_for_status()
         data = response.json()
-        if not data['payload']['uuid'] or not data['payload']['username']:
+        if not data['uuid'] or not data['username']:
             return None
-        return data['payload']['uuid'], data['payload']['username']
+        return data['uuid'], data['username']
 
     def queue_broadcast(self):
         response = self.api_session.post(f'{API_URL}/broadcast')
@@ -90,3 +96,17 @@ class AppApi:
     def connect_ws():
         return websockets.connect(WS_URL)
 
+
+def forever(func):
+    """Async loop runs forever; resiliently never exiting"""
+    @functools.wraps(func)
+    async def wrapper(*args, **kwargs):
+        while True:
+            try:
+                await func(*args, **kwargs)
+            except KeyboardInterrupt:
+                break
+            except:  # noqa E722
+                print(traceback.format_exc())
+                await asyncio.sleep(30)
+    return wrapper
