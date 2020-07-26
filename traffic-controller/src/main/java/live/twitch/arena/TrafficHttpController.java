@@ -3,6 +3,7 @@ package live.twitch.arena;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import live.twitch.arena.dto.Pair;
 import live.twitch.arena.dto.TwitchUserDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -39,12 +40,13 @@ public class TrafficHttpController {
         return "{}";
     }
 
-    private JsonArray serializeUserTimeouts(Map<String, Long> userSessions) {
+    private JsonArray serializeUserTimeouts(Map<String, Pair<String, Long>> userSessions) {
         JsonArray streamList = new JsonArray();
         for (String userId : userSessions.keySet()) {
             JsonObject userElement = new JsonObject();
             userElement.addProperty("userId", userId);
-            userElement.addProperty("time", userSessions.get(userId));
+            userElement.addProperty("time", userSessions.get(userId).first);
+            userElement.addProperty("twitchTag", userSessions.get(userId).second);
             streamList.add(userElement);
         }
         return streamList;

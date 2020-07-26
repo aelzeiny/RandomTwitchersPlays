@@ -6,7 +6,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import com.sun.tools.javac.util.Pair;
+import live.twitch.arena.dto.Pair;
 import live.twitch.arena.dto.TwitchUserDTO;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -28,25 +28,31 @@ public class UserRegistry {
                 .collect(Collectors.toList());
     }
 
-    public Map<String, Long> getUserTimeouts() {
+    public Map<String, Pair<String, Long>> getUserTimeouts() {
         final long rightNow = LocalDateTime.now().toEpochSecond(ZoneOffset.UTC);
         return Collections.list(usersById.keys()).stream()
                 .filter(el -> !el.equals(PRESENTER_ID))
                 .collect(Collectors.toMap(
                     el -> el,
-                    el -> rightNow - usersById.get(el).getCreatedDttm().toEpochSecond(ZoneOffset.UTC),
+                    el -> new Pair<>(
+                            usersById.get(el).getTwitchTag(),
+                            rightNow - usersById.get(el).getCreatedDttm().toEpochSecond(ZoneOffset.UTC)
+                    ),
                     (first, second) -> first,
                     ConcurrentHashMap::new
                 ));
     }
 
-    public Map<String, Long> getWhitelistTimeouts() {
+    public Map<String, Pair<String, Long>> getWhitelistTimeouts() {
         final long rightNow = LocalDateTime.now().toEpochSecond(ZoneOffset.UTC);
         return Collections.list(whitelist.keys()).stream()
                 .filter(el -> !el.equals(PRESENTER_ID))
                 .collect(Collectors.toMap(
                         el -> el,
-                        el -> rightNow - whitelist.get(el).snd.toEpochSecond(ZoneOffset.UTC),
+                        el -> new Pair<>(
+                                whitelist.get(el).first,
+                                rightNow - whitelist.get(el).second.toEpochSecond(ZoneOffset.UTC)
+                        ),
                         (first, second) -> first,
                         ConcurrentHashMap::new
                 ));
@@ -77,7 +83,7 @@ public class UserRegistry {
     }
 
     public String getTwitchTag(String userId) {
-        return this.whitelist.get(userId).fst;
+        return this.whitelist.get(userId).first;
     }
 
     public void setWhitelist(List<TwitchUserDTO> names) {
