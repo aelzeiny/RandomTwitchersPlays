@@ -44,7 +44,7 @@ public class TrafficApp implements WebSocketConfigurer {
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(trafficHandler(), "/traffic");
+        registry.addHandler(trafficHandler(), "/traffic").setAllowedOrigins("https://twitcharena.live");
     }
 }
 
