@@ -2,8 +2,7 @@ import json
 import os
 from twitchio.ext import commands
 from twitchio.dataclasses import Context
-from apis import AppApi
-
+from apis import AppApi, forever
 
 TWITCH_CHANNEL = 'RandomTwitchersPlay'
 BOT_NICK = 'RandomTwitchersPlay'
@@ -104,6 +103,7 @@ async def cheer(ctx):
     ctx.send('Not implemented yet. Sorry m8.')
 
 
+@forever
 async def queue_listener():
     """
     This task just listens in on the app's websocket for changes in the Q, and posts them
