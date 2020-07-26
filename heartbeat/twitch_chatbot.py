@@ -1,9 +1,12 @@
+import asyncio
 import json
 import os
+import logging
 from twitchio.ext import commands
 from twitchio.dataclasses import Context
 from apis import AppApi, forever
 
+log = logging.root.getChild(__name__)
 TWITCH_CHANNEL = 'RandomTwitchersPlay'
 BOT_NICK = 'RandomTwitchersPlay'
 api = AppApi()
@@ -22,7 +25,7 @@ bot = commands.Bot(
 @bot.event
 async def event_ready():
     """Called once when the bot goes online."""
-    print(f"RandomTwitchersPlay is online!")
+    log.info("RandomTwitchersPlay is online!")
     await bot._ws.send_privmsg(TWITCH_CHANNEL, f"/me has landed!")  # noqa
 
 
@@ -45,7 +48,8 @@ async def event_message(ctx):
 @bot.command(name='join')
 async def join(ctx: Context):
     username = ctx.author.name
-    url = api.join(username)
+    url = api.queue_join(username)
+    log.info(f'{ctx.author.name} joining queue @{url}')
     await ctx.send(f'Welcome @{username}! I sent you a private message. Please check your whispers for instructions.')
     await ctx.send_whisper(username, f"We made you a secret URL. Please don't share it with anyone, "
                            f"or someone else can take your spot in line.")
@@ -59,7 +63,8 @@ async def leave(ctx: Context):
 
 @bot.command(name='goodbye')
 async def goodbye(ctx: Context):
-    api.remove(ctx.author.name)
+    log.info(f'{ctx.author.name} leaving queue')
+    api.queue_remove(ctx.author.name)
     await ctx.send(f'Goodbye, @{ctx.author.name}! We hope you can "!join" us again soon!')
 
 
@@ -75,10 +80,12 @@ async def queue(ctx):
 
 @bot.command(name='position', aliases=['where'])
 async def position(ctx):
+    username = ctx.author.name
+    api.queue_position(username)
     if position < 0:
-        await ctx.send(f'@{ctx.author.name} type "!join" to enter the queue')
+        await ctx.send(f'@{username} type "!join" to enter the queue')
     else:
-        await ctx.send(f'@{ctx.author.name} is #{data["position"]} in the queue.')
+        await ctx.send(f'@{username} is #{username} in the queue.')
 
 
 @bot.command(name='help', aliases=['h', 'ayuda', 'halp'])
@@ -94,13 +101,13 @@ async def helper(ctx):
 @bot.command(name='ban', aliases=['kick', 'boot', 'kill'])
 async def ban(ctx):
     # TODO Add banning abilities
-    ctx.send('Not implemented yet. Sorry m8.')
+    await ctx.send('Not implemented yet. Sorry m8.')
 
 
 @bot.command(name='cheer', aliases=['add', 'love' 'reward'])
 async def cheer(ctx):
     # TODO Add cheering abilities
-    ctx.send('Not implemented yet. Sorry m8.')
+    await ctx.send('Not implemented yet. Sorry m8.')
 
 
 @forever
@@ -112,11 +119,28 @@ async def queue_listener():
     async with api.connect_ws() as websocket:
         while True:
             queue_usernames = json.loads(await websocket.recv())[:5]
-            up_next = ', '.join([f"#{i + 1} @{d}" for i, d in enumerate(queue_usernames)])
-            await bot._ws.send_privmsg(  # noqa
-                TWITCH_CHANNEL,
-                f'Comming up: {up_next}'
-            )
+            if queue_usernames:
+                up_next = ', '.join([f"#{i + 1} @{d}" for i, d in enumerate(queue_usernames)])
+                log.info(f'Next: {queue_usernames}')
+                await bot._ws.send_privmsg(  # noqa
+                    TWITCH_CHANNEL,
+                    f'Coming up: {up_next}'
+                )
+            else:
+                await bot._ws.send_privmsg(
+                    TWITCH_CHANNEL,
+                    f'Queue is empty. Type "!join" to enter!'
+                )
+
+
+@forever
+async def spam_help():
+    while True:
+        await asyncio.sleep(300)
+        await bot._ws.send_privmsg(
+            TWITCH_CHANNEL,
+            'Welcome to Twitch Arena. Type "!join" to enter queue, or "!help" for more options'
+        )
 
 
 async def __send_whisper(self, username: str, content: str):

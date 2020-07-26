@@ -61,12 +61,16 @@ class AppApi:
         unique_id = response_body['uuid']
         return f"{APP_EXTERNAL_URL}/queue/{unique_id}"
 
-    def queue_remove(self, username) -> None:
+    def queue_remove(self, username) -> bool:
         response = self.api_session.delete(
             f'{API_URL}/queue',
             json={'username': username}
         )
-        response.raise_for_status()
+        if response.status_code != 400:
+            response.raise_for_status()
+        if response.status_code == 400:
+            return False
+        return True
 
     def queue_position(self, username) -> int:
         response = self.api_session.get(f'{API_URL}/user/{username}')
