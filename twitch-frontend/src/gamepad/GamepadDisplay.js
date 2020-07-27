@@ -20,8 +20,8 @@ export default function GamepadDisplay({ observable }) {
     const leftStickX = `${24 + (switchState[switchApi.AXIS_LX] || 0) * 2}%`;
     const rightStickX = `${62.5 + (switchState[switchApi.AXIS_RX] || 0) * 2}%`;
 
-    const leftStickY = `${31 + (switchState[switchApi.AXIS_LY] || 0) * -3}%`;
-    const rightStickY = `${50 + (switchState[switchApi.AXIS_RY] || 0) * -3}%`;
+    const leftStickY = `${31 + (switchState[switchApi.AXIS_LY] || 0) * 3}%`;
+    const rightStickY = `${50 + (switchState[switchApi.AXIS_RY] || 0) * 3}%`;
 
     return (
         <div className='gamepad-display-div'>
