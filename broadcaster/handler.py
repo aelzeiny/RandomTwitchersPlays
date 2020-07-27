@@ -8,6 +8,7 @@ import functools
 import traceback
 import datetime as dt
 
+import botocore
 from redis import Redis
 from uuid import uuid4, UUID
 
@@ -192,11 +193,18 @@ def _broadcast_status():
     gatewayapi = _get_api_gateway_client()
     data = [username.decode('utf8') for username in redis.lrange(REDIS_QUEUE, 0, 15)]
     logger.debug(f'sending: {data} to {len(all_conn_ids)} open connections')
+    to_rem = []
     for conn_id_bytes in all_conn_ids:
-        gatewayapi.post_to_connection(
-            ConnectionId=conn_id_bytes.decode('utf8'),
-            Data=json.dumps(data).encode('utf8')
-        )
+        try:
+            gatewayapi.post_to_connection(
+                ConnectionId=conn_id_bytes.decode('utf8'),
+                Data=json.dumps(data).encode('utf8')
+            )
+        except:
+            to_rem.append(conn_id_bytes)
+    if to_rem:
+        logger.debug(f'Failed to send to {len(to_rem)} connections. Closing.')
+        redis.zrem(REDIS_CONN_SET, *to_rem)
     return data
 
 

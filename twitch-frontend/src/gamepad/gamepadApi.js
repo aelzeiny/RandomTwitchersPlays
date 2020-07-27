@@ -101,10 +101,10 @@ function getKeyboardEvents() {
         const eKey = e.key.toLowerCase();
         switch (eKey) {
             case "s":
-                newInput[switchApi.AXIS_LY] = -1;
+                newInput[switchApi.AXIS_LY] = 1;
                 break;
             case "w":
-                newInput[switchApi.AXIS_LY] = 1;
+                newInput[switchApi.AXIS_LY] = -1;
                 break;
             case "a":
                 newInput[switchApi.AXIS_LX] = -1;
@@ -118,10 +118,10 @@ function getKeyboardEvents() {
             case "l":
                 newInput[switchApi.AXIS_RX] = 1;
                 break;
-            case "k":
+            case "i":
                 newInput[switchApi.AXIS_RY] = -1;
                 break;
-            case "i":
+            case "k":
                 newInput[switchApi.AXIS_RY] = 1;
                 break;
             default:

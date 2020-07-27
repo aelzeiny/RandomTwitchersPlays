@@ -40,7 +40,7 @@ export default function Present () {
         bttn.setAttribute('disabled', true);
         const jwt = toJwt({name: name}, secret);
         let ws = new WebSocket('wss://' + window.location.host + `/traffic?jwt=${jwt}`);
-        // const wsProxy = new WebSocket(proxy);
+        const wsProxy = new WebSocket(proxy);
 
         const receiveVideoResponse = ({ sdpAnswer }) => {
             rtcPeer.processAnswer (sdpAnswer, function (error) {
@@ -57,7 +57,7 @@ export default function Present () {
         };
 
         const onSwitchInput = ({ commonInput }) => {
-            // wsProxy.sendMessage(commonInput);
+            wsProxy.sendMessage(commonInput);
         };
 
         const offerToReceiveVideo = (error, offerSdp) => {

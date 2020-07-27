@@ -1,7 +1,12 @@
 import asyncio
 from typing import Set
 from apis import AppApi, forever
-from twitch_chatbot import bot, queue_listener
+from twitch_chatbot import bot, queue_listener, spam_help, TWITCH_CHANNEL
+import logging
+
+
+logging.root.setLevel(logging.DEBUG)
+log = logging.root.getChild(__name__)
 
 
 SESSION_TIMEOUT_SECS = 300
@@ -20,6 +25,9 @@ async def init_heartbeat():
        IF there are players in Q
     """
     while True:
+        # sleep it out
+        await asyncio.sleep(HEARTBEAT_SECS)
+
         stream_user_sessions, whitelisted_user_sessions = api.stream_status()
         stream_user_sessions = sorted(stream_user_sessions, key=lambda x: -x[2])
         whitelisted_user_sessions = sorted(whitelisted_user_sessions, key=lambda x: x[2])
@@ -47,10 +55,13 @@ async def init_heartbeat():
         if num_empty_slots > 0:
             new_whitelisted_users = []
             expired_iter = iter(expired_next_users)
+            added_user = False
             for _ in range(num_empty_slots):
                 up_next = api.queue_rotate()
                 if up_next:
+                    added_user = True
                     new_whitelisted_users.append(up_next)
+                    await bot._ws.send_privmsg(TWITCH_CHANNEL, f"@{up_next[1]} You're up!")
                 else:  # Nobody in Q. Just use the least-expired user until queue fills back up
                     try:
                         new_whitelisted_users.append(next(expired_iter))
@@ -61,14 +72,15 @@ async def init_heartbeat():
                 (u, twitch_id) for u, twitch_id, _ in whitelisted_user_sessions
                 if (u, twitch_id) not in expired_next_users
             ])
-            print(new_whitelisted_users)
+            log.debug('users: ' + str(new_whitelisted_users))
             api.stream_update(new_whitelisted_users)
-
-        # sleep it out
-        await asyncio.sleep(HEARTBEAT_SECS)
+            if added_user:
+                new_whitelisted = ', '.join([f'@{u}' for _, u in new_whitelisted_users])
+                await bot._ws.send_privmsg(TWITCH_CHANNEL, f"On Stream: {new_whitelisted}")
 
 
 if __name__ == "__main__":
     bot.loop.create_task(queue_listener())
     bot.loop.create_task(init_heartbeat())
+    bot.loop.create_task(spam_help())
     bot.run()
