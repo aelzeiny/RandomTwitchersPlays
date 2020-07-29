@@ -1,2 +1,4 @@
 boto3
 redis
+requests
+pyjwt

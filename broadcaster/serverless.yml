@@ -1,83 +1,137 @@
 service: random-twitchers-play
 
 provider:
-    name: aws
-    runtime: python3.8
-    websocketApiName: random-twitchers-broadcast
-    websocketApiRouteSelectionExpressi3/on: $request.body.action
-    iamRoleStatements:
-        - Effect: Allow
-          Action:
-              - "execute-api:ManageConnections"
-              - "execute-api:Invoke"
-          Resource:
-              - "arn:aws:execute-api:*:*:**/@connections/*"
-    vpc:
-        securityGroupIds:
-            - sg-032721f6f2294fd9a
-        subnetIds:
-            - subnet-05798f675e5af045f
-            - subnet-0ae23843b73f4d790
+  name: aws
+  runtime: python3.8
+  websocketApiName: random-twitchers-broadcast
+  websocketApiRouteSelectionExpressi3/on: $request.body.action
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - "execute-api:ManageConnections"
+        - "execute-api:Invoke"
+      Resource:
+        - "arn:aws:execute-api:*:*:**/@connections/*"
+  vpc:
+    securityGroupIds:
+      - sg-032721f6f2294fd9a
+    subnetIds:
+      - subnet-05798f675e5af045f
+      - subnet-0ae23843b73f4d790
+  environment:
+    TWITCH_CLIENT_ID: ${env:TWITCH_CLIENT_ID}
+    TWITCH_CLIENT_SECRET: ${env:TWITCH_CLIENT_SECRET}
 
 plugins:
   - serverless-python-requirements
+  - serverless-domain-manager
 custom:
-    pythonRequirements:
-        dockerizePip: true
-        noDeploy: []
+  pythonRequirements:
+    dockerizePip: true
+    noDeploy: []
+  customDomain:
+    domainName: lambda.twitcharena.live
+    stage: ${self:provider.stage}
+    basePath: ''
+    certificateName: lambda.twitcharena.live
+    createRoute53Record: true
+    endpointType: 'regional'
+    securityPolicy: tls_1_2
+    apiType: rest
+    autoDomain: false
 
 functions:
-    connectionManager:
-        handler: handler.connection_manager
-        events:
-            - websocket:
-                route: $connect
-            - websocket:
-                route: $disconnect
-    defaultMessage:
-        handler: handler.default_message
-        events:
-            - websocket:
-                route: $default
+  connectionManager:
+    handler: handler.connection_manager
+    events:
+      - websocket:
+          route: $connect
+      - websocket:
+          route: $disconnect
+  defaultMessage:
+    handler: handler.default_message
+    events:
+      - websocket:
+          route: $default
 
-    broadcast:
-        handler: handler.broadcast_status
-        events:
-            - http:
-                path: broadcast
-                method: post
+  broadcast:
+    handler: handler.broadcast_status
+    events:
+      - http:
+          path: broadcast
+          method: post
+  position:
+    handler: handler.position_queue
+    events:
+      - http:
+          path: user/{username}
+          method: get
+          request:
+            parameters:
+              paths:
+                username: true
+  next:
+    handler: handler.next_queue
+    events:
+      - http:
+          path: queue
+          method: post
 
-    join:
-        handler: handler.join_queue
-        events:
-            - http:
-                path: queue
-                method: put
-    status:
-        handler: handler.status_queue
-        events:
-            - http:
-                path: queue
-                method: get
-    position:
-        handler: handler.position_queue
-        events:
-            - http:
-                  path: user/{username}
-                  method: get
-                  request:
-                      parameters:
-                          paths:
-                              username: true
-    leave:
-        handler: handler.leave_queue
-        events:
-            - http:
-                path: queue
-                method: delete
-    next:
-        handler: handler.next_queue
-        events:
-            - http:
-                path: queue
-                method: post
+  join:
+    handler: handler.join_queue
+    events:
+      - http:
+          path: queue
+          method: PUT
+          cors:
+            origins:
+              - https://localhost:3000
+              - https://127.0.0.1:3000
+              - https://twitcharena.live
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: true
+  leave:
+    handler: handler.leave_queue
+    events:
+      - http:
+          path: queue
+          method: DELETE
+          cors:
+            cors:
+              origins:
+                - https://localhost:3000
+                - https://127.0.0.1:3000
+                - https://twitcharena.live
+              headers:
+                - Content-Type
+                - X-Amz-Date
+                - Authorization
+                - X-Api-Key
+                - X-Amz-Security-Token
+                - X-Amz-User-Agent
+              allowCredentials: true
+  authorize:
+    handler: handler.authorize
+    events:
+      - http:
+          path: authorize/{code}
+          method: GET
+          cors:
+            origins:
+              - https://localhost:3000
+              - https://127.0.0.1:3000
+              - https://twitcharena.live
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: true

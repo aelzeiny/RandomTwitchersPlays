@@ -1,55 +1,15 @@
-from json import JSONDecodeError
-from typing import Callable, Any, Union, Tuple
-
+import os
 import boto3
 import json
 import logging
-import functools
-import traceback
-import datetime as dt
+import requests
 
-import botocore
-from redis import Redis
-from uuid import uuid4, UUID
+from decorators import jsonify, cors, auth
+import store
+
 
 logger = logging.getLogger("handler_logger")
 logger.setLevel(logging.DEBUG)
-
-
-REDIS_QUEUE = 'queue'
-REDIS_CHANNEL = 'queue_chan'
-REDIS_CONN_SET = 'open_conn'
-redis = Redis(
-    host="myredis.jsemzk.0001.use1.cache.amazonaws.com",
-    port=6379,
-    db=0
-)
-
-
-def jsonify(func: Callable[..., Union[Union[dict, str], Tuple[Union[dict, str], int]]]) -> Callable[..., dict]:
-    """
-    A function decorator that accepts 2 types of returns.
-    A return type of a string will become a dictionary with the key of 'payload'.
-    If the return type is a dictionary, then the status code is assumed to be 200
-    If the return type is a tuple, then the first element must be the body, and the second must be the status code
-
-    :return The response will be formatted as {'statusCode': [status], 'body': [dictionary]}
-    """
-    @functools.wraps(func)
-    def wrap(*args, **kwargs):
-        try:
-            answer = func(*args, **kwargs)
-            status_code = 200
-            if isinstance(answer, tuple):
-                answer, status_code = answer
-            if isinstance(answer, str):
-                answer = {'payload': answer}
-            return {"statusCode": status_code, "body": json.dumps(answer)}
-        except Exception as e:
-            logger.error(str(e))
-            logger.debug(traceback.format_exc())
-            return {"statusCode": 500, "body": json.dumps({'error': str(e)})}
-    return wrap
 
 
 @jsonify
@@ -60,124 +20,87 @@ def connection_manager(event, _):
     connection_id = event["requestContext"].get("connectionId")
     event_type = event["requestContext"]["eventType"]
     query_params = event['queryStringParameters'] if 'queryStringParameters' in event else {}
-    uuid_str = query_params.get('uuid')
-    uuid = UUID(uuid_str) if uuid_str else None
+    oauth = query_params.get('oauth')
     if event_type == "CONNECT":
-        can_connect = _open_conn(connection_id, uuid)
+        can_connect = _open_conn(connection_id, oauth)
         if not can_connect:
-            return 'Endpoint not found.', 404
+            return 'Unauthorized', 404
         return 'Connected'
 
     elif event_type == "DISCONNECT":
-        _close_conn(connection_id, uuid)
+        _close_conn(connection_id, oauth)
         return 'Disconnected'
 
     logger.error(f"Connection manager received unrecognized eventType '{event_type}")
     return 'Unrecognized eventType.', 500
 
 
-def _open_conn(conn_id, uuid: UUID = None) -> bool:
+def _open_conn(conn_id, oauth: str) -> bool:
     """
     Asks Redis to remember to open websocket for broadcasting events later.
     :param conn_id API Gateway websocket id
-    :param uuid if provided will also add connection to the appropriate user
+    :param oauth if provided will also add connection to the appropriate user
     :return return True if UUID provided is valid.
     """
-    if uuid:
-        if not redis.get(uuid.bytes):
-            return False
-        redis.sadd(_redis_open_sockets_key(uuid), conn_id)
-    redis.zadd(REDIS_CONN_SET, {conn_id: dt.datetime.now().timestamp()}, nx=True)
+    username = __oauth_to_user(oauth)
+    if not username or not store.queue_contains(username):
+        return False
+    store.conn_push(username, conn_id)
     return True
 
 
-def _close_conn(conn_id, uuid: UUID = None):
+def _close_conn(conn_id, _: str):
     """
     Closes Websocket connection.
     :param conn_id API Gateway websocket id
-    :param uuid if provided, will also delete connection from appropriate user
+    :param _ if provided, will also delete connection from appropriate user
     """
-    if uuid:
-        redis.srem(_redis_open_sockets_key(uuid), conn_id)
-    redis.zrem(REDIS_CONN_SET, conn_id)
+    store.conn_pop(conn_id)
 
 
+@cors
+@auth
 @jsonify
-def join_queue(event, _):
-    body = json.loads(event['body']) if 'body' in event else {}
-    username = body['username']
-    uuid = _join_queue(username)
-    return {'uuid': str(uuid)}
-
-
-def _join_queue(username) -> UUID:
-    """
-    Adds a user to the queue. If a user is already in Q then the existing UUID is returned.
-    Joining the Game Queue has the following operations:
-    * Joining the Game Q
-    * Adding UUID -> User Mapping
-    * Update Pub/Sub Channel
-    """
-    new_user_id = uuid4()
-    added = redis.setnx(username, new_user_id.bytes)  # User -> UUID
-    if not added:
-        return UUID(bytes=redis.get(username))
-
-    redis.set(new_user_id.bytes, username)  # UUID -> User
-    redis.rpush(REDIS_QUEUE, username)  # ADD to Queue
+def join_queue(_, __, user):
+    picture_url = __oauth_to_picture(user)
+    was_added = store.queue_push(user, picture_url)
     _broadcast_status()  # Notify listeners that Q has changed
-    return new_user_id
+    return 'ADDED' if was_added else 'IN_QUEUE'
 
 
+@cors
+@auth
 @jsonify
-def leave_queue(event, _):
-    body = json.loads(event['body']) if 'body' in event else {}
-    username = body['username']
-    exists = _leave_queue(username)
-    if not exists:
-        return 'User not part of queue', 400
-    return 'REMOVED'
+def leave_queue(_, __, user):
+    was_removed = _leave_queue(user)
+    # broadcast to remaining users that the status has changed
+    _broadcast_status()  # Notify listeners that Q has changed
+    return 'REMOVED' if was_removed else 'NOT_IN_QUEUE'
 
 
-def _leave_queue(username):
-    """
-    If a user DNE then nothing happens.
-    Leaving the Game Queue has the following operations:
-    * Leaving the Game Q
-    * Delete UUID -> User mapping
-    * Delete User -> UUID mapping
-    * delete any/all open websockets associated with the user
-    * Update Pub/Sub Channel
-    """
-    uuid_bytes = redis.get(username)
-    if not uuid_bytes:
-        return False
-    uuid = UUID(bytes=uuid_bytes)
-    open_socket_key = _redis_open_sockets_key(uuid)
-    open_socket_conn_ids = redis.smembers(open_socket_key)
-
-    redis.delete(username, uuid_bytes, open_socket_key)  # UUID -> User & User -> UUID & open sockets
-    redis.lrem(REDIS_QUEUE, 1, username)  # REMOVE from Queue
-    if open_socket_conn_ids:  # Remove from open connections
-        redis.zrem(REDIS_CONN_SET, *open_socket_conn_ids)
-    _broadcast_status()
-    return True
+def _leave_queue(user):
+    was_removed = store.queue_remove(user)
+    store.conn_remove(user)
+    return was_removed
 
 
 @jsonify
 def next_queue(*_, **__):
-    username = redis.lindex(REDIS_QUEUE, 0)
+    username, joined_dttm = store.queue_pop()
     if not username:
-        return {'uuid': None, 'username': None}
-    user_id = UUID(bytes=redis.get(username))
-    _leave_queue(username)
-    return {'uuid': str(user_id), 'username': username.decode('utf8')}
-
-
-@jsonify
-def default_message(*_, **__):
-    logger.info("Unknown Action.")
-    return "Unrecognized Endpoint.", 404
+        return {'username': None, 'joined': None}
+    # notify user that they're up in the Q
+    gatewayapi = _get_api_gateway_client()
+    all_open_connections = store.conn_get(username)
+    for conn_id in all_open_connections:
+        gatewayapi.post_to_connection(
+            ConnectionId=conn_id,
+            Data=json.dumps({'id': 'stream'})
+        )
+    store.queue_remove(username)
+    store.conn_remove(username)
+    _broadcast_status()  # Notify listeners that Q has changed
+    return {'username': username, 'joined': joined_dttm}
 
 
 @jsonify
@@ -189,42 +112,22 @@ def broadcast_status(*_, **__):
 
 
 def _broadcast_status():
-    all_conn_ids = redis.zrange(REDIS_CONN_SET, 0, -1)
     gatewayapi = _get_api_gateway_client()
-    data = [username.decode('utf8') for username in redis.lrange(REDIS_QUEUE, 0, 15)]
+    all_conn_ids = store.conn_scan()
+    data = json.dumps(store.queue_scan(10)).encode('utf8')
     logger.debug(f'sending: {data} to {len(all_conn_ids)} open connections')
-    to_rem = []
+    bad_conns = []
     for conn_id_bytes in all_conn_ids:
         try:
             gatewayapi.post_to_connection(
-                ConnectionId=conn_id_bytes.decode('utf8'),
-                Data=json.dumps(data).encode('utf8')
+                ConnectionId=conn_id_bytes,
+                Data=data
             )
         except:
-            to_rem.append(conn_id_bytes)
-    if to_rem:
-        logger.debug(f'Failed to send to {len(to_rem)} connections. Closing.')
-        redis.zrem(REDIS_CONN_SET, *to_rem)
-    return data
-
-
-@jsonify
-def status_queue(*_, **__):
-    """
-    Return the 10 most recent chat messages.
-    """
-    def is_connected(username: bytes):
-        uuid = redis.get(username).decode('utf8')
-        num_conn = redis.scard(_redis_open_sockets_key(uuid))
-        return num_conn != 0
-
-    data = [
-        {
-            'username': username.decode('utf8'),
-            'is_connected': is_connected(username)
-        }
-        for username in redis.lrange(REDIS_QUEUE, 0, 5)
-    ]
+            bad_conns.append(conn_id_bytes)
+    if bad_conns:
+        logger.debug(f'Failed to send to {len(bad_conns)} connections. Closing.')
+        store.conn_pop(*bad_conns)
     return data
 
 
@@ -234,14 +137,47 @@ def position_queue(event, _):
     if 'pathParameters' not in event or 'username' not in event['pathParameters']:
         return 'No username provided', 400
     username = event['pathParameters']['username']
-    if not redis.get(username):
+    index = store.queue_rank(username)
+    if not index:
         return {'position': -1}
-    index = list(redis.lrange(REDIS_QUEUE, 0, -1)).index(username.encode('utf8'))
     return {'position': index + 1}
 
 
-def _redis_open_sockets_key(uuid: UUID):
-    return f'{REDIS_CONN_SET}_{uuid}'
+@cors
+@jsonify
+def authorize(event, context):
+    if 'pathParameters' not in event or 'code' not in event['pathParameters']:
+        return 'No code provided', 400
+    code = event['pathParameters']['code']
+    response = requests.post(
+        'https://id.twitch.tv/oauth2/token',
+        params={
+            'client_id': os.environ['TWITCH_CLIENT_ID'],
+            'client_secret': os.environ['TWITCH_CLIENT_SECRET'],
+            'code': code,
+            'grant_type': 'authorization_code',
+            'redirect_uri': 'https://twitcharena.live/authorize'
+        }
+    )
+    if not (200 <= response.status_code < 300):
+        return response.json(), response.status_code
+
+    data = response.json()
+    # keys: access_token, expires_in, id_token, refresh_token, scope, token_type
+    return 'success', 200, {
+        'multiValueHeaders': {
+            "Set-Cookie": [
+                f'token="{data["access_token"]}"; Path=/; SameSite=None; Secure',
+                f'refresh="{data["refresh_token"]}"; Path=/; SameSite=None; Secure'
+            ]
+        }
+    }
+
+
+@jsonify
+def default_message(*_, **__):
+    logger.info("Unknown Action.")
+    return "Unrecognized Endpoint.", 404
 
 
 def _get_api_gateway_client():
@@ -250,3 +186,30 @@ def _get_api_gateway_client():
         # endpoint_url=f'https://{event["requestContext"]["domainName"]}/{event["requestContext"]["stage"]}'
         endpoint_url='https://4tylj6rpwi.execute-api.us-east-1.amazonaws.com/dev'
     )
+
+
+def __oauth_to_user(oauth):
+    cached_user = store.oauth_cache_get(oauth)
+    if cached_user:
+        return cached_user
+    challenge_req = requests.get(
+        'https://id.twitch.tv/oauth2/validate',
+        headers={'Authorization': f'Bearer {oauth}'}
+    )
+    if not (200 <= challenge_req.status_code < 300):
+        return None
+    user_info = challenge_req.json()
+    store.oauth_cache_update(oauth, user_info['login'])
+    return user_info['login']
+
+
+def __oauth_to_picture(oauth):
+    info_req = requests.get(
+        'https://id.twitch.tv/oauth2/userinfo',
+        headers={'Authorization': f'Bearer {oauth}'}
+    )
+    if not (200 <= info_req.status_code < 300):
+        return None
+    user_info = info_req.json()
+    # keys: aud, exp, iat, iss, sub, picture, preferred_username
+    return user_info['picture']
