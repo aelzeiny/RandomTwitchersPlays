@@ -33,3 +33,8 @@
 .emphasis {
     font-weight: bold;
 }
+
+.home-section {
+    background-color: #101011;
+    height: 480px;
+}

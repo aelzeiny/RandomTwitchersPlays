@@ -1,7 +1,17 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+  'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+  sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  background-color: #202020;
+}
+
 @font-face {
   font-family: "Twitchy";
-  src: url("fonts/TwitchyTV.eot"); /* IE9 Compat Modes */
-  src: url("fonts/TwitchyTV.eot?#iefix") format("embedded-opentype"), /* IE6-IE8 */
+  src:
     url("fonts/TwitchyTV.otf") format("opentype"), /* Open Type Font */
     url("fonts/TwitchyTV.svg") format("svg"), /* Legacy iOS */
     url("fonts/TwitchyTV.ttf") format("truetype"), /* Safari, Android, iOS */
@@ -11,11 +21,35 @@
   font-style: normal;
 }
 
-.title {
-  font-family: Twitchy, serif;
-  text-align: center;
-  text-shadow: 2px 9px 1px black;
-  color: white;
-  letter-spacing: -3px;
-  margin-bottom: 56px;
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+  monospace;
+}
+
+.container {
+  max-width: 1400px;
+}
+
+
+.btn-primary {
+  background-color: #9147ff;
+  border-color: #9147ff;
+}
+
+.btn-primary:hover, .btn-primary:not(:disabled):not(.disabled):active,
+.btn-primary:not(:disabled):not(.disabled).active, .show > .btn-primary.dropdown-toggle {
+  background-color: #9147ff;
+  border-color: #9147ff;
+}
+
+.btn-outline-primary {
+  color: #fff;
+  border-color: #9147ff;
+}
+
+.btn-outline-primary:hover, .btn-primary:not(:disabled):not(.disabled):active,
+  .btn-primary:not(:disabled):not(.disabled).active, .show > .btn-primary.dropdown-toggle {
+  color: #fff;
+  background-color: #9147ff;
+  border-color: #9147ff;
 }
