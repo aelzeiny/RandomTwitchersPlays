@@ -93,7 +93,7 @@ async def helper(ctx):
     await ctx.send_me("!join to enter the queue")
     await ctx.send_me("!queue to track your status")
     await ctx.send_me("!leave to exit the queue")
-    await ctx.send_me("!cheer @<user> to add time")
+    await ctx.send_me("!cheer @<user> adds time")
     await ctx.send_me("!kick @<user> to kick")
     await ctx.send_me("!help to see this again")
 

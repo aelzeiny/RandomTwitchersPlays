@@ -3,6 +3,7 @@ const https = require('https');
 
 
 const apiGateway = 'https://fhfgpzs40f.execute-api.us-east-1.amazonaws.com/dev';
+const wsGateway = 'wss://nq8v1ckz81.execute-api.us-east-1.amazonaws.com/dev';
 axios.defaults.withCredentials = true;
 
 
@@ -26,4 +27,9 @@ export async function joinQueue() {
 
 export async function leaveQueue() {
     return await axiosWithCookies.delete(`${apiGateway}/queue`);
+}
+
+
+export async function openQueueConnection () {
+    return new WebSocket(wsGateway);
 }

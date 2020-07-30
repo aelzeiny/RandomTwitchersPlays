@@ -50,3 +50,23 @@
 .gamepad-selection {
     text-align: center;
 }
+
+
+#join-prompt {
+    position: absolute;
+    box-sizing: border-box;
+    width: 300px;
+    height: 300px;
+    left: 50%;
+    top: 50%;
+    margin-left: -150px;
+    margin-top: -150px;
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #9147ff;
+    border-radius: 50%;
+    flex-direction: column;
+    font-family: 'Twitchy', serif;
+}
