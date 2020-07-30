@@ -48,13 +48,13 @@ function HelpModal() {
 }
 
 
-export default function Navbar() {
+export default function Navbar({ buttonText, callback}) {
     return (
         <div className='navbar-offset'>
             <HelpModal/>
             <nav id='arena-navbar' className="navbar fixed-top navbar-dark bg-dark bg-roulette">
                 <div className='container'>
-                    <a className="navbar-brand title" href={window.location.origin}>Twitch Roulette</a>
+                    <a className="navbar-brand title" href='/'>Twitch Roulette</a>
                     <div className='nav-buttons'>
                         <button
                             id='queue-button'
@@ -64,7 +64,9 @@ export default function Navbar() {
                             className="btn btn-dark">
                             <FA name="question-circle"/>
                         </button>
-                        <button className="btn btn-outline-primary join-btn" type="submit">Join</button>
+                        <button className="btn btn-outline-primary join-btn" type="submit" onClick={callback}>
+                            {buttonText}
+                        </button>
                     </div>
                 </div>
             </nav>
