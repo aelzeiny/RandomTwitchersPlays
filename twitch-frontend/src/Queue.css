@@ -29,6 +29,10 @@
     margin-right: 0;
 }
 
+.queue-div .twitch-embedder {
+    background-color: #18181b;
+}
+
 .queue-twitch-container {
     width: 100%;
 }

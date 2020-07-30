@@ -17,7 +17,7 @@ export default function Authorize(props) {
         else
             authorize(queryString.code)
                 .then(exitTimeout)  // exit if authorized
-                .catch(props.history.push('/authorize'));  // Tell user that didn't work if the API call failed
+                .catch(() => props.history.push('/authorize'));  // Tell user that didn't work if the API call failed
     }, [queryString, props]);
 
     if (!queryString.code) {

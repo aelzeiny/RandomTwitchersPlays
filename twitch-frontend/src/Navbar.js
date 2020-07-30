@@ -1,6 +1,6 @@
 import './Navbar.css';
 
-import React from "react";
+import React, { createRef } from "react";
 import FA from "react-fontawesome";
 
 
@@ -49,6 +49,11 @@ function HelpModal() {
 
 
 export default function Navbar({ buttonText, callback}) {
+    const textButton = createRef();
+    const modCallback = (...args) => {
+        textButton.current.setAttribute('disabled', true);
+        callback(...args);
+    }
     return (
         <div className='navbar-offset'>
             <HelpModal/>
@@ -64,10 +69,12 @@ export default function Navbar({ buttonText, callback}) {
                             className="btn btn-dark">
                             <FA name="question-circle"/>
                         </button>
-                        {buttonText && <buttonTextbutton className="btn btn-outline-primary join-btn" type="submit"
-                                           onClick={callback}>
+                        {buttonText && <button ref={textButton}
+                                                         className="btn btn-outline-primary join-btn"
+                                                         type="submit"
+                                           onClick={modCallback}>
                             {buttonText}
-                        </buttonTextbutton>}
+                        </button>}
                     </div>
                 </div>
             </nav>
