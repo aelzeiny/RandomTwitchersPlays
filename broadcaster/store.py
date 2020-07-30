@@ -31,7 +31,7 @@ def queue_remove(username) -> int:
 
 
 def queue_scan(number_of_people) -> List[str]:
-    return [u for u in redis.zrange(REDIS_QUEUE, 0, number_of_people - 1)]
+    return [u.decode('utf8') for u in redis.zrange(REDIS_QUEUE, 0, number_of_people - 1)]
 
 
 def queue_rank(username) -> int:

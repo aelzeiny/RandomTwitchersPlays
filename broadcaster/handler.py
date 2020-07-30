@@ -61,8 +61,8 @@ def _close_conn(conn_id, _: str):
 @cors
 @auth
 @jsonify
-def join_queue(_, __, user):
-    picture_url = __oauth_to_picture(user)
+def join_queue(_, __, user, token):
+    picture_url = __oauth_to_picture(token)
     was_added = store.queue_push(user, picture_url)
     _broadcast_status()  # Notify listeners that Q has changed
     return 'ADDED' if was_added else 'IN_QUEUE'
@@ -71,7 +71,7 @@ def join_queue(_, __, user):
 @cors
 @auth
 @jsonify
-def leave_queue(_, __, user):
+def leave_queue(_, __, user, ___):
     was_removed = _leave_queue(user)
     # broadcast to remaining users that the status has changed
     _broadcast_status()  # Notify listeners that Q has changed
@@ -208,8 +208,7 @@ def __oauth_to_picture(oauth):
         'https://id.twitch.tv/oauth2/userinfo',
         headers={'Authorization': f'Bearer {oauth}'}
     )
-    if not (200 <= info_req.status_code < 300):
-        return None
+    info_req.raise_for_status()
     user_info = info_req.json()
     # keys: aud, exp, iat, iss, sub, picture, preferred_username
     return user_info['picture']

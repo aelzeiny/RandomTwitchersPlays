@@ -1,5 +1,5 @@
 from typing import Callable, Union, Tuple, Optional
-from http.cookies import SimpleCookie, Morsel
+from http.cookies import SimpleCookie
 
 import os
 import json
@@ -79,26 +79,31 @@ def auth(func):
     """
     @functools.wraps(func)
     def wraps(context, *args, **kwargs):
-        print(context)
+        def unauthorized(message):
+            return {
+                'statusCode': 401,
+                'body': json.dumps({'payload': message, 'clientId': os.environ['TWITCH_CLIENT_ID']})
+            }
+
         if 'headers' in context and 'Cookie' in context['headers']:
             context['headers']['cookie'] = context['headers']['Cookie']
         if not ('headers' in context and 'Cookie' in context['headers']):
-            return 'No cookies found', 401
+            return unauthorized('Token not found')
         cookie = SimpleCookie()
         cookie.load(context['headers']['cookie'])
         if 'token' not in cookie:
-            return 'No token found', 401
+            return unauthorized('Token not found')
         # challenge the cookie
         challenge_req = requests.get(
             'https://id.twitch.tv/oauth2/validate',
             headers={'Authorization': f'Bearer {cookie["token"].value}'}
         )
         if 200 <= challenge_req.status_code < 300:
-            return func(context, *args, **kwargs, user=challenge_req.json()['login'])
+            return func(context, *args, **kwargs, user=challenge_req.json()['login'], token=cookie['token'].value)
 
         # if the first request didn't succeed; try-try again the refresh token
         if 'refresh' not in cookie:
-            return 'Cannot authorize', 401
+            return unauthorized('Cannot Authorize')
         refresh_req = requests.post(
             'https://id.twitch.tv/oauth2/token',
             params={
@@ -110,7 +115,7 @@ def auth(func):
         )
 
         if not (200 <= refresh_req.status_code < 300):
-            return 'Unauthorized', 401
+            return unauthorized('Unauthorized')
 
         refresh_data = refresh_req.json()
         # challenge the oauth token again
@@ -119,9 +124,9 @@ def auth(func):
             headers={'Authorization': f'Bearer {refresh_data["access_token"]}'}
         )
         if not (200 <= challenge_req.status_code < 300):
-            return 'Unauthorized with bad Refresh Token', 401
+            return unauthorized('Unauthorized with bad refresh token')
 
-        answer = func(context, *args, **kwargs, user=challenge_req.json()['login'])
+        answer = func(context, *args, **kwargs, user=challenge_req.json()['login'], token=refresh_data['access_token'])
         multi_headers = answer.pop('multiValueHeaders', {})
         set_cookies = multi_headers.pop('Set-Cookie', [])
         set_cookies.append(f'token="{refresh_data["access_token"]}"; Path=/; SameSite=None; Secure')
