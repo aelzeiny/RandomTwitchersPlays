@@ -1,0 +1,26 @@
+.bg-roulette {
+    background-color: #140d1c !important;
+}
+
+.title {
+    font-family: Twitchy, serif;
+    letter-spacing: -2px;
+    text-shadow: 3px 3px 1px #9147ff;
+}
+
+.navbar-brand {
+    font-size: 30px;
+    text-align: center;
+}
+
+.navbar-offset {
+    height: 71px;
+}
+
+.join-btn {
+    font-family: Twitchy, serif;
+}
+
+.nav-buttons .btn{
+    margin-left: 8px;
+}

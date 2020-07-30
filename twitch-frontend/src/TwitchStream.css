@@ -1,5 +1,11 @@
 .twitch-embedder {
     display: flex;
     justify-content: center;
-    background-color: #101213;
+    background-color: #000;
+    align-items: center;
+}
+
+#twitchWindow {
+    width: 100%;
+    height: calc(100vh - 80px);
 }

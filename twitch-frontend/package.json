@@ -15,6 +15,7 @@
     "lodash.isequal": "^4.5.0",
     "popper.js": "^1.16.1",
     "python-struct": "^1.1.3",
+    "qs": "^6.9.4",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-fontawesome": "^1.7.1",
@@ -25,7 +26,7 @@
     "use-state-with-callback": "^1.0.18"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "export HTTPS=true && react-scripts start",
     "build": "react-scripts build && rm -rf ../traffic-controller/src/main/resources/static && mv ./build ../traffic-controller/src/main/resources/static",
     "eject": "react-scripts eject"
   },

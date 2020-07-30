@@ -3,10 +3,11 @@
   "description": "",
   "version": "0.1.0",
   "scripts": {
-    "build": "serverless deploy"
+    "build": "time serverless deploy"
   },
   "dependencies": {},
   "devDependencies": {
+    "serverless-domain-manager": "^4.2.0",
     "serverless-python-requirements": "^5.1.0"
   }
 }

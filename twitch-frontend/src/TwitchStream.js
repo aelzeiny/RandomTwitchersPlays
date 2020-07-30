@@ -1,19 +1,22 @@
 import React from 'react';
-import {TwitchPlayer, TwitchEmbed} from 'react-twitch-embed';
+import { TwitchEmbed } from 'react-twitch-embed';
 import './TwitchStream.css';
 
 
 const TwitchStream = (props) => {
-    const Player = props.chat ? TwitchEmbed : TwitchPlayer;
+    const args = Object.assign({}, props);
+    args.chat = undefined;
     return (
         <div className='twitch-embedder'>
-            <Player
+            <TwitchEmbed
                 channel="RandomTwitchersPlay"
-                id="aelzeiny"
                 theme="dark"
                 layout="video"
+                id="twitchWindow"
                 muted={false}
-            />
+                height=''
+                withChat={props.chat}
+                {...args}/>
         </div>
     );
 }

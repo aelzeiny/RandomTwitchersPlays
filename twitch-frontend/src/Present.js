@@ -5,6 +5,7 @@ import './Present.css';
 import { WebRtcPeer } from 'kurento-utils';
 import Base64 from 'crypto-js/enc-base64';
 import HmacSHA256 from 'crypto-js/hmac-sha256';
+import Navbar from "./Navbar";
 
 
 const encodeBase64 = (value, padding) => {
@@ -137,38 +138,41 @@ export default function Present () {
 
     }
     return (
-        <div className='container present-div'>
-            <div className="row form-group">
-                <div className="col-lg-5">
-                    <label htmlFor="proxyInput">Proxy</label>
-                    <input type="text"
-                           className="form-control"
-                           id="proxyInput"
-                           placeholder="ws://localhost:9999"
-                           value={proxy}
-                           onChange={(e) => setProxy(e.target.value)}/>
+        <div>
+            <Navbar/>
+            <div className='container present-div'>
+                <div className="row form-group">
+                    <div className="col-lg-5">
+                        <label htmlFor="proxyInput">Proxy</label>
+                        <input type="text"
+                               className="form-control"
+                               id="proxyInput"
+                               placeholder="ws://localhost:9999"
+                               value={proxy}
+                               onChange={(e) => setProxy(e.target.value)}/>
+                    </div>
+                    <div className="col-lg-6">
+                        <label htmlFor="secretInput">256-bit Secret Key</label>
+                        <input type="password"
+                               className="form-control"
+                               id="secretInput"
+                               placeholder="Super Secret Key"
+                               value={secret}
+                               onChange={(e) => setSecret(e.target.value)}/>
+                    </div>
+                    <div className="col-lg-1" id="connect-div">
+                        <button type="button"
+                                className="btn btn-primary"
+                                onClick={connect}>Connect</button>
+                    </div>
                 </div>
-                <div className="col-lg-6">
-                    <label htmlFor="secretInput">256-bit Secret Key</label>
-                    <input type="password"
-                           className="form-control"
-                           id="secretInput"
-                           placeholder="Super Secret Key"
-                           value={secret}
-                           onChange={(e) => setSecret(e.target.value)}/>
-                </div>
-                <div className="col-lg-1" id="connect-div">
-                    <button type="button"
-                            className="btn btn-dark"
-                            onClick={connect}>Connect</button>
-                </div>
+                <video key='presenter'
+                       ref={vidRef}
+                       className='player-vid'
+                       autoPlay={true}
+                       controls={false}
+                       poster={loadingScreen}/>
             </div>
-            <video key='presenter'
-                   ref={vidRef}
-                   className='player-vid'
-                   autoPlay={true}
-                   controls={false}
-                   poster={loadingScreen}/>
         </div>
     )
 }

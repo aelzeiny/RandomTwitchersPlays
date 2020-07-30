@@ -24,9 +24,17 @@
 }
 
 .queue-div {
-    background-color: #101213;
+    background-color: #18181b;
     margin-left: 0;
     margin-right: 0;
+}
+
+.queue-div .twitch-embedder {
+    background-color: #18181b;
+}
+
+.queue-twitch-container {
+    width: 100%;
 }
 
 .gamepad-div {
@@ -41,4 +49,24 @@
 
 .gamepad-selection {
     text-align: center;
+}
+
+
+#join-prompt {
+    position: absolute;
+    box-sizing: border-box;
+    width: 300px;
+    height: 300px;
+    left: 50%;
+    top: 50%;
+    margin-left: -150px;
+    margin-top: -150px;
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #9147ff;
+    border-radius: 50%;
+    flex-direction: column;
+    font-family: 'Twitchy', serif;
 }
