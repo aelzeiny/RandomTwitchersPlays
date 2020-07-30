@@ -64,9 +64,10 @@ export default function Navbar({ buttonText, callback}) {
                             className="btn btn-dark">
                             <FA name="question-circle"/>
                         </button>
-                        <button className="btn btn-outline-primary join-btn" type="submit" onClick={callback}>
+                        {buttonText && <buttonTextbutton className="btn btn-outline-primary join-btn" type="submit"
+                                           onClick={callback}>
                             {buttonText}
-                        </button>
+                        </buttonTextbutton>}
                     </div>
                 </div>
             </nav>

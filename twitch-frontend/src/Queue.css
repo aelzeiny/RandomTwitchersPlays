@@ -24,9 +24,13 @@
 }
 
 .queue-div {
-    background-color: #101213;
+    background-color: #18181b;
     margin-left: 0;
     margin-right: 0;
+}
+
+.queue-twitch-container {
+    width: 100%;
 }
 
 .gamepad-div {

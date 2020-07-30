@@ -9,10 +9,12 @@ const TwitchStream = (props) => {
         <div className='twitch-embedder'>
             <Player
                 channel="RandomTwitchersPlay"
-                id="aelzeiny"
                 theme="dark"
                 layout="video"
+                id="twitchWindow"
                 muted={false}
+                height=''
+                {...props}
             />
         </div>
     );
