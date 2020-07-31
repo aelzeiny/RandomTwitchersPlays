@@ -29,7 +29,7 @@ function Queue(props) {
             ws.onmessage = (raw) => {
                 const message = JSON.parse(raw.data);
                 console.log(message);
-                if (message.id === 'stream')
+                if (message.id === 'play')
                     setInQueue(true);
             };
 

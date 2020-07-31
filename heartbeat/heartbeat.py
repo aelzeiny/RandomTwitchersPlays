@@ -57,7 +57,7 @@ async def init_heartbeat():
             expired_iter = iter(expired_next_users)
             added_user = False
             for _ in range(num_empty_slots):
-                up_next = api.queue_rotate()
+                up_next, is_notified = api.queue_rotate()
                 if up_next:
                     added_user = True
                     new_whitelisted_users.append(up_next)

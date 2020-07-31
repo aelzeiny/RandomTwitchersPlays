@@ -1,10 +1,14 @@
 import os
+from typing import Optional, List, Union
+
 import boto3
 import json
 import logging
+
+import jwt
 import requests
 
-from decorators import jsonify, cors, auth_or_secret, secret
+from decorators import jsonify, cors, auth_or_secret, secret, SECRET
 import store
 
 
@@ -13,7 +17,7 @@ logger.setLevel(logging.DEBUG)
 
 
 @jsonify
-def connection_manager(event, _):
+def connection_manager(event, *_, **__):
     """
     Handles Websocket connection/disconnects
     """
@@ -21,10 +25,11 @@ def connection_manager(event, _):
     event_type = event["requestContext"]["eventType"]
     query_params = event['queryStringParameters'] if 'queryStringParameters' in event else {}
     oauth = query_params.get('token')
+    jwt_token = query_params.get('jwt')
     if event_type == "CONNECT":
-        if not oauth:
+        if not oauth and not jwt_token:
             return 'Unauthorized', 1003
-        can_connect = _open_conn(connection_id, oauth)
+        can_connect = _open_conn(connection_id, oauth, jwt_token)
         if not can_connect:
             return 'Unauthorized', 1003
         return 'Connected'
@@ -37,17 +42,26 @@ def connection_manager(event, _):
     return 'Unrecognized eventType.', 1003
 
 
-def _open_conn(conn_id, oauth: str) -> bool:
+def _open_conn(conn_id, oauth: Optional[str], jwt_token: Optional[str]) -> bool:
     """
     Asks Redis to remember to open websocket for broadcasting events later.
     :param conn_id API Gateway websocket id
     :param oauth if provided will also add connection to the appropriate user
     :return return True if oauth provided is valid.
     """
-    username = __oauth_to_user(oauth)
-    if not username or not store.queue_contains(username):
-        return False
-    store.conn_push(username, conn_id)
+    if not oauth and not jwt_token:
+        raise ValueError('specify at least one')
+    if oauth:
+        username = __oauth_to_user(oauth)
+        if not username or not store.queue_contains(username):
+            return False
+    else:
+        try:
+            decoded_data = jwt.decode(jwt_token, SECRET)
+            username = decoded_data['name']
+        except jwt.InvalidTokenError:
+            return False
+    store.conn_push(username, conn_id, rank=0)
     return True
 
 
@@ -69,7 +83,7 @@ def default_message(*_, **__):
 @cors
 @auth_or_secret
 @jsonify
-def join_queue(_, __, user, token):
+def join_queue(*_, user, token, **__):
     picture_url = __oauth_to_picture(token) if token else None
     was_added = store.queue_push(user, picture_url)
     _broadcast_status()  # Notify listeners that Q has changed
@@ -80,7 +94,7 @@ def join_queue(_, __, user, token):
 @cors
 @auth_or_secret
 @jsonify
-def leave_queue(_, __, user, ___):
+def leave_queue(*_, user, **__):
     was_removed = _leave_queue(user)
     # broadcast to remaining users that the status has changed
     _broadcast_status()  # Notify listeners that Q has changed
@@ -98,19 +112,16 @@ def _leave_queue(user):
 def next_queue(*_, **__):
     username, joined_dttm = store.queue_pop()
     if not username:
-        return {'username': None, 'joined': None}
+        return {'username': None, 'joined': None, 'is_notified': False}
     # notify user that they're up in the Q
-    gatewayapi = _get_api_gateway_client()
     all_open_connections = store.conn_get(username)
-    for conn_id in all_open_connections:
-        gatewayapi.post_to_connection(
-            ConnectionId=conn_id,
-            Data=json.dumps({'id': 'stream'})
-        )
+    bad_conns = _broadcast_to_conns(all_open_connections, {'id': 'play'})
+    is_notified = all_open_connections and len(bad_conns) == len(all_open_connections)
+
     store.queue_remove(username)
     store.conn_remove(username)
     _broadcast_status()  # Notify listeners that Q has changed
-    return {'username': username, 'joined': joined_dttm}
+    return {'username': username, 'joined': joined_dttm, 'is_notified': is_notified}
 
 
 @secret
@@ -123,28 +134,34 @@ def broadcast_status(*_, **__):
 
 
 def _broadcast_status():
-    gatewayapi = _get_api_gateway_client()
     all_conn_ids = store.conn_scan()
-    data = json.dumps(store.queue_scan(10)).encode('utf8')
+    data = store.queue_scan(10)
     logger.debug(f'sending: {data} to {len(all_conn_ids)} open connections')
+    _broadcast_to_conns(all_conn_ids, data)
+    return data
+
+
+def _broadcast_to_conns(conn_ids: List[str], data: Union[dict, str, int, float, list, bool]):
+    data_msg = json.dumps(data).encode('utf8')
+    gatewayapi = _get_api_gateway_client()
     bad_conns = []
-    for conn_id_bytes in all_conn_ids:
+    for conn_id_bytes in conn_ids:
         try:
             gatewayapi.post_to_connection(
                 ConnectionId=conn_id_bytes,
-                Data=data
+                Data=data_msg
             )
         except:
             bad_conns.append(conn_id_bytes)
     if bad_conns:
         logger.debug(f'Failed to send to {len(bad_conns)} connections. Closing.')
         store.conn_pop(*bad_conns)
-    return data
+    return bad_conns
 
 
 @secret
 @jsonify
-def position_queue(event, _):
+def position_queue(event, *_, **__):
     """Get the index of the given username."""
     if 'pathParameters' not in event or 'username' not in event['pathParameters']:
         return 'No username provided', 400
@@ -157,7 +174,7 @@ def position_queue(event, _):
 
 @cors
 @jsonify
-def authorize(event, context):
+def authorize(event, *_, **__):
     if 'pathParameters' not in event or 'code' not in event['pathParameters']:
         return 'No code provided', 400
     code = event['pathParameters']['code']

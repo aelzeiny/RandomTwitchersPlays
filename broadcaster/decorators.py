@@ -55,8 +55,9 @@ def cors(func):
     ]
 
     @functools.wraps(func)
-    def wraps(event, *args, **kwargs):
-        response = func(event, *args, **kwargs)
+    def wraps(*args, **kwargs):
+        event = kwargs.get('event', args[0])
+        response = func(*args, **kwargs)
         if 'headers' in event and 'origin' in event['headers']:
             origin = event['headers']['origin']
             headers = {
@@ -75,9 +76,12 @@ def cors(func):
 def secret(func):
     """
     Super Secret JWT ONLY!
+    Request can contain params "username" and "token" which will be passed down
+    to the wrapped function
     """
     @functools.wraps(func)
-    def wraps(event, *args, **kwargs):
+    def wraps(*args, **kwargs):
+        event = kwargs.get('event', args[0])
         if 'headers' in event and 'Authorization' in event['headers']:
             event['headers']['authorization'] = event['headers']['Authorization']
         if not ('headers' in event and 'authorization' in event['headers']):
@@ -87,12 +91,15 @@ def secret(func):
             jwt.decode(token, SECRET)
         except jwt.InvalidTokenError as e:
             return __unauthorized(str(e))
-        if 'body' not in event:
-            return __unauthorized('No username found')
-        body = json.loads(event['body'])
-        if 'username' not in body:
-            return __unauthorized('No username found')
-        return func(*args, **kwargs, user=body['username'], token=None)
+        username = None
+        token = None
+        if 'body' in event and event['body']:
+            body = json.loads(event['body'])
+            if 'username' in body:
+                username = body['username']
+            if 'token' in body:
+                token = body['token']
+        return func(*args, user=username, token=token, **kwargs)
     return wraps
 
 
@@ -104,7 +111,8 @@ def auth(func):
     If that challenge is rejected, we then try to refresh the cookie, and use that instead.
     """
     @functools.wraps(func)
-    def wraps(event, *args, **kwargs):
+    def wraps(*args, **kwargs):
+        event = kwargs.get('event', args[0])
         if 'headers' in event and 'Cookie' in event['headers']:
             event['headers']['cookie'] = event['headers']['Cookie']
         if not ('headers' in event and 'cookie' in event['headers']):
@@ -119,7 +127,12 @@ def auth(func):
             headers={'Authorization': f'Bearer {cookie["token"].value}'}
         )
         if 200 <= challenge_req.status_code < 300:
-            return func(event, *args, **kwargs, user=challenge_req.json()['login'], token=cookie['token'].value)
+            return func(
+                *args,
+                user=challenge_req.json()['login'],
+                token=cookie['token'].value,
+                **kwargs
+            )
 
         # if the first request didn't succeed; try-try again the refresh token
         if 'refresh' not in cookie:
@@ -146,7 +159,12 @@ def auth(func):
         if not (200 <= challenge_req.status_code < 300):
             return __unauthorized('Unauthorized with bad refresh token')
 
-        answer = func(event, *args, **kwargs, user=challenge_req.json()['login'], token=refresh_data['access_token'])
+        answer = func(
+            *args,
+            user=challenge_req.json()['login'],
+            token=refresh_data['access_token'],
+            **kwargs
+        )
         multi_headers = answer.pop('multiValueHeaders', {})
         set_cookies = multi_headers.pop('Set-Cookie', [])
         set_cookies.append(f'token="{refresh_data["access_token"]}"; Path=/; SameSite=None; Secure')
@@ -159,10 +177,11 @@ def auth(func):
 
 def auth_or_secret(func):
     @functools.wraps(func)
-    def wraps(event, *args, **kwargs):
+    def wraps(*args, **kwargs):
+        event = kwargs.get('event', args[0])
         if 'headers' in event and 'Authorization' in event['headers'] or 'authorization' in event['headers']:
-            return secret(func)(event, *args, **kwargs)
-        return auth(func)(event, *args, **kwargs)
+            return secret(func)(*args, **kwargs)
+        return auth(func)(*args, **kwargs)
     return wraps
 
 

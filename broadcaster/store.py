@@ -46,14 +46,16 @@ def queue_contains(username) -> bool:
     return redis.zscore(REDIS_QUEUE, username) is not None
 
 
-def conn_push(username, conn_id) -> NoReturn:
+def conn_push(username, conn_id, rank: Optional[int] = None) -> NoReturn:
     """
     Add username to broadcast list, which is sorted by joined rank. We want users that are early in line
     to get queue updates first!
     """
+    if rank is None:
+        rank = redis.zrank(REDIS_QUEUE, username)
     with redis.pipeline() as pipe:
         pipe.sadd(__conn_sockets_key(username), conn_id)
-        pipe.zadd(REDIS_CONN_SET, {conn_id: redis.zrank(REDIS_QUEUE, username)}, nx=True)
+        pipe.zadd(REDIS_CONN_SET, {conn_id: rank}, nx=True)
         pipe.set(conn_id, username)
         pipe.execute()
 

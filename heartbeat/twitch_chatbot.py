@@ -50,10 +50,7 @@ async def join(ctx: Context):
     username = ctx.author.name
     url = api.queue_join(username)
     log.info(f'{ctx.author.name} joining queue @{url}')
-    await ctx.send(f'Welcome @{username}! I sent you a private message. Please check your whispers for instructions.')
-    await ctx.send_whisper(username, f"We made you a secret URL. Please don't share it with anyone, "
-                           f"or someone else can take your spot in line.")
-    await ctx.send_whisper(username, url)
+    await ctx.send(f'Welcome @{username}! Please wait in line here: {url}.')
 
 
 @bot.command(name='leave', aliases=['quit', 'exit', 'remove'])
