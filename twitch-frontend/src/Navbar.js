@@ -57,9 +57,9 @@ export default function Navbar({ buttonText, callback}) {
     return (
         <div className='navbar-offset'>
             <HelpModal/>
-            <nav id='arena-navbar' className="navbar fixed-top navbar-dark bg-dark bg-roulette">
+            <nav id='arena-navbar' className="navbar fixed-top navbar-dark bg-dark bg-arena">
                 <div className='container'>
-                    <a className="navbar-brand title" href='/'>Twitch Roulette</a>
+                    <a className="navbar-brand title" href='/'>Twitch Arena</a>
                     <div className='nav-buttons'>
                         <button
                             id='queue-button'
