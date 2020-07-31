@@ -20,11 +20,13 @@ def connection_manager(event, _):
     connection_id = event["requestContext"].get("connectionId")
     event_type = event["requestContext"]["eventType"]
     query_params = event['queryStringParameters'] if 'queryStringParameters' in event else {}
-    oauth = query_params.get('oauth')
+    oauth = query_params.get('token')
     if event_type == "CONNECT":
+        if not oauth:
+            return 'Unauthorized', 1003
         can_connect = _open_conn(connection_id, oauth)
         if not can_connect:
-            return 'Unauthorized', 404
+            return 'Unauthorized', 1003
         return 'Connected'
 
     elif event_type == "DISCONNECT":
@@ -32,7 +34,7 @@ def connection_manager(event, _):
         return 'Disconnected'
 
     logger.error(f"Connection manager received unrecognized eventType '{event_type}")
-    return 'Unrecognized eventType.', 500
+    return 'Unrecognized eventType.', 1003
 
 
 def _open_conn(conn_id, oauth: str) -> bool:
@@ -65,7 +67,8 @@ def join_queue(_, __, user, token):
     picture_url = __oauth_to_picture(token)
     was_added = store.queue_push(user, picture_url)
     _broadcast_status()  # Notify listeners that Q has changed
-    return 'ADDED' if was_added else 'IN_QUEUE'
+    message = 'ADDED' if was_added else 'IN_QUEUE'
+    return {'payload': message, 'token': token}
 
 
 @cors
@@ -165,6 +168,7 @@ def authorize(event, context):
     data = response.json()
     # keys: access_token, expires_in, id_token, refresh_token, scope, token_type
     return 'success', 200, {
+        'headers': {'Set-Cookie': f'token="{data["access_token"]}"; Path=/; SameSite=None; Secure'},
         'multiValueHeaders': {
             "Set-Cookie": [
                 f'token="{data["access_token"]}"; Path=/; SameSite=None; Secure',

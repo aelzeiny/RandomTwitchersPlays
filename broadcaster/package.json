@@ -3,11 +3,14 @@
   "description": "",
   "version": "0.1.0",
   "scripts": {
-    "build": "time serverless deploy"
+    "build": "time serverless deploy",
+    "dev": "export REDIS_HOST='127.0.0.1' && serverless offline start --port=9000 --httpsProtocol certs"
   },
   "dependencies": {},
   "devDependencies": {
+    "selfsigned": "^1.10.7",
     "serverless-domain-manager": "^4.2.0",
+    "serverless-offline-python": "^3.22.2",
     "serverless-python-requirements": "^5.1.0"
   }
 }
