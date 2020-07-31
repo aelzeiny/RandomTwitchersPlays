@@ -11,7 +11,7 @@ export default function Authorize(props) {
     const queryString = qs.parse(props.location.search, { ignoreQueryPrefix: true });
 
     useEffect( () => {
-        const exitTimeout = () => props.history.push('/');
+        const exitTimeout = () => props.history.push('/queue');
         if (!queryString.code)
             setTimeout(exitTimeout, 3000);
         else

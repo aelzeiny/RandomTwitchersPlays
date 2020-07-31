@@ -4,8 +4,11 @@ from typing import List, Tuple, Optional, NoReturn
 from redis import Redis
 REDIS_QUEUE = 'queue'
 REDIS_CONN_SET = 'open_conn'
+from os import getenv
+
+
 redis = Redis(
-    host="myredis.jsemzk.0001.use1.cache.amazonaws.com",
+    host=getenv('REDIS_HOST', 'myredis.jsemzk.0001.use1.cache.amazonaws.com'),
     port=6379,
     db=0
 )

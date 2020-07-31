@@ -130,7 +130,7 @@ def auth(func):
         multi_headers = answer.pop('multiValueHeaders', {})
         set_cookies = multi_headers.pop('Set-Cookie', [])
         set_cookies.append(f'token="{refresh_data["access_token"]}"; Path=/; SameSite=None; Secure')
-        set_cookies.append(f'token="{refresh_data["refresh_token"]}"; Path=/; SameSite=None; Secure')
+        set_cookies.append(f'refresh="{refresh_data["refresh_token"]}"; Path=/; SameSite=None; Secure')
         multi_headers['Set-Cookie'] = set_cookies
         answer['multiValueHeaders'] = multi_headers
         return answer

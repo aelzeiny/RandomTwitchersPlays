@@ -30,6 +30,6 @@ export async function leaveQueue() {
 }
 
 
-export async function openQueueConnection () {
-    return new WebSocket(wsGateway);
+export async function openQueueConnection (token) {
+    return new WebSocket(`${wsGateway}?token=${token}`);
 }
