@@ -44,7 +44,7 @@ function Queue(props) {
                 ws.close();
             };
         }).catch(() => props.history.push('/'));
-    }, [setInQueue]);
+    }, [props.history, setInQueue]);
 
     const leave = () => {
         leaveQueue().then(props.history.push('/'));

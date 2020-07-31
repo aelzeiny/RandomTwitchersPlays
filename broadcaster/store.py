@@ -17,7 +17,8 @@ redis = Redis(
 def queue_push(username, picture) -> NoReturn:
     with redis.pipeline() as pipe:
         pipe.zadd(REDIS_QUEUE, {username: dt.datetime.now().timestamp()}, nx=True)
-        pipe.set(username, picture)
+        if picture:
+            pipe.set(username, picture)
         pipe.execute()
 
 

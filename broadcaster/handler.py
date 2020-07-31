@@ -4,7 +4,7 @@ import json
 import logging
 import requests
 
-from decorators import jsonify, cors, auth
+from decorators import jsonify, cors, auth_or_secret, secret
 import store
 
 
@@ -42,7 +42,7 @@ def _open_conn(conn_id, oauth: str) -> bool:
     Asks Redis to remember to open websocket for broadcasting events later.
     :param conn_id API Gateway websocket id
     :param oauth if provided will also add connection to the appropriate user
-    :return return True if UUID provided is valid.
+    :return return True if oauth provided is valid.
     """
     username = __oauth_to_user(oauth)
     if not username or not store.queue_contains(username):
@@ -60,11 +60,17 @@ def _close_conn(conn_id, _: str):
     store.conn_pop(conn_id)
 
 
+@jsonify
+def default_message(*_, **__):
+    logger.info("Unknown Action.")
+    return "Unrecognized Endpoint.", 404
+
+
 @cors
-@auth
+@auth_or_secret
 @jsonify
 def join_queue(_, __, user, token):
-    picture_url = __oauth_to_picture(token)
+    picture_url = __oauth_to_picture(token) if token else None
     was_added = store.queue_push(user, picture_url)
     _broadcast_status()  # Notify listeners that Q has changed
     message = 'ADDED' if was_added else 'IN_QUEUE'
@@ -72,7 +78,7 @@ def join_queue(_, __, user, token):
 
 
 @cors
-@auth
+@auth_or_secret
 @jsonify
 def leave_queue(_, __, user, ___):
     was_removed = _leave_queue(user)
@@ -87,6 +93,7 @@ def _leave_queue(user):
     return was_removed
 
 
+@secret
 @jsonify
 def next_queue(*_, **__):
     username, joined_dttm = store.queue_pop()
@@ -106,6 +113,7 @@ def next_queue(*_, **__):
     return {'username': username, 'joined': joined_dttm}
 
 
+@secret
 @jsonify
 def broadcast_status(*_, **__):
     """
@@ -134,6 +142,7 @@ def _broadcast_status():
     return data
 
 
+@secret
 @jsonify
 def position_queue(event, _):
     """Get the index of the given username."""
@@ -178,17 +187,11 @@ def authorize(event, context):
     }
 
 
-@jsonify
-def default_message(*_, **__):
-    logger.info("Unknown Action.")
-    return "Unrecognized Endpoint.", 404
-
-
 def _get_api_gateway_client():
     return boto3.client(
         "apigatewaymanagementapi",
         # endpoint_url=f'https://{event["requestContext"]["domainName"]}/{event["requestContext"]["stage"]}'
-        endpoint_url='https://4tylj6rpwi.execute-api.us-east-1.amazonaws.com/dev'
+        endpoint_url='https://nq8v1ckz81.execute-api.us-east-1.amazonaws.com/dev'
     )
 
 

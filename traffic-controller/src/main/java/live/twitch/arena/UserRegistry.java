@@ -6,7 +6,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import live.twitch.arena.dto.Pair;
 import live.twitch.arena.dto.TwitchUserDTO;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -15,7 +14,7 @@ public class UserRegistry {
 
     private final ConcurrentHashMap<String, UserSession> usersById = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, UserSession> usersBySessionId = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<String, Pair<String, LocalDateTime>> whitelist = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, LocalDateTime> whitelist = new ConcurrentHashMap<>();
 
     public void register(UserSession user) {
         usersById.put(user.getUserId(), user);
@@ -28,31 +27,25 @@ public class UserRegistry {
                 .collect(Collectors.toList());
     }
 
-    public Map<String, Pair<String, Long>> getUserTimeouts() {
+    public Map<String, Long> getUserTimeouts() {
         final long rightNow = LocalDateTime.now().toEpochSecond(ZoneOffset.UTC);
         return Collections.list(usersById.keys()).stream()
                 .filter(el -> !el.equals(PRESENTER_ID))
                 .collect(Collectors.toMap(
                     el -> el,
-                    el -> new Pair<>(
-                            usersById.get(el).getTwitchTag(),
-                            rightNow - usersById.get(el).getCreatedDttm().toEpochSecond(ZoneOffset.UTC)
-                    ),
+                    el -> rightNow - usersById.get(el).getCreatedDttm().toEpochSecond(ZoneOffset.UTC),
                     (first, second) -> first,
                     ConcurrentHashMap::new
                 ));
     }
 
-    public Map<String, Pair<String, Long>> getWhitelistTimeouts() {
+    public Map<String, Long> getWhitelistTimeouts() {
         final long rightNow = LocalDateTime.now().toEpochSecond(ZoneOffset.UTC);
         return Collections.list(whitelist.keys()).stream()
                 .filter(el -> !el.equals(PRESENTER_ID))
                 .collect(Collectors.toMap(
                         el -> el,
-                        el -> new Pair<>(
-                                whitelist.get(el).first,
-                                rightNow - whitelist.get(el).second.toEpochSecond(ZoneOffset.UTC)
-                        ),
+                        el -> rightNow - whitelist.get(el).toEpochSecond(ZoneOffset.UTC),
                         (first, second) -> first,
                         ConcurrentHashMap::new
                 ));
@@ -82,10 +75,6 @@ public class UserRegistry {
         return !this.whitelist.containsKey(userId);
     }
 
-    public String getTwitchTag(String userId) {
-        return this.whitelist.get(userId).first;
-    }
-
     public void setWhitelist(List<TwitchUserDTO> names) {
         // remove the old items
         for (String name : this.whitelist.keySet()) {
@@ -102,8 +91,7 @@ public class UserRegistry {
         // add new items
         for (TwitchUserDTO u : names) {
             if (!this.whitelist.containsKey(u.getUserId())) {
-                Pair<String, LocalDateTime> valuePair = new Pair<>(u.getTwitchTag(), LocalDateTime.now());
-                this.whitelist.put(u.getUserId(), valuePair);
+                this.whitelist.put(u.getUserId(), LocalDateTime.now());
             }
         }
     }

@@ -41,9 +41,9 @@ public class Room implements Closeable {
         this.close();
     }
 
-    public UserSession join(String userName, String twitchTag, WebSocketSession session, boolean isPresenter) throws IOException {
+    public UserSession join(String userName, WebSocketSession session, boolean isPresenter) throws IOException {
         log.info("ROOM {}: adding participant {}", userName, userName);
-        final UserSession participant = new UserSession(userName, twitchTag, session, this.pipeline);
+        final UserSession participant = new UserSession(userName, session, this.pipeline);
         if (isPresenter)
             this.presenter = participant;
         joinRoom(participant, isPresenter);

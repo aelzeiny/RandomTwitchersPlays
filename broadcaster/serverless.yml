@@ -21,6 +21,7 @@ provider:
   environment:
     TWITCH_CLIENT_ID: ${env:TWITCH_CLIENT_ID}
     TWITCH_CLIENT_SECRET: ${env:TWITCH_CLIENT_SECRET}
+    PRESENTER_SUPER_SECRET: ${env:PRESENTER_SUPER_SECRET}
 
 plugins:
   - serverless-python-requirements

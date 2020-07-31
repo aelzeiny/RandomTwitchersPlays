@@ -34,6 +34,8 @@ class AppApi:
         self.app_session.headers['Content-Type'] = 'application/json'
 
         self.api_session = session()
+        self.api_session.headers['Authorization'] = f'Bearer {header}.{payload}.{signature}'
+        self.api_session.headers['Content-Type'] = 'application/json'
 
     def stream_status(self) -> Tuple[List[Tuple[str, str, int]], List[Tuple[str, str, int]]]:
         """
@@ -57,20 +59,12 @@ class AppApi:
     def queue_join(self, username) -> str:
         response = self.api_session.put(f'{API_URL}/queue', json={'username': username})
         response.raise_for_status()
-        response_body = response.json()
-        unique_id = response_body['uuid']
-        return f"{APP_EXTERNAL_URL}/queue/{unique_id}"
+        return f"{APP_EXTERNAL_URL}/queue"
 
     def queue_remove(self, username) -> bool:
-        response = self.api_session.delete(
-            f'{API_URL}/queue',
-            json={'username': username}
-        )
-        if response.status_code != 400:
-            response.raise_for_status()
-        if response.status_code == 400:
-            return False
-        return True
+        response = self.api_session.delete(f'{API_URL}/queue', json={'username': username})
+        response.raise_for_status()
+        return response.json()['payload'] == 'REMOVED'
 
     def queue_position(self, username) -> int:
         response = self.api_session.get(f'{API_URL}/user/{username}')
@@ -88,9 +82,7 @@ class AppApi:
         response = self.api_session.post(f'{API_URL}/queue')
         response.raise_for_status()
         data = response.json()
-        if not data['uuid'] or not data['username']:
-            return None
-        return data['uuid'], data['username']
+        return data['username']
 
     def queue_broadcast(self):
         response = self.api_session.post(f'{API_URL}/broadcast')
