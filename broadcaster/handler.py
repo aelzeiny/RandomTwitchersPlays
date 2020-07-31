@@ -167,8 +167,8 @@ def position_queue(event, *_, **__):
         return 'No username provided', 400
     username = event['pathParameters']['username']
     index = store.queue_rank(username)
-    if not index:
-        return {'position': -1}
+    if index is None:
+        return {'position': None}
     return {'position': index + 1}
 
 

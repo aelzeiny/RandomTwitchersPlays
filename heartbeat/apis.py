@@ -60,7 +60,7 @@ class AppApi:
         return response.json()['payload'] == 'REMOVED'
 
     def queue_position(self, username) -> int:
-        response = self.api_session.get(f'{API_URL}/user/{username}')
+        response = self.api_session.get(f'{API_URL}/queue/{username}')
         response.raise_for_status()
         data = response.json()
         return data['position']

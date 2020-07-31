@@ -75,14 +75,14 @@ async def queue(ctx):
             ctx.send(f"@{username} you're not in the Arena. Please check your private messages (whispers).")
 
 
-@bot.command(name='position', aliases=['where'])
+@bot.command(name='position', aliases=['where', 'status'])
 async def position(ctx):
     username = ctx.author.name
-    api.queue_position(username)
-    if position < 0:
-        await ctx.send(f'@{username} type "!join" to enter the queue')
+    pos = api.queue_position(username)
+    if pos:
+        await ctx.send(f'@{username} is #{pos} in the queue.')
     else:
-        await ctx.send(f'@{username} is #{username} in the queue.')
+        await ctx.send(f'@{username} type "!join" to enter the queue')
 
 
 @bot.command(name='help', aliases=['h', 'ayuda', 'halp'])
@@ -95,8 +95,8 @@ async def helper(ctx):
     await ctx.send_me("!help to see this again")
 
 
-@bot.command(name='ban', aliases=['kick', 'boot', 'kill'])
-async def ban(ctx):
+@bot.command(name='kick', aliases=['ban', 'boot', 'kill'])
+async def kick(ctx):
     # TODO Add banning abilities
     await ctx.send('Not implemented yet. Sorry m8.')
 
