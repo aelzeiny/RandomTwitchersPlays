@@ -1,14 +1,13 @@
 package live.twitch.arena;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import live.twitch.arena.dto.TwitchUserDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.Arrays;
 import java.util.Map;
 
 @RestController
@@ -29,13 +28,9 @@ public class TrafficHttpController {
     }
 
     @PostMapping(path="/users", consumes="application/json")
-    public String updateUserWhitelist(@RequestBody String userList) throws IOException {
-        final ObjectMapper mapper = new ObjectMapper();
-        final List<TwitchUserDTO> users = mapper.readValue(
-            userList,
-            mapper.getTypeFactory().constructCollectionType(List.class, TwitchUserDTO.class)
-        );
-        registry.setWhitelist(users);
+    public String updateUserWhitelist(@RequestBody String rawUserList) throws IOException {
+        String[] userList = new Gson().fromJson(rawUserList, String[].class);
+        registry.setWhitelist(Arrays.asList(userList));
         return "{}";
     }
 

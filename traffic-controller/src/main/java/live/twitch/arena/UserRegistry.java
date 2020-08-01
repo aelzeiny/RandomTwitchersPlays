@@ -6,7 +6,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import live.twitch.arena.dto.TwitchUserDTO;
 import org.springframework.web.socket.WebSocketSession;
 
 public class UserRegistry {
@@ -75,23 +74,16 @@ public class UserRegistry {
         return !this.whitelist.containsKey(userId);
     }
 
-    public void setWhitelist(List<TwitchUserDTO> names) {
+    public void setWhitelist(List<String> names) {
         // remove the old items
         for (String name : this.whitelist.keySet()) {
-            boolean hasName = false;
-            for (TwitchUserDTO dto : names) {
-                if (dto.getUserId().equals(name)) {
-                    hasName = true;
-                    break;
-                }
-            }
-            if (!hasName)
+            if (!names.contains(name))
                 this.whitelist.remove(name);
         }
         // add new items
-        for (TwitchUserDTO u : names) {
-            if (!this.whitelist.containsKey(u.getUserId())) {
-                this.whitelist.put(u.getUserId(), LocalDateTime.now());
+        for (String u : names) {
+            if (!this.whitelist.containsKey(u)) {
+                this.whitelist.put(u, LocalDateTime.now());
             }
         }
     }
