@@ -50,7 +50,7 @@ async def join(ctx: Context):
     username = ctx.author.name
     url = api.queue_join(username)
     log.info(f'{ctx.author.name} joining queue @{url}')
-    await ctx.send(f'Welcome @{username}! Please wait in line here: {url}.')
+    await ctx.send(f'Welcome @{username}! Please wait in line here: {url}')
 
 
 @bot.command(name='leave', aliases=['quit', 'exit', 'remove'])

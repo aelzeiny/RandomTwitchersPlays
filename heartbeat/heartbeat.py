@@ -1,6 +1,6 @@
 import asyncio
 from typing import Set
-from apis import AppApi, forever
+from apis import AppApi, forever, APP_EXTERNAL_URL
 from twitch_chatbot import bot, queue_listener, spam_help, TWITCH_CHANNEL
 import logging
 
@@ -61,7 +61,13 @@ async def init_heartbeat():
                 if up_next:
                     added_user = True
                     new_whitelisted_users.append(up_next)
-                    await bot._ws.send_privmsg(TWITCH_CHANNEL, f"@{up_next[1]} You're up!")
+                    await bot._ws.send_privmsg(TWITCH_CHANNEL, f"@{up_next} You're up!")
+                    if not is_notified:
+                        await bot._ws.send_privmsg(
+                            TWITCH_CHANNEL,
+                            f"@{up_next} you're not logged in and in queue. You have 60 seconds to visit this page "
+                            f"{APP_EXTERNAL_URL}/queue"
+                        )
                 else:  # Nobody in Q. Just use the least-expired user until queue fills back up
                     try:
                         new_whitelisted_users.append(next(expired_iter))
@@ -69,8 +75,8 @@ async def init_heartbeat():
                         break
 
             new_whitelisted_users.extend([
-                (u, twitch_id) for u, twitch_id, _ in whitelisted_user_sessions
-                if (u, twitch_id) not in expired_next_users
+                u for u, _ in whitelisted_user_sessions
+                if u not in expired_next_users
             ])
             log.debug('users: ' + str(new_whitelisted_users))
             api.stream_update(new_whitelisted_users)

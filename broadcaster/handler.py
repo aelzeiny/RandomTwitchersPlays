@@ -85,10 +85,9 @@ def default_message(*_, **__):
 @jsonify
 def join_queue(*_, user, token, **__):
     picture_url = __oauth_to_picture(token) if token else None
-    was_added = store.queue_push(user, picture_url)
+    store.queue_push(user, picture_url)
     _broadcast_status()  # Notify listeners that Q has changed
-    message = 'ADDED' if was_added else 'IN_QUEUE'
-    return {'payload': message, 'token': token}
+    return {'payload': 'ADDED', 'token': token}
 
 
 @cors
@@ -116,7 +115,7 @@ def next_queue(*_, **__):
     # notify user that they're up in the Q
     all_open_connections = store.conn_get(username)
     bad_conns = _broadcast_to_conns(all_open_connections, {'id': 'play'})
-    is_notified = all_open_connections and len(bad_conns) == len(all_open_connections)
+    is_notified = bool(not not all_open_connections and len(bad_conns) == len(all_open_connections))
 
     store.queue_remove(username)
     store.conn_remove(username)
