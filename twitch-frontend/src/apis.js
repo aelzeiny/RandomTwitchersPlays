@@ -26,6 +26,6 @@ export async function leaveQueue() {
 }
 
 
-export async function openQueueConnection (token) {
+export function openQueueConnection (token) {
     return new WebSocket(`wss://nq8v1ckz81.execute-api.us-east-1.amazonaws.com/dev?token=${token}`);
 }

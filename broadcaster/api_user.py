@@ -45,7 +45,7 @@ def login(event, *_, **__):
             "Set-Cookie": [
                 f'token="{data["access_token"]}"; Path=/; Secure',
                 f'refresh="{data["refresh_token"]}"; Path=/; Secure',
-                f'username="{oidc_token["preferred_username"]}; Path=/; Secure"'
+                f'username="{oidc_token["preferred_username"]}"; Path=/; Secure"'
             ]
         }
     }
