@@ -24,7 +24,6 @@ public class UserSession implements Closeable {
     private static final Logger log = LoggerFactory.getLogger(UserSession.class);
 
     private final String userId;
-    private final String twitchTag;
     private final WebSocketSession session;
 
     private final MediaPipeline pipeline;
@@ -35,12 +34,11 @@ public class UserSession implements Closeable {
 
     private GamepadInput gamepadInput;
 
-    public UserSession(final String userId, final String twitchTag, final WebSocketSession session, MediaPipeline pipeline) {
+    public UserSession(final String userId, final WebSocketSession session, MediaPipeline pipeline) {
         this.pipeline = pipeline;
         this.userId = userId;
         this.session = session;
         this.outgoingMedia = new WebRtcEndpoint.Builder(pipeline).build();
-        this.twitchTag = twitchTag;
         this.createdDttm = LocalDateTime.now();
 
         this.outgoingMedia.addIceCandidateFoundListener(event -> {
@@ -64,10 +62,6 @@ public class UserSession implements Closeable {
 
     public String getUserId() {
         return userId;
-    }
-
-    public String getTwitchTag() {
-        return twitchTag;
     }
 
     public WebSocketSession getSession() {

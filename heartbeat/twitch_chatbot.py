@@ -4,7 +4,7 @@ import os
 import logging
 from twitchio.ext import commands
 from twitchio.dataclasses import Context
-from apis import AppApi, forever
+from apis import AppApi, forever, APP_EXTERNAL_URL
 
 log = logging.root.getChild(__name__)
 TWITCH_CHANNEL = 'RandomTwitchersPlay'
@@ -48,12 +48,9 @@ async def event_message(ctx):
 @bot.command(name='join')
 async def join(ctx: Context):
     username = ctx.author.name
-    url = api.queue_join(username)
+    url = api.user_join(username)
     log.info(f'{ctx.author.name} joining queue @{url}')
-    await ctx.send(f'Welcome @{username}! I sent you a private message. Please check your whispers for instructions.')
-    await ctx.send_whisper(username, f"We made you a secret URL. Please don't share it with anyone, "
-                           f"or someone else can take your spot in line.")
-    await ctx.send_whisper(username, url)
+    await ctx.send(f'Welcome @{username}! Please wait in line here: {url}')
 
 
 @bot.command(name='leave', aliases=['quit', 'exit', 'remove'])
@@ -64,28 +61,20 @@ async def leave(ctx: Context):
 @bot.command(name='goodbye')
 async def goodbye(ctx: Context):
     log.info(f'{ctx.author.name} leaving queue')
-    api.queue_remove(ctx.author.name)
+    api.user_remove(ctx.author.name)
     await ctx.send(f'Goodbye, @{ctx.author.name}! We hope you can "!join" us again soon!')
 
 
-@bot.command(name='queue', aliases=['line'])
-async def queue(ctx):
-    usernames = api.queue_status()
-    up_next = [f"({i + 1}) @{d[0]}" for i, d in enumerate(usernames)]
-    await ctx.send_me(','.join(up_next))
-    for username, is_connected in usernames:
-        if not is_connected:
-            ctx.send(f"@{username} you're not in the Arena. Please check your private messages (whispers).")
-
-
-@bot.command(name='position', aliases=['where'])
+@bot.command(name='position', aliases=['where', 'status'])
 async def position(ctx):
     username = ctx.author.name
-    api.queue_position(username)
-    if position < 0:
-        await ctx.send(f'@{username} type "!join" to enter the queue')
+    pos, in_stream = api.user_position(username)
+    if pos:
+        await ctx.send(f'@{username} is #{pos} in the queue.')
+    elif in_stream:
+        await ctx.send(f"@{username} you're supposed to be on stream! {APP_EXTERNAL_URL}/queue")
     else:
-        await ctx.send(f'@{username} is #{username} in the queue.')
+        await ctx.send(f'@{username} type "!join" to enter the queue')
 
 
 @bot.command(name='help', aliases=['h', 'ayuda', 'halp'])
@@ -98,8 +87,8 @@ async def helper(ctx):
     await ctx.send_me("!help to see this again")
 
 
-@bot.command(name='ban', aliases=['kick', 'boot', 'kill'])
-async def ban(ctx):
+@bot.command(name='kick', aliases=['ban', 'boot', 'kill'])
+async def kick(ctx):
     # TODO Add banning abilities
     await ctx.send('Not implemented yet. Sorry m8.')
 
@@ -118,13 +107,21 @@ async def queue_listener():
     """
     async with api.connect_ws() as websocket:
         while True:
-            queue_usernames = json.loads(await websocket.recv())[:5]
+            data = json.loads(await websocket.recv())
+            queue_usernames = data['queue'][:5]
+            whitelist_usernames = data['whitelist']
             if queue_usernames:
-                up_next = ', '.join([f"#{i + 1} @{d}" for i, d in enumerate(queue_usernames)])
+                up_next = ', '.join([f"#{i + 1} @{u}" for i, u in enumerate(queue_usernames)])
+                on_now = ', '.join([f"@{u}" for u in whitelist_usernames])
                 log.info(f'Next: {queue_usernames}')
+                log.info(f'On Stream: {on_now}')
                 await bot._ws.send_privmsg(  # noqa
                     TWITCH_CHANNEL,
                     f'Coming up: {up_next}'
+                )
+                await bot._ws.send_privmsg(
+                    TWITCH_CHANNEL,
+                    f'On Stream: {on_now}'
                 )
             else:
                 await bot._ws.send_privmsg(

@@ -47,7 +47,6 @@ public class TrafficWebsocketsHandler extends TextWebSocketHandler {
                 } else {
                     UserSession presenterSession = room.join(
                             UserRegistry.PRESENTER_ID,
-                            UserRegistry.PRESENTER_ID,
                             session,
                             true
                     );
@@ -64,7 +63,6 @@ public class TrafficWebsocketsHandler extends TextWebSocketHandler {
                     // Add to room & registry
                     UserSession userSession = room.join(
                         userId.get(),
-                        registry.getTwitchTag(userId.get()),
                         session,
                         false
                     );
@@ -113,7 +111,7 @@ public class TrafficWebsocketsHandler extends TextWebSocketHandler {
         Optional<UserSession> user = registry.removeBySession(session);
         Room room = this.roomManager.getRoom();
         if (user.isPresent()) {
-            log.info("User {}@{}: has exited the room", user.get().getUserId(), user.get().getTwitchTag());
+            log.info("User {}: has exited the room", user.get().getUserId());
             room.leave(user.get());
         }
     }

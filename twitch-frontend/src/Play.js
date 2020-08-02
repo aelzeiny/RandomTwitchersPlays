@@ -8,6 +8,7 @@ import GamepadDisplay from "./gamepad/GamepadDisplay";
 import {switchObservable, updateController} from "./gamepad/gamepadApi";
 import { compressInput, decompressInput } from "./gamepad/switchApi";
 import { Subject } from 'rxjs';
+import Navbar from "./Navbar";
 
 WebSocket.prototype.sendMessage = function (msg) {
     const jsonMessage = JSON.stringify(msg);
@@ -67,8 +68,7 @@ export default class Play extends React.Component {
 	    }
 
 	    this.ws.onclose = () => {
-	        console.log('exiting');
-	        this.props.history.push('/');
+	        // this.props.history.push('/');
         };
     }
 
@@ -205,7 +205,6 @@ export default class Play extends React.Component {
     initWebRtc() {
         for (let player of this.state.players) {
             if (!(player in this.webRtc)) {
-                console.log('yeeting', player);
                 this.webRtc[player] = {
                     video: React.createRef(),
                     rtcPeer: null,
@@ -247,18 +246,21 @@ export default class Play extends React.Component {
     render() {
         this.initWebRtc();
         return (
-            <div className='play-div row'>
-                <div className='play-left-div col-lg-3'>
-                    {this.state.presenter && <GamepadDisplay observable={this.webRtc[this.state.presenter].observable}/>}
-                </div>
-                <div className='col-lg-7'>
-                    {this.renderPresenter()}
-                </div>
-                <div className='players-div col-lg-2'>
-                    <GamepadSelection gamepadSelectedCallback={updateController}/>
-                    {Array.from(this.state.players)
-                        .filter(player => player !== this.state.presenter)
-                        .map((player) => this.renderPlayer(player))}
+            <div>
+                <Navbar/>
+                <div className='play-div row'>
+                    <div className='play-left-div col-lg-3'>
+                        {this.state.presenter && <GamepadDisplay observable={this.webRtc[this.state.presenter].observable}/>}
+                    </div>
+                    <div className='col-lg-7'>
+                        {this.renderPresenter()}
+                    </div>
+                    <div className='players-div col-lg-2'>
+                        <GamepadSelection gamepadSelectedCallback={updateController}/>
+                        {Array.from(this.state.players)
+                            .filter(player => player !== this.state.presenter)
+                            .map((player) => this.renderPlayer(player))}
+                    </div>
                 </div>
             </div>
         );

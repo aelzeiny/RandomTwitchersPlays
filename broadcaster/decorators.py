@@ -7,9 +7,11 @@ import functools
 import traceback
 import requests
 import logging
+import jwt
 
 
 logger = logging.getLogger("handler_logger")
+SECRET = os.environ['PRESENTER_SUPER_SECRET']
 
 
 def jsonify(func: Callable[..., Union[Union[dict, str], Tuple[Union[dict, str], int, Optional[dict]]]])\
@@ -53,8 +55,9 @@ def cors(func):
     ]
 
     @functools.wraps(func)
-    def wraps(event, *args, **kwargs):
-        response = func(event, *args, **kwargs)
+    def wraps(*args, **kwargs):
+        event = kwargs.get('event', args[0])
+        response = func(*args, **kwargs)
         if 'headers' in event and 'origin' in event['headers']:
             origin = event['headers']['origin']
             headers = {
@@ -70,6 +73,36 @@ def cors(func):
     return wraps
 
 
+def secret(func):
+    """
+    Super Secret JWT ONLY!
+    Request can contain params "username" and "token" which will be passed down
+    to the wrapped function
+    """
+    @functools.wraps(func)
+    def wraps(*args, **kwargs):
+        event = kwargs.get('event', args[0])
+        if 'headers' in event and 'Authorization' in event['headers']:
+            event['headers']['authorization'] = event['headers']['Authorization']
+        if not ('headers' in event and 'authorization' in event['headers']):
+            return __unauthorized('Token not found')
+        token = event['headers']['authorization'].lstrip('Bbearer').lstrip()
+        try:
+            jwt.decode(token, SECRET)
+        except jwt.InvalidTokenError as e:
+            return __unauthorized(str(e))
+        username = None
+        token = None
+        if 'body' in event and event['body']:
+            body = json.loads(event['body'])
+            if 'username' in body:
+                username = body['username']
+            if 'token' in body:
+                token = body['token']
+        return func(*args, user=username, token=token, **kwargs)
+    return wraps
+
+
 def auth(func):
     """
     Twitch OAuth checker.
@@ -78,32 +111,32 @@ def auth(func):
     If that challenge is rejected, we then try to refresh the cookie, and use that instead.
     """
     @functools.wraps(func)
-    def wraps(context, *args, **kwargs):
-        def unauthorized(message):
-            return {
-                'statusCode': 401,
-                'body': json.dumps({'payload': message, 'clientId': os.environ['TWITCH_CLIENT_ID']})
-            }
-
-        if 'headers' in context and 'Cookie' in context['headers']:
-            context['headers']['cookie'] = context['headers']['Cookie']
-        if not ('headers' in context and 'Cookie' in context['headers']):
-            return unauthorized('Token not found')
+    def wraps(*args, **kwargs):
+        event = kwargs.get('event', args[0])
+        if 'headers' in event and 'Cookie' in event['headers']:
+            event['headers']['cookie'] = event['headers']['Cookie']
+        if not ('headers' in event and 'cookie' in event['headers']):
+            return __unauthorized('Token not found')
         cookie = SimpleCookie()
-        cookie.load(context['headers']['cookie'])
+        cookie.load(event['headers']['cookie'])
         if 'token' not in cookie:
-            return unauthorized('Token not found')
+            return __unauthorized('Token not found')
         # challenge the cookie
         challenge_req = requests.get(
             'https://id.twitch.tv/oauth2/validate',
             headers={'Authorization': f'Bearer {cookie["token"].value}'}
         )
         if 200 <= challenge_req.status_code < 300:
-            return func(context, *args, **kwargs, user=challenge_req.json()['login'], token=cookie['token'].value)
+            return func(
+                *args,
+                user=challenge_req.json()['login'],
+                token=cookie['token'].value,
+                **kwargs
+            )
 
         # if the first request didn't succeed; try-try again the refresh token
         if 'refresh' not in cookie:
-            return unauthorized('Cannot Authorize')
+            return __unauthorized('Cannot Authorize')
         refresh_req = requests.post(
             'https://id.twitch.tv/oauth2/token',
             params={
@@ -115,7 +148,7 @@ def auth(func):
         )
 
         if not (200 <= refresh_req.status_code < 300):
-            return unauthorized('Unauthorized')
+            return __unauthorized('Unauthorized')
 
         refresh_data = refresh_req.json()
         # challenge the oauth token again
@@ -124,14 +157,37 @@ def auth(func):
             headers={'Authorization': f'Bearer {refresh_data["access_token"]}'}
         )
         if not (200 <= challenge_req.status_code < 300):
-            return unauthorized('Unauthorized with bad refresh token')
-
-        answer = func(context, *args, **kwargs, user=challenge_req.json()['login'], token=refresh_data['access_token'])
+            return __unauthorized('Unauthorized with bad refresh token')
+        username = challenge_req.json()['login']
+        answer = func(
+            *args,
+            user=username,
+            token=refresh_data['access_token'],
+            **kwargs
+        )
         multi_headers = answer.pop('multiValueHeaders', {})
         set_cookies = multi_headers.pop('Set-Cookie', [])
-        set_cookies.append(f'token="{refresh_data["access_token"]}"; Path=/; SameSite=None; Secure')
-        set_cookies.append(f'token="{refresh_data["refresh_token"]}"; Path=/; SameSite=None; Secure')
+        set_cookies.append(f'token="{refresh_data["access_token"]}"; Path=/; Secure')
+        set_cookies.append(f'refresh="{refresh_data["refresh_token"]}"; Path=/; Secure')
+        set_cookies.append(f'username="{username}"; Path=/; Secure')
         multi_headers['Set-Cookie'] = set_cookies
         answer['multiValueHeaders'] = multi_headers
         return answer
     return wraps
+
+
+def auth_or_secret(func):
+    @functools.wraps(func)
+    def wraps(*args, **kwargs):
+        event = kwargs.get('event', args[0])
+        if 'headers' in event and 'Authorization' in event['headers'] or 'authorization' in event['headers']:
+            return secret(func)(*args, **kwargs)
+        return auth(func)(*args, **kwargs)
+    return wraps
+
+
+def __unauthorized(message):
+    return {
+        'statusCode': 401,
+        'body': json.dumps({'payload': message, 'clientId': os.environ['TWITCH_CLIENT_ID']})
+    }
