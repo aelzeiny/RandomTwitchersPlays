@@ -4,7 +4,7 @@ import os
 import logging
 from twitchio.ext import commands
 from twitchio.dataclasses import Context
-from apis import AppApi, forever
+from apis import AppApi, forever, APP_EXTERNAL_URL
 
 log = logging.root.getChild(__name__)
 TWITCH_CHANNEL = 'RandomTwitchersPlay'
@@ -68,9 +68,11 @@ async def goodbye(ctx: Context):
 @bot.command(name='position', aliases=['where', 'status'])
 async def position(ctx):
     username = ctx.author.name
-    pos = api.user_position(username)
+    pos, in_stream = api.user_position(username)
     if pos:
         await ctx.send(f'@{username} is #{pos} in the queue.')
+    elif in_stream:
+        await ctx.send(f"@{username} you're supposed to be on stream! {APP_EXTERNAL_URL}/queue")
     else:
         await ctx.send(f'@{username} type "!join" to enter the queue')
 

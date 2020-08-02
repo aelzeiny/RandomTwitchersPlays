@@ -13,7 +13,7 @@ import jwt
 
 SUPER_SECRET_KEY = os.environ['PRESENTER_SUPER_SECRET']
 APP_EXTERNAL_URL = 'https://twitcharena.live'
-APP_INTERNAL_URL = 'https://twitcharena.live/api/queue'
+APP_INTERNAL_URL = 'https://twitcharena.live/api/users'
 WS_URL = 'wss://nq8v1ckz81.execute-api.us-east-1.amazonaws.com/dev'
 API_URL = 'https://hvpdl44jfl.execute-api.us-east-1.amazonaws.com/dev'
 
@@ -59,24 +59,24 @@ class AppApi:
         response.raise_for_status()
         return response.json()['payload'] == 'REMOVED'
 
-    def user_position(self, username) -> int:
+    def user_position(self, username) -> Tuple[Optional[int], bool]:
         response = self.api_session.get(f'{API_URL}/user/{username}')
         response.raise_for_status()
         data = response.json()
-        return data['position']
+        return data['position'], data['in_stream']
 
     def queue_rotate(self) -> Optional[Tuple[str, str]]:
-        response = self.api_session.post(APP_INTERNAL_URL)
+        response = self.api_session.post(f'{API_URL}/queue')
         response.raise_for_status()
         data = response.json()
         return data['username']
 
     def queue_broadcast(self):
-        response = self.api_session.get(APP_INTERNAL_URL)
+        response = self.api_session.get(f'{API_URL}/queue')
         response.raise_for_status()
 
     def queue_whitelist(self, usernames: List[str]) -> List[str]:
-        response = self.api_session.put(APP_INTERNAL_URL, json=usernames)
+        response = self.api_session.put(f'{API_URL}/queue', json=usernames)
         response.raise_for_status()
         return response.json()
 

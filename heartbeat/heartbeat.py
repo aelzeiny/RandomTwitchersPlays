@@ -74,21 +74,14 @@ async def init_heartbeat():
             ])
             log.debug('users: ' + str(new_whitelisted_users))
             api.stream_update(new_whitelisted_users)
-            failed_to_notify = api.queue_whitelist(new_whitelisted_users)
-
-            for user in failed_to_notify:
-                await bot._ws.send_privmsg(
-                    TWITCH_CHANNEL,
-                    f"@{user} you're not logged in and in queue. You have {QUEUE_TIMEOUT_SECS} "
-                    f"seconds to visit {APP_EXTERNAL_URL}/queue"
-                )
+            api.queue_whitelist(new_whitelisted_users)
             if added_user:
                 new_whitelisted = ', '.join([f'@{u}' for _, u in new_whitelisted_users])
                 await bot._ws.send_privmsg(TWITCH_CHANNEL, f"On Stream: {new_whitelisted}")
 
 
 if __name__ == "__main__":
-    bot.loop.create_task(queue_listener())
-    # bot.loop.create_task(init_heartbeat())
+    # bot.loop.create_task(queue_listener())
+    bot.loop.create_task(init_heartbeat())
     # bot.loop.create_task(spam_help())
     bot.run()

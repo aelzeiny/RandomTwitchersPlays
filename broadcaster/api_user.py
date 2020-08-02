@@ -77,5 +77,6 @@ def position_queue(event, *_, **__):
     username = event['pathParameters']['username']
     index = store.queue_rank(username)
     if index is None:
-        return {'position': None}
-    return {'position': index + 1}
+        in_stream = username in store.get_whitelist()
+        return {'position': None, 'in_stream': in_stream}
+    return {'position': index + 1, 'in_stream': False}

@@ -52,7 +52,7 @@ def _open_conn(conn_id, oauth: Optional[str], jwt_token: Optional[str]) -> bool:
         raise ValueError('specify at least one')
     if oauth:
         username = store.oauth_to_user(oauth)
-        if not username or not store.queue_contains(username):
+        if not username or not store.queue_contains(username) or username not in store.get_whitelist():
             return False
         store.conn_push(username, conn_id)
     else:

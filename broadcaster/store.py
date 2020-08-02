@@ -76,6 +76,9 @@ def conn_pop(*conn_ids: List[str]) -> NoReturn:
 
 
 def conn_remove(*usernames: str) -> List[str]:
+    if not usernames:
+        return []
+
     sockets_keys = [__conn_sockets_key(u) for u in usernames]
     # get all open websocket connections from the user
     all_open_websocket_conn_ids = []

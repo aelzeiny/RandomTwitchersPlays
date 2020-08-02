@@ -29,14 +29,12 @@ def broadcast_status(*_, **__):
 @secret
 @jsonify
 def whitelist(event, *_, **__):
-    body = json.loads(event.get('body', '{}'))
-    new_whitelist = body['usernames']
-    unwhitelisted = set(store.get_whitelist()) - set(new_whitelist)
-    if body and 'usernames' in body:
-        store.set_whitelist(body['usernames'])
+    new_whitelist = json.loads(event.get('body', '[]'))
+    blacklisted = set(store.get_whitelist()) - set(new_whitelist)
+    store.set_whitelist(new_whitelist)
 
     # goodbye unwhitelisted
-    removed_conn_ids = store.conn_remove(*unwhitelisted)
+    removed_conn_ids = store.conn_remove(*blacklisted)
     api_websocket.close_sockets(removed_conn_ids)
 
     api_websocket.broadcast_status()
