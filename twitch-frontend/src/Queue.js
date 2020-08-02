@@ -24,31 +24,31 @@ function JoinPrompt({ callback }) {
 function Queue(props) {
     const [inQueue, setInQueue] = useState(false);
     useEffect(() => {
-        const { token } = cookie.parse(document.cookie);
+        const { token, username } = cookie.parse(document.cookie);
         if (!token) {
             props.history.push('/');
             return;
         }
         const ws = openQueueConnection(token);
-        ws.onclose = () => {
-            props.history.push('/');
-        }
         ws.onmessage = (raw) => {
             const message = JSON.parse(raw.data);
             console.log(message);
-            if (message.id === 'play')
-                setInQueue(true);
+            if (message.id === 'status') {
+            }
         };
 
         let interval;
         ws.onopen = () => {
             // AWS API Gateway has idle connection timeouts of 10 min.
             interval = setInterval(() => ws.send(JSON.stringify({action: 'ping'})), 5 * 60 * 1000);
+            // request status action from socket
+            ws.send(JSON.stringify({action: 'status'}));
         }
 
         return () => {
             clearInterval(interval);
-            ws.close();
+            if (ws && ws.readyState === WebSocket.OPEN)
+                ws.close();
         };
     }, [props.history, setInQueue]);
 

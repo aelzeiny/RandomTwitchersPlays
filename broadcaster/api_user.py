@@ -1,6 +1,10 @@
+import json
 import os
 import logging
+from typing import Dict, Optional
 
+import jwt
+from jwt.algorithms import RSAAlgorithm
 import requests
 
 from decorators import jsonify, auth_or_secret
@@ -29,15 +33,19 @@ def login(event, *_, **__):
     )
     if not (200 <= response.status_code < 300):
         return response.json(), response.status_code
-
     data = response.json()
+    try:
+        oidc_token = _validate_oidc(data['id_token'])
+    except (AssertionError, KeyError) as e:
+        return str(e), 401
     # keys: access_token, expires_in, id_token, refresh_token, scope, token_type
     return 'success', 200, {
-        'headers': {'Set-Cookie': f'token="{data["access_token"]}"; Path=/; SameSite=None; Secure'},
+        'headers': {'Set-Cookie': f'token="{data["access_token"]}"; Path=/; Secure'},
         'multiValueHeaders': {
             "Set-Cookie": [
-                f'token="{data["access_token"]}"; Path=/; SameSite=None; Secure',
-                f'refresh="{data["refresh_token"]}"; Path=/; SameSite=None; Secure'
+                f'token="{data["access_token"]}"; Path=/; Secure',
+                f'refresh="{data["refresh_token"]}"; Path=/; Secure',
+                f'username="{oidc_token["preferred_username"]}; Path=/; Secure"'
             ]
         }
     }
@@ -77,6 +85,23 @@ def position_queue(event, *_, **__):
     username = event['pathParameters']['username']
     index = store.queue_rank(username)
     if index is None:
+        print(store.get_whitelist())
         in_stream = username in store.get_whitelist()
         return {'position': None, 'in_stream': in_stream}
     return {'position': index + 1, 'in_stream': False}
+
+
+def _validate_oidc(id_token: str) -> Optional[Dict[str, str]]:
+    header = jwt.get_unverified_header(id_token)
+    twitch_pub_res = requests.get('https://id.twitch.tv/oauth2/keys')
+    twitch_pub_res.raise_for_status()
+    twitch_pub_data = twitch_pub_res.json()
+    assert 'keys' in twitch_pub_data, 'Twitch pubkey changed'
+    twitch_pub_keys = {k['kid']: k for k in twitch_pub_data['keys']}
+    assert 'kid' in header and header['kid'] in twitch_pub_keys, 'No matching Key ID from twitch. Check your id token.'
+    matched_key = twitch_pub_keys[header['kid']]
+    matched_rsa = jwt.algorithms.RSAAlgorithm.from_jwk(json.dumps(matched_key))
+
+    decoded_data = jwt.decode(id_token, matched_rsa, algorithm=matched_key['alg'], options=dict(verify_aud=False))
+    assert decoded_data['aud'] == os.environ['TWITCH_CLIENT_ID'], 'This token is not meant for this client'
+    return decoded_data

@@ -52,7 +52,7 @@ def _open_conn(conn_id, oauth: Optional[str], jwt_token: Optional[str]) -> bool:
         raise ValueError('specify at least one')
     if oauth:
         username = store.oauth_to_user(oauth)
-        if not username or not store.queue_contains(username) or username not in store.get_whitelist():
+        if not username or (not store.queue_contains(username) and username not in store.get_whitelist()):
             return False
         store.conn_push(username, conn_id)
     else:
@@ -99,9 +99,10 @@ def broadcast_to_conns(conn_ids: List[str], data: Union[dict, str, int, float, l
 
 
 def broadcast_status(all_conn_ids: Optional[List[str]] = None) -> List[str]:
-    if not all_conn_ids:
+    if all_conn_ids is None:
         all_conn_ids = store.conn_scan()
     data = {
+        'id': 'status',
         'queue': store.queue_scan(1000),
         'whitelist': store.get_whitelist()
     }
@@ -110,7 +111,7 @@ def broadcast_status(all_conn_ids: Optional[List[str]] = None) -> List[str]:
 
 
 def close_sockets(all_conn_ids: Optional[List[str]] = None) -> NoReturn:
-    if not all_conn_ids:
+    if all_conn_ids is None:
         all_conn_ids = store.conn_scan()
     gatewayapi = _get_api_gateway_client()
     for conn_id in all_conn_ids:

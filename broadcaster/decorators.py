@@ -158,17 +158,18 @@ def auth(func):
         )
         if not (200 <= challenge_req.status_code < 300):
             return __unauthorized('Unauthorized with bad refresh token')
-
+        username = challenge_req.json()['login']
         answer = func(
             *args,
-            user=challenge_req.json()['login'],
+            user=username,
             token=refresh_data['access_token'],
             **kwargs
         )
         multi_headers = answer.pop('multiValueHeaders', {})
         set_cookies = multi_headers.pop('Set-Cookie', [])
-        set_cookies.append(f'token="{refresh_data["access_token"]}"; Path=/; SameSite=None; Secure')
-        set_cookies.append(f'refresh="{refresh_data["refresh_token"]}"; Path=/; SameSite=None; Secure')
+        set_cookies.append(f'token="{refresh_data["access_token"]}"; Path=/; Secure')
+        set_cookies.append(f'refresh="{refresh_data["refresh_token"]}"; Path=/; Secure')
+        set_cookies.append(f'username="{username}"; Path=/; Secure')
         multi_headers['Set-Cookie'] = set_cookies
         answer['multiValueHeaders'] = multi_headers
         return answer

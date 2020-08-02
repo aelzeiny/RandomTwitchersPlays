@@ -29,24 +29,24 @@ async def init_heartbeat():
         await asyncio.sleep(HEARTBEAT_SECS)
 
         stream_user_sessions, whitelisted_user_sessions = api.stream_status()
-        stream_user_sessions = sorted(stream_user_sessions, key=lambda x: -x[2])
-        whitelisted_user_sessions = sorted(whitelisted_user_sessions, key=lambda x: x[2])
-        stream_users: Set[str] = set([u for u, _, _ in stream_user_sessions])
+        stream_user_sessions = sorted(stream_user_sessions, key=lambda x: -x[1])
+        whitelisted_user_sessions = sorted(whitelisted_user_sessions, key=lambda x: x[1])
+        stream_users: Set[str] = set([u for u, _ in stream_user_sessions])
 
         # Different types of users:
         # Those that have joined but their time is up
         # Those that are whitelisted but haven't yet joined
         # Those that whitelisted but haven't yet
         expired_users = [
-            (u, t) for u, t, playtime_secs in stream_user_sessions
+            u for u, playtime_secs in stream_user_sessions
             if playtime_secs >= SESSION_TIMEOUT_SECS
         ]
         next_users = [
-            (u, t) for u, t, _ in whitelisted_user_sessions
+            u for u, _ in whitelisted_user_sessions
             if u not in stream_users
         ]
         expired_next_users = [
-            (u, t) for u, t, queuetime_secs in whitelisted_user_sessions
+            u for u, queuetime_secs in whitelisted_user_sessions
             if u not in stream_users and queuetime_secs >= QUEUE_TIMEOUT_SECS
         ]
 
@@ -73,10 +73,11 @@ async def init_heartbeat():
                 if u not in expired_next_users
             ])
             log.debug('users: ' + str(new_whitelisted_users))
-            api.stream_update(new_whitelisted_users)
-            api.queue_whitelist(new_whitelisted_users)
+            if set([u for u, _ in whitelisted_user_sessions]) != set(new_whitelisted_users):
+                api.stream_update(new_whitelisted_users)
+                api.queue_whitelist(new_whitelisted_users)
             if added_user:
-                new_whitelisted = ', '.join([f'@{u}' for _, u in new_whitelisted_users])
+                new_whitelisted = ', '.join([f'@{u}' for u in new_whitelisted_users])
                 await bot._ws.send_privmsg(TWITCH_CHANNEL, f"On Stream: {new_whitelisted}")
 
 

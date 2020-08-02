@@ -56,7 +56,7 @@ def conn_push(username, conn_id, rank: Optional[int] = None) -> NoReturn:
     to get queue updates first!
     """
     if rank is None:
-        rank = redis.zrank(REDIS_QUEUE, username)
+        rank = redis.zrank(REDIS_QUEUE, username) or 1
     with redis.pipeline() as pipe:
         pipe.sadd(__conn_sockets_key(username), conn_id)
         pipe.zadd(REDIS_CONN_SET, {conn_id: rank}, nx=True)

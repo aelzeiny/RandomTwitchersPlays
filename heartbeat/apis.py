@@ -44,8 +44,7 @@ class AppApi:
         return stream, whitelist
 
     def stream_update(self, usernames: List[str]):
-        user_data = [{'username': u} for u in usernames]
-        response = self.app_session.post(APP_INTERNAL_URL, data=json.dumps(user_data))
+        response = self.app_session.post(APP_INTERNAL_URL, data=json.dumps(usernames))
         response.raise_for_status()
         return response.json()
 

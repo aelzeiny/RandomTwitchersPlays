@@ -17,12 +17,12 @@ export async function authorize(code) {
 
 
 export async function joinQueue() {
-    return await axiosWithCookies.put('/lambda/queue');
+    return await axiosWithCookies.put('/lambda/user');
 }
 
 
 export async function leaveQueue() {
-    return await axiosWithCookies.delete('/lambda/queue');
+    return await axiosWithCookies.delete('/lambda/user');
 }
 
 

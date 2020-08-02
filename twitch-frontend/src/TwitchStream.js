@@ -8,6 +8,7 @@ const TwitchStream = (props) => {
     args.chat = undefined;
     return (
         <div className='twitch-embedder'>
+            {/*<div style={{height: 'calc(100vh - 85px)', backgroundColor: 'black'}}/>*/}
             <TwitchEmbed
                 channel="RandomTwitchersPlay"
                 theme="dark"
