@@ -57,17 +57,11 @@ async def init_heartbeat():
             expired_iter = iter(expired_next_users)
             added_user = False
             for _ in range(num_empty_slots):
-                up_next, is_notified = api.queue_rotate()
+                up_next = api.queue_rotate()
                 if up_next:
                     added_user = True
                     new_whitelisted_users.append(up_next)
                     await bot._ws.send_privmsg(TWITCH_CHANNEL, f"@{up_next} You're up!")
-                    if not is_notified:
-                        await bot._ws.send_privmsg(
-                            TWITCH_CHANNEL,
-                            f"@{up_next} you're not logged in and in queue. You have 60 seconds to visit this page "
-                            f"{APP_EXTERNAL_URL}/queue"
-                        )
                 else:  # Nobody in Q. Just use the least-expired user until queue fills back up
                     try:
                         new_whitelisted_users.append(next(expired_iter))
@@ -80,6 +74,14 @@ async def init_heartbeat():
             ])
             log.debug('users: ' + str(new_whitelisted_users))
             api.stream_update(new_whitelisted_users)
+            failed_to_notify = api.queue_whitelist(new_whitelisted_users)
+
+            for user in failed_to_notify:
+                await bot._ws.send_privmsg(
+                    TWITCH_CHANNEL,
+                    f"@{user} you're not logged in and in queue. You have {QUEUE_TIMEOUT_SECS} "
+                    f"seconds to visit {APP_EXTERNAL_URL}/queue"
+                )
             if added_user:
                 new_whitelisted = ', '.join([f'@{u}' for _, u in new_whitelisted_users])
                 await bot._ws.send_privmsg(TWITCH_CHANNEL, f"On Stream: {new_whitelisted}")
@@ -87,6 +89,6 @@ async def init_heartbeat():
 
 if __name__ == "__main__":
     bot.loop.create_task(queue_listener())
-    bot.loop.create_task(init_heartbeat())
-    bot.loop.create_task(spam_help())
+    # bot.loop.create_task(init_heartbeat())
+    # bot.loop.create_task(spam_help())
     bot.run()

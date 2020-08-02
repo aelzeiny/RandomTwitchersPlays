@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "scripts": {
     "build": "time serverless deploy",
-    "dev": "export REDIS_HOST='127.0.0.1' && serverless offline start --port=9000 --httpsProtocol certs"
+    "dev": "export REDIS_HOST='127.0.0.1' && serverless offline start --port=9000"
   },
   "dependencies": {},
   "devDependencies": {

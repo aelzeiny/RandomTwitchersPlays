@@ -68,8 +68,7 @@ export default class Play extends React.Component {
 	    }
 
 	    this.ws.onclose = () => {
-	        console.log('exiting');
-	        this.props.history.push('/');
+	        // this.props.history.push('/');
         };
     }
 

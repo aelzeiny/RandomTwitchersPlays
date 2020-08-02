@@ -1,35 +1,31 @@
 import axios from 'axios';
-const https = require('https');
 
 
-const apiGateway = 'https://fhfgpzs40f.execute-api.us-east-1.amazonaws.com/dev';
-const wsGateway = 'wss://nq8v1ckz81.execute-api.us-east-1.amazonaws.com/dev';
 axios.defaults.withCredentials = true;
+
+window.axios = axios;
 
 
 const axiosWithCookies = axios.create({
-    withCredentials: true,
-    httpsAgent: new https.Agent({
-        rejectUnauthorized: false
-    })
+    withCredentials: true
 });
 
 
 export async function authorize(code) {
-    return await axiosWithCookies.get(`${apiGateway}/authorize/${code}`);
+    return await axiosWithCookies.get(`/lambda/login/${code}`);
 }
 
 
 export async function joinQueue() {
-    return await axiosWithCookies.put(`${apiGateway}/queue`);
+    return await axiosWithCookies.put('/lambda/queue');
 }
 
 
 export async function leaveQueue() {
-    return await axiosWithCookies.delete(`${apiGateway}/queue`);
+    return await axiosWithCookies.delete('/lambda/queue');
 }
 
 
 export async function openQueueConnection (token) {
-    return new WebSocket(`${wsGateway}?token=${token}`);
+    return new WebSocket(`wss://nq8v1ckz81.execute-api.us-east-1.amazonaws.com/dev?token=${token}`);
 }

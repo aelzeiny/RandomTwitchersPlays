@@ -25,115 +25,79 @@ provider:
 
 plugins:
   - serverless-python-requirements
-  - serverless-domain-manager
   - serverless-offline-python
 custom:
   pythonRequirements:
     dockerizePip: true
     noDeploy: []
-  customDomain:
-    domainName: lambda.twitcharena.live
-    stage: ${self:provider.stage}
-    basePath: ''
-    certificateName: lambda.twitcharena.live
-    createRoute53Record: true
-    endpointType: 'regional'
-    securityPolicy: tls_1_2
-    apiType: rest
-    autoDomain: false
 
 functions:
   connectionManager:
-    handler: handler.connection_manager
+    handler: api_websocket.connection_manager
     events:
       - websocket:
           route: $connect
       - websocket:
           route: $disconnect
   defaultMessage:
-    handler: handler.default_message
+    handler: api_websocket.default_message
     events:
       - websocket:
           route: $default
-
+  status:
+    handler: api_websocket.get_status
+    events:
+      - websocket:
+          route: status
   broadcast:
-    handler: handler.broadcast_status
-    events:
-      - http:
-          path: broadcast
-          method: post
-  position:
-    handler: handler.position_queue
-    events:
-      - http:
-          path: queue/{username}
-          method: get
-          request:
-            parameters:
-              paths:
-                username: true
-  next:
-    handler: handler.next_queue
+    handler: api_websocket.broadcast_status
     events:
       - http:
           path: queue
-          method: post
+          method: GET
 
-  join:
-    handler: handler.join_queue
+  rotate:
+    handler: api_queue.rotate_queue
+    events:
+      - http:
+          path: queue
+          method: POST
+  whitelist:
+    handler: api_queue.whitelist
     events:
       - http:
           path: queue
           method: PUT
-          cors:
-            origins:
-              - https://localhost:3000
-              - https://127.0.0.1:3000
-              - https://twitcharena.live
-            headers:
-              - Content-Type
-              - X-Amz-Date
-              - Authorization
-              - X-Api-Key
-              - X-Amz-Security-Token
-              - X-Amz-User-Agent
-            allowCredentials: true
+
+  join:
+    handler: api_user.join_queue
+    events:
+      - http:
+          path: user
+          method: PUT
   leave:
-    handler: handler.leave_queue
+    handler: api_user.leave_queue
     events:
       - http:
-          path: queue
+          path: user
           method: DELETE
-          cors:
-            cors:
-              origins:
-                - https://localhost:3000
-                - https://127.0.0.1:3000
-                - https://twitcharena.live
-              headers:
-                - Content-Type
-                - X-Amz-Date
-                - Authorization
-                - X-Api-Key
-                - X-Amz-Security-Token
-                - X-Amz-User-Agent
-              allowCredentials: true
-  authorize:
-    handler: handler.authorize
+  position:
+    handler: api_user.position_queue
     events:
       - http:
-          path: authorize/{code}
+          path: user/{username}
           method: GET
-          cors:
-            origins:
-              - https://localhost:3000
-              - https://127.0.0.1:3000
-              - https://twitcharena.live
-            headers:
-              - Content-Type
-              - X-Amz-Date
-              - Authorization
-              - X-Api-Key
-              - X-Amz-Security-Token
-              - X-Amz-User-Agent
-            allowCredentials: true
+          request:
+            parameters:
+              paths:
+                username: true
+  login:
+    handler: api_user.login
+    events:
+      - http:
+          path: login/{code}
+          method: GET
+          request:
+            parameters:
+              paths:
+                code: true

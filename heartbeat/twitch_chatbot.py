@@ -48,7 +48,7 @@ async def event_message(ctx):
 @bot.command(name='join')
 async def join(ctx: Context):
     username = ctx.author.name
-    url = api.queue_join(username)
+    url = api.user_join(username)
     log.info(f'{ctx.author.name} joining queue @{url}')
     await ctx.send(f'Welcome @{username}! Please wait in line here: {url}')
 
@@ -61,24 +61,14 @@ async def leave(ctx: Context):
 @bot.command(name='goodbye')
 async def goodbye(ctx: Context):
     log.info(f'{ctx.author.name} leaving queue')
-    api.queue_remove(ctx.author.name)
+    api.user_remove(ctx.author.name)
     await ctx.send(f'Goodbye, @{ctx.author.name}! We hope you can "!join" us again soon!')
-
-
-@bot.command(name='queue', aliases=['line'])
-async def queue(ctx):
-    usernames = api.queue_status()
-    up_next = [f"({i + 1}) @{d[0]}" for i, d in enumerate(usernames)]
-    await ctx.send_me(','.join(up_next))
-    for username, is_connected in usernames:
-        if not is_connected:
-            ctx.send(f"@{username} you're not in the Arena. Please check your private messages (whispers).")
 
 
 @bot.command(name='position', aliases=['where', 'status'])
 async def position(ctx):
     username = ctx.author.name
-    pos = api.queue_position(username)
+    pos = api.user_position(username)
     if pos:
         await ctx.send(f'@{username} is #{pos} in the queue.')
     else:
@@ -115,13 +105,21 @@ async def queue_listener():
     """
     async with api.connect_ws() as websocket:
         while True:
-            queue_usernames = json.loads(await websocket.recv())[:5]
+            data = json.loads(await websocket.recv())
+            queue_usernames = data['queue'][:5]
+            whitelist_usernames = data['whitelist']
             if queue_usernames:
-                up_next = ', '.join([f"#{i + 1} @{d}" for i, d in enumerate(queue_usernames)])
+                up_next = ', '.join([f"#{i + 1} @{u}" for i, u in enumerate(queue_usernames)])
+                on_now = ', '.join([f"@{u}" for u in whitelist_usernames])
                 log.info(f'Next: {queue_usernames}')
+                log.info(f'On Stream: {on_now}')
                 await bot._ws.send_privmsg(  # noqa
                     TWITCH_CHANNEL,
                     f'Coming up: {up_next}'
+                )
+                await bot._ws.send_privmsg(
+                    TWITCH_CHANNEL,
+                    f'On Stream: {on_now}'
                 )
             else:
                 await bot._ws.send_privmsg(

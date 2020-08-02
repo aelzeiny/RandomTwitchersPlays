@@ -1,10 +1,14 @@
 import datetime as dt
 from typing import List, Tuple, Optional, NoReturn
 
+import requests
 from redis import Redis
-REDIS_QUEUE = 'queue'
-REDIS_CONN_SET = 'open_conn'
 from os import getenv
+import pickle
+
+REDIS_QUEUE = '_queue'
+REDIS_CONN_SET = '_open_conn'
+REDIS_WHITELIST = '_whitelist'
 
 
 redis = Redis(
@@ -30,8 +34,8 @@ def queue_pop() -> Tuple[Optional[str], Optional[int]]:
     return username_bytes.decode('utf8'), joined_dttm
 
 
-def queue_remove(username) -> int:
-    return redis.zrem(REDIS_QUEUE, username)
+def queue_remove(*usernames) -> int:
+    return redis.zrem(REDIS_QUEUE, *usernames)
 
 
 def queue_scan(number_of_people) -> List[str]:
@@ -71,18 +75,24 @@ def conn_pop(*conn_ids: List[str]) -> NoReturn:
         pipe.execute()
 
 
-def conn_remove(username) -> NoReturn:
-    sockets_key = __conn_sockets_key(username)
+def conn_remove(*usernames: str) -> List[str]:
+    sockets_keys = [__conn_sockets_key(u) for u in usernames]
     # get all open websocket connections from the user
-    all_open_websocket_conn_ids = redis.srem(sockets_key, 0, -1)
-    # ask redis to forget all these connection ids from the broadcast
-    if all_open_websocket_conn_ids:
-        redis.zrem(REDIS_CONN_SET, *all_open_websocket_conn_ids)
-    # ask redis to forget all open websocket connections from the user
-    redis.delete(sockets_key)
+    all_open_websocket_conn_ids = []
+    for key in sockets_keys:
+        all_open_websocket_conn_ids.extend(redis.smembers(key))
+    with redis.pipeline() as pipe:
+        # ask redis to forget all these connection ids from the broadcast
+        if all_open_websocket_conn_ids:
+            pipe.zrem(REDIS_CONN_SET, *all_open_websocket_conn_ids)
+        # ask redis to forget all open websocket connections from the user
+        pipe.delete(*sockets_keys)
+        pipe.execute()
+
+    return all_open_websocket_conn_ids
 
 
-def conn_get(username) -> List[str]:
+def conn_get(username: str) -> List[str]:
     return [x.decode('utf8') for x in redis.smembers(__conn_sockets_key(username))]
 
 
@@ -90,19 +100,53 @@ def conn_scan() -> List[str]:
     return [x.decode('utf8') for x in redis.zrange(REDIS_CONN_SET, 0, -1)]
 
 
-def __conn_sockets_key(username: str):
+def __conn_sockets_key(username: str) -> NoReturn:
     return f'{REDIS_CONN_SET}_{username}'
 
 
-def oauth_cache_get(oauth):
+def oauth_cache_get(oauth) -> Optional[str]:
     answer = redis.get(oauth)
     if answer:
         return answer.decode('utf8')
     return None
 
 
-def oauth_cache_update(oauth, username):
-    answer = redis.set(oauth, username, 60 * 15)
-    if answer:
-        return answer.decode('utf8')
-    return None
+def oauth_cache_update(oauth, username) -> NoReturn:
+    redis.set(oauth, username, 60 * 15)
+
+
+def get_whitelist() -> List[str]:
+    binary_whitelist = redis.get(REDIS_WHITELIST)
+    if not binary_whitelist:
+        return []
+    return pickle.loads(binary_whitelist)
+
+
+def set_whitelist(usernames: List[str]) -> NoReturn:
+    redis.set(REDIS_WHITELIST, pickle.dumps(usernames))
+
+
+def oauth_to_user(oauth):
+    cached_user = oauth_cache_get(oauth)
+    if cached_user:
+        return cached_user
+    challenge_req = requests.get(
+        'https://id.twitch.tv/oauth2/validate',
+        headers={'Authorization': f'Bearer {oauth}'}
+    )
+    if not (200 <= challenge_req.status_code < 300):
+        return None
+    user_info = challenge_req.json()
+    oauth_cache_update(oauth, user_info['login'])
+    return user_info['login']
+
+
+def oauth_to_picture(oauth):
+    info_req = requests.get(
+        'https://id.twitch.tv/oauth2/userinfo',
+        headers={'Authorization': f'Bearer {oauth}'}
+    )
+    info_req.raise_for_status()
+    user_info = info_req.json()
+    # keys: aud, exp, iat, iss, sub, picture, preferred_username
+    return user_info['picture']

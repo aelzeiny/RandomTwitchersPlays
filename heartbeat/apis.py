@@ -13,9 +13,9 @@ import jwt
 
 SUPER_SECRET_KEY = os.environ['PRESENTER_SUPER_SECRET']
 APP_EXTERNAL_URL = 'https://twitcharena.live'
-APP_INTERNAL_URL = 'https://twitcharena.live/api/users'
+APP_INTERNAL_URL = 'https://twitcharena.live/api/queue'
 WS_URL = 'wss://nq8v1ckz81.execute-api.us-east-1.amazonaws.com/dev'
-API_URL = 'https://fhfgpzs40f.execute-api.us-east-1.amazonaws.com/dev'
+API_URL = 'https://hvpdl44jfl.execute-api.us-east-1.amazonaws.com/dev'
 
 
 class AppApi:
@@ -49,37 +49,36 @@ class AppApi:
         response.raise_for_status()
         return response.json()
 
-    def queue_join(self, username) -> str:
-        response = self.api_session.put(f'{API_URL}/queue', json={'username': username})
+    def user_join(self, username) -> str:
+        response = self.api_session.put(f'{API_URL}/user', json={'username': username})
         response.raise_for_status()
         return f"{APP_EXTERNAL_URL}/queue"
 
-    def queue_remove(self, username) -> bool:
-        response = self.api_session.delete(f'{API_URL}/queue', json={'username': username})
+    def user_remove(self, username) -> bool:
+        response = self.api_session.delete(f'{API_URL}/user', json={'username': username})
         response.raise_for_status()
         return response.json()['payload'] == 'REMOVED'
 
-    def queue_position(self, username) -> int:
-        response = self.api_session.get(f'{API_URL}/queue/{username}')
+    def user_position(self, username) -> int:
+        response = self.api_session.get(f'{API_URL}/user/{username}')
         response.raise_for_status()
         data = response.json()
         return data['position']
 
-    def queue_status(self) -> List[Tuple[str, bool]]:
-        response = self.api_session.get(f'{API_URL}/queue')
-        response.raise_for_status()
-        data = response.json()
-        return [(d['username'], d['is_connected']) for d in data]
-
     def queue_rotate(self) -> Optional[Tuple[str, str]]:
-        response = self.api_session.post(f'{API_URL}/queue')
+        response = self.api_session.post(APP_INTERNAL_URL)
         response.raise_for_status()
         data = response.json()
-        return data['username'], data['is_notified']
+        return data['username']
 
     def queue_broadcast(self):
-        response = self.api_session.post(f'{API_URL}/broadcast')
+        response = self.api_session.get(APP_INTERNAL_URL)
         response.raise_for_status()
+
+    def queue_whitelist(self, usernames: List[str]) -> List[str]:
+        response = self.api_session.put(APP_INTERNAL_URL, json=usernames)
+        response.raise_for_status()
+        return response.json()
 
     def connect_ws(self):
         return websockets.connect(f'{WS_URL}?jwt={self.jwt}')

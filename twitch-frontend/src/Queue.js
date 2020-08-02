@@ -6,7 +6,8 @@ import GamepadSelection from "./gamepad/GamepadSelection";
 import GamepadDisplay from "./gamepad/GamepadDisplay";
 import { updateController, switchObservable } from "./gamepad/gamepadApi";
 import Navbar from "./Navbar";
-import { joinQueue, leaveQueue, openQueueConnection } from "./apis";
+import { leaveQueue, openQueueConnection } from "./apis";
+import cookie from 'cookie';
 
 
 function JoinPrompt({ callback }) {
@@ -23,27 +24,32 @@ function JoinPrompt({ callback }) {
 function Queue(props) {
     const [inQueue, setInQueue] = useState(false);
     useEffect(() => {
-        joinQueue().then(res => {
-            const token = res.data.token;
-            const ws = openQueueConnection(token);
-            ws.onmessage = (raw) => {
-                const message = JSON.parse(raw.data);
-                console.log(message);
-                if (message.id === 'play')
-                    setInQueue(true);
-            };
+        const { token } = cookie.parse(document.cookie);
+        if (!token) {
+            props.history.push('/');
+            return;
+        }
+        const ws = openQueueConnection(token);
+        ws.onclose = () => {
+            props.history.push('/');
+        }
+        ws.onmessage = (raw) => {
+            const message = JSON.parse(raw.data);
+            console.log(message);
+            if (message.id === 'play')
+                setInQueue(true);
+        };
 
-            let interval;
-            ws.onopen = () => {
-                // AWS API Gateway has idle connection timeouts of 10 min.
-                interval = setInterval(() => ws.send(JSON.stringify({action: 'ping'})), 5 * 60 * 1000);
-            }
+        let interval;
+        ws.onopen = () => {
+            // AWS API Gateway has idle connection timeouts of 10 min.
+            interval = setInterval(() => ws.send(JSON.stringify({action: 'ping'})), 5 * 60 * 1000);
+        }
 
-            return () => {
-                clearInterval(interval);
-                ws.close();
-            };
-        }).catch(() => props.history.push('/'));
+        return () => {
+            clearInterval(interval);
+            ws.close();
+        };
     }, [props.history, setInQueue]);
 
     const leave = () => {
