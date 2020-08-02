@@ -1,5 +1,5 @@
 echo 'BUILDING SERVERLESS BROADCASTER'
-cd ./broadcaster
+cd ./serverless-auctioneer
 npm run build
 
 echo 'BUILDING FARGATE HEARTBEAT SERVER'
