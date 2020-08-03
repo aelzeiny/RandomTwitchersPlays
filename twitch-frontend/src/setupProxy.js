@@ -14,7 +14,7 @@ module.exports = app => {
     const lambdaProxy = createProxyMiddleware('/lambda', {
         target: `https://hvpdl44jfl.execute-api.us-east-1.amazonaws.com/dev`,
         // target: 'http://localhost:5001',
-        pathRewrite: (path, _) => path.replace('/lambda', ''),
+        // pathRewrite: (path, _) => path.replace('/lambda', ''),
         changeOrigin: true,
         logLevel: 'debug',
         onError: err => console.log(err)
