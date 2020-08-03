@@ -16,6 +16,9 @@ public class TrafficHttpController {
     @Autowired
     private UserRegistry registry;
 
+    @Autowired
+    private RoomManager roomManager;
+
     @GetMapping("/users")
     public String listUsers() {
         JsonArray streamList = serializeUserTimeouts(registry.getUserTimeouts());
@@ -24,6 +27,7 @@ public class TrafficHttpController {
         final JsonObject status = new JsonObject();
         status.add("stream", streamList.getAsJsonArray());
         status.add("whitelist", whitelist.getAsJsonArray());
+        status.addProperty("hasPresenter", roomManager.getRoom().getPresenter().isPresent());
         return status.toString();
     }
 

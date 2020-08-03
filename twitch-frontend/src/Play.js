@@ -9,10 +9,11 @@ import {switchObservable, updateController} from "./gamepad/gamepadApi";
 import { compressInput, decompressInput } from "./gamepad/switchApi";
 import { Subject } from 'rxjs';
 import Navbar from "./Navbar";
+import cookie from "cookie";
 
 WebSocket.prototype.sendMessage = function (msg) {
     const jsonMessage = JSON.stringify(msg);
-    console.log('Sending message: ' + jsonMessage);
+    console.debug('Sending message: ' + jsonMessage);
     this.send(jsonMessage);
 }
 
@@ -20,7 +21,11 @@ WebSocket.prototype.sendMessage = function (msg) {
 export default class Play extends React.Component {
     constructor(props) {
         super(props);
-        this.id = this.props.match.params.uuid;
+
+        this.id = cookie.parse(document.cookie).username;
+        if (!this.id) {
+            this.props.history.push('/');
+        }
 
         this.state = {
             players: new Set(),
@@ -41,7 +46,7 @@ export default class Play extends React.Component {
         });
 	    this.ws.onmessage = (message) => {
             const parsedMessage = JSON.parse(message.data);
-            console.info('Received message:', parsedMessage.id, parsedMessage);
+            console.debug('Received message:', parsedMessage.id, parsedMessage);
 
             switch (parsedMessage.id) {
                 case 'newParticipantArrived':
@@ -183,7 +188,7 @@ export default class Play extends React.Component {
 
     offerToReceiveVideo(player, error, offerSdp) {
 		if (error)
-		    return console.error("sdp offer error")
+		    return console.error("sdp offer error");
 		this.ws.sendMessage({
 			id: "receiveVideoFrom",
 			sender: player,

@@ -67,3 +67,12 @@ code {
   color: #9147ff;
   background-color: transparent;
 }
+
+.btn-primary.focus, .btn-primary:focus {
+  box-shadow: 0 0 0 0.2rem rgba(110, 0, 255, 0.5);
+}
+.btn-primary.focus, .btn-primary:focus, .btn-primary:hover {
+  color: #fff;
+  background-color: #9147ff;
+  border-color: #9147ff;
+}

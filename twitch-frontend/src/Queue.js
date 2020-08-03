@@ -53,6 +53,8 @@ function Queue(props) {
             }
         };
 
+        ws.onerror = () => props.history.push('/queue');  // Refresh the page as a backup
+
         return () => {
             clearInterval(interval);
             if (ws && ws.readyState === WebSocket.OPEN)
