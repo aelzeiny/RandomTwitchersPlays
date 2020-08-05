@@ -1,11 +1,10 @@
-import React, { useRef, useState } from 'react';
-import loadingScreen from './nook_loading.jpg';
+import React, { useState } from 'react';
 import './Present.css';
 
-import { WebRtcPeer } from 'kurento-utils';
 import Base64 from 'crypto-js/enc-base64';
 import HmacSHA256 from 'crypto-js/hmac-sha256';
 import Navbar from "./Navbar";
+import Room from "./Room";
 
 
 const encodeBase64 = (value, padding) => {
@@ -32,114 +31,36 @@ const toJwt = (message, secret) => {
 export default function Present () {
     const [secret, setSecret] = useState('');
     const [proxy, setProxy] = useState('ws://localhost:9999');
-    const vidRef = useRef();
+    const [wsPair, setWsPair] = useState({ main: undefined, proxy: undefined });
+
     const name = '!PRESENTER';
-    let rtcPeer;
+
+    const onMessageCallback = ({id, commonInput}) => {
+        if (id === 'switchInput')
+            wsPair.proxy.sendMessage(commonInput);
+    };
 
     const connect = (e) => {
-        const bttn = e.target;
-        bttn.setAttribute('disabled', true);
+        const btn = e.target;
+        btn.setAttribute('disabled', true);
         const jwt = toJwt({name: name}, secret);
-        let ws = new WebSocket('wss://' + window.location.host + `/traffic?jwt=${jwt}`);
+        const wsx = new WebSocket('wss://' + window.location.host + `/traffic?jwt=${jwt}`);
         const wsProxy = new WebSocket(proxy);
-        let pingInterval;
+        let pingInterval = setInterval(() => {
+            if (wsx.readyState === WebSocket.OPEN)
+                wsx.sendMessage({id: 'ping'})
+        }, 10 * 60 * 1000);
 
-        const receiveVideoResponse = ({ sdpAnswer }) => {
-            rtcPeer.processAnswer (sdpAnswer, function (error) {
-                if (error) return console.error (error);
-            });
-        };
-
-        const addIceCandidate = ({ candidate }) => {
-            rtcPeer.addIceCandidate(candidate, (error) => {
-                if (error) {
-                    console.error("Error adding candidate: " + error);
-                }
-            });
-        };
-
-        const onSwitchInput = ({ commonInput }) => {
-            wsProxy.sendMessage(commonInput);
-        };
-
-        const offerToReceiveVideo = (error, offerSdp) => {
-            if (error)
-                return console.error("sdp offer error " + error)
-            ws.sendMessage({
-                id: "receiveVideoFrom",
-                sender: name,
-                sdpOffer: offerSdp
-            });
-        };
-
-	    ws.onmessage = (message) => {
-            const parsedMessage = JSON.parse(message.data);
-            console.info('Received message:', parsedMessage.id);
-            const isPresenter = 'name' in parsedMessage && parsedMessage['name'] === name;
-
-            switch (parsedMessage.id) {
-                case 'receiveVideoAnswer':
-                    if (isPresenter)
-                        receiveVideoResponse(parsedMessage);
-                    else
-                        console.log("Message filtered: ", parsedMessage.id, parsedMessage.name);
-                    break;
-                case 'iceCandidate':
-                    if (isPresenter)
-                        addIceCandidate(parsedMessage);
-                    else
-                        console.log("Message filtered: ", parsedMessage.id, parsedMessage.name);
-                    break;
-                case 'switchInput':
-                    onSwitchInput(parsedMessage);
-                    break;
-                default:
-                    console.log('Message filtered: ', parsedMessage.id);
-            }
-	    }
-
-	    ws.onclose = (err) => {
-            bttn.removeAttribute('disabled');
-	        console.error('we out', err);
-	        if (pingInterval)
+        wsx.onclose = (err) => {
+            btn.removeAttribute('disabled');
+            console.error('we out', err);
+            if (pingInterval)
                 clearInterval(pingInterval);
         };
 
-	    ws.onopen = () => {
-            pingInterval = setInterval(() => ws.sendMessage({id: 'ping'}), 1000 * 5);
-	        console.log('we in', vidRef);
-            const options = {
-                localVideo: vidRef.current,
-                mediaConstraints: {
-                    audio: true,
-                    video: {
-                        mandatory: {
-                            maxWidth: 320,
-                            maxFrameRate: 15,
-                            minFrameRate: 15
-                        }
-                    }
-                },
-                onicecandidate: (candidate) => {
-                    ws.sendMessage({
-                        id: 'onIceCandidate',
-                        candidate: candidate,
-                        name: name
-                    });
-                }
-            };
-
-            rtcPeer = new WebRtcPeer.WebRtcPeerSendonly(options, function offerCallback(err) {
-                if (err)
-                    return console.error(err);
-                try {
-                    this.generateOffer(offerToReceiveVideo)
-                } catch (e) {
-                    console.error(`Cannot generate offer because: ${e}`)
-                }
-            });
-        };
+        setWsPair({main: wsx, proxy: wsProxy});
     }
+
     return (
         <div>
             <Navbar/>
@@ -169,13 +90,12 @@ export default function Present () {
                                 onClick={connect}>Connect</button>
                     </div>
                 </div>
-                <video key='presenter'
-                       ref={vidRef}
-                       className='player-vid'
-                       autoPlay={true}
-                       controls={false}
-                       poster={loadingScreen}/>
             </div>
+            {wsPair.main && <Room
+                id={name}
+                isPresenter={true}
+                ws={wsPair.main}
+                onMessageCallback={onMessageCallback}/>}
         </div>
     )
 }

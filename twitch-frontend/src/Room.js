@@ -21,12 +21,12 @@ export default class Room extends React.Component {
         super(props);
 
         this.id = props.id;
+        this.isPresenter = props.isPresenter;
 
         this.state = {
             players: new Set(),
             presenter: null
         };
-
         this.webRtc = {};
         this.ws = props.ws;
     }
@@ -85,17 +85,26 @@ export default class Room extends React.Component {
                 }
                 console.log(`${this.id} sees another player: ${player}`);
                 if (player === this.id) {
+                    let vidOptions;
+                    if (!this.isPresenter) {
+                        vidOptions = {
+                            maxWidth: 100,
+                                maxFrameRate: 15,
+                                minFrameRate: 15
+                        }
+                    } else {
+                        vidOptions = {
+                            maxWidth: 1280,
+                            maxFrameRate: 60,
+                            minFrameRate: 15
+                        }
+                    }
+
                     const options = {
                         localVideo: this.webRtc[player].video,
                         mediaConstraints: {
                             audio: true,
-                            video: {
-                                mandatory: {
-                                    maxWidth: 320,
-                                    maxFrameRate: 15,
-                                    minFrameRate: 15
-                                }
-                            }
+                            video: vidOptions
                         },
                         onicecandidate: this.onIceCandidate.bind(this, player)
                     };
@@ -177,7 +186,6 @@ export default class Room extends React.Component {
             const switchCommonInput = decompressInput(commonInput);
             this.webRtc[this.state.presenter].observable.next(switchCommonInput);
         }
-        console.log('nani', name in this.state.players, this.webRtc[name], name !== this.id);
         if (this.state.players.has(name) && name in this.webRtc && name !== this.id) {
             const switchInput = decompressInput(input);
             this.webRtc[name].observable.next(switchInput);
@@ -190,7 +198,7 @@ export default class Room extends React.Component {
                 this.webRtc[player] = {
                     video: React.createRef(),
                     rtcPeer: null,
-                    observable: (player === this.id) ? switchObservable : new Subject()
+                    observable: (player === this.id && !this.isPresenter) ? switchObservable : new Subject()
                 };
             }
         }
