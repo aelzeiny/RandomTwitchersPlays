@@ -5,6 +5,7 @@ import { openStreamerConnection } from "./apis";
 import cookie from "cookie";
 import { switchObservable } from "./gamepad/gamepadApi";
 import { compressInput } from "./gamepad/switchApi";
+import ControlsModal from "./gamepad/ControlsModal";
 
 
 export default class Play extends React.Component {
@@ -47,6 +48,7 @@ export default class Play extends React.Component {
                     id={this.username}
                     isPresenter={false}
                     ws={this.ws}/>
+                <ControlsModal/>
             </div>
         );
     }

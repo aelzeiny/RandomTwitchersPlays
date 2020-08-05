@@ -7,6 +7,7 @@ import { switchObservable } from "./gamepad/gamepadApi";
 import Navbar from "./Navbar";
 import { leaveQueue, openQueueConnection } from "./apis";
 import cookie from 'cookie';
+import ControlsModal from './gamepad/ControlsModal';
 
 
 function JoinPrompt({ callback }) {
@@ -70,8 +71,9 @@ function Queue(props) {
             {position < 0 && <JoinPrompt callback={() => props.history.push('/play')}/>}
             <div className='queue-div row'>
                 <div className='gamepad-div col-sm-3'>
-                    <div className='queue-pos'>{position >= 0 && (position ? `#${position}` : '¯\\_(ツ)_/¯')}</div>
                     <GamepadDisplay observable={switchObservable}/>
+                    <div className='queue-pos'>{position >= 0 && (position ? `#${position}` : '¯\\_(ツ)_/¯')}</div>
+                    <ControlsModal/>
                 </div>
                 <div className='queue-twitch-container col-sm-9'>
                     <TwitchStream chat={true} width='100%'/>
