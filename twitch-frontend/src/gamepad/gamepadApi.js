@@ -69,14 +69,10 @@ const switchKeyboardMapping = {
     'esc': switchApi.BUTTON_SELECT,
     'shift': switchApi.BUTTON_SELECT,
 
-    'up': switchApi.BUTTON_X,
-    'arrowup': switchApi.BUTTON_X, // IE/Edge
-    'left': switchApi.BUTTON_Y,
-    'arrowleft': switchApi.BUTTON_Y, // IE/Edge
-    'down': switchApi.BUTTON_B,
-    'arrowdown': switchApi.BUTTON_B, // IE/Edge
-    'right': switchApi.BUTTON_A,
-    'arrowright': switchApi.BUTTON_A, // IE/Edge
+    'a': switchApi.BUTTON_Y,
+    's': switchApi.BUTTON_B,
+    'd': switchApi.BUTTON_A,
+    'w': switchApi.BUTTON_X,
 
     'q': switchApi.BUTTON_LB,
     'e': switchApi.BUTTON_RB,
@@ -100,18 +96,23 @@ function getKeyboardEvents() {
         const newInput = {...lastInput};
         const eKey = e.key.toLowerCase();
         switch (eKey) {
-            case "s":
+            case "down": // IE/Edge
+            case "arrowdown":
                 newInput[switchApi.AXIS_LY] = 1;
                 break;
-            case "w":
+            case "up": // IE/Edge
+            case "arrowup":
                 newInput[switchApi.AXIS_LY] = -1;
                 break;
-            case "a":
+            case "left": // IE/Edge
+            case "arrowleft":
                 newInput[switchApi.AXIS_LX] = -1;
                 break;
-            case "d":
+            case "right": // IE/Edge
+            case "arrowright":
                 newInput[switchApi.AXIS_LX] = 1;
                 break;
+
             case "j":
                 newInput[switchApi.AXIS_RX] = -1;
                 break;
@@ -139,12 +140,16 @@ function getKeyboardEvents() {
         const newInput = {...lastInput};
         const eKey = e.key.toLowerCase();
         switch (eKey) {
-            case "w":
-            case "s":
+            case "down": // IE/Edge
+            case "arrowdown":
+            case "up": // IE/Edge
+            case "arrowup":
                 newInput[switchApi.AXIS_LY] = 0;
                 break;
-            case "a":
-            case "d":
+            case "left": // IE/Edge
+            case "arrowleft":
+            case "right": // IE/Edge
+            case "arrowright":
                 newInput[switchApi.AXIS_LX] = 0;
                 break;
 
