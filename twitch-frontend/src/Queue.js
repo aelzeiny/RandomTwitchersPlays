@@ -2,9 +2,8 @@ import './Queue.css';
 
 import React, { useEffect, useState } from 'react';
 import TwitchStream from "./TwitchStream";
-import GamepadSelection from "./gamepad/GamepadSelection";
 import GamepadDisplay from "./gamepad/GamepadDisplay";
-import { updateController, switchObservable } from "./gamepad/gamepadApi";
+import { switchObservable } from "./gamepad/gamepadApi";
 import Navbar from "./Navbar";
 import { leaveQueue, openQueueConnection } from "./apis";
 import cookie from 'cookie';
@@ -72,7 +71,6 @@ function Queue(props) {
             <div className='queue-div row'>
                 <div className='gamepad-div col-sm-3'>
                     <div className='queue-pos'>{position >= 0 && (position ? `#${position}` : '¯\\_(ツ)_/¯')}</div>
-                    <GamepadSelection gamepadSelectedCallback={updateController}/>
                     <GamepadDisplay observable={switchObservable}/>
                 </div>
                 <div className='queue-twitch-container col-sm-9'>

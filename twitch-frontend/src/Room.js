@@ -3,9 +3,8 @@ import loadingScreen from './nook_loading.jpg';
 
 import React from 'react';
 import { WebRtcPeer } from 'kurento-utils';
-import GamepadSelection from "./gamepad/GamepadSelection";
 import GamepadDisplay from "./gamepad/GamepadDisplay";
-import {switchObservable, updateController} from "./gamepad/gamepadApi";
+import { switchObservable } from "./gamepad/gamepadApi";
 import { decompressInput } from "./gamepad/switchApi";
 import { Subject } from 'rxjs';
 
@@ -237,7 +236,6 @@ export default class Room extends React.Component {
                     {this.renderPresenter()}
                 </div>
                 <div className='players-div col-lg-2'>
-                    <GamepadSelection gamepadSelectedCallback={updateController}/>
                     {Array.from(this.state.players)
                         .filter(player => player !== this.state.presenter)
                         .map((player) => this.renderPlayer(player))}
