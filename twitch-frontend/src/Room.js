@@ -22,6 +22,7 @@ export default class Room extends React.Component {
 
         this.id = props.id;
         this.isPresenter = props.isPresenter;
+        this.onMessageCallback = props.onMessageCallback;
 
         this.state = {
             players: new Set(),
@@ -57,6 +58,10 @@ export default class Room extends React.Component {
                     break;
                 default:
                     console.error('Unrecognized message', parsedMessage);
+            }
+
+            if (this.onMessageCallback) {
+                this.onMessageCallback(parsedMessage);
             }
 	    }
     }

@@ -37,7 +37,7 @@ export default function Present () {
 
     const onMessageCallback = ({id, commonInput}) => {
         if (id === 'switchInput')
-            wsPair.proxy.sendMessage(commonInput);
+            wsPair.proxy.sendMessage({id: 'switchInput', input: commonInput});
     };
 
     const connect = (e) => {
@@ -48,16 +48,30 @@ export default function Present () {
         const wsProxy = new WebSocket(proxy);
         let pingInterval = setInterval(() => {
             if (wsx.readyState === WebSocket.OPEN)
-                wsx.sendMessage({id: 'ping'})
+                wsx.sendMessage({id: 'ping'});
+            if (wsProxy.readyState === WebSocket.OPEN)
+                wsProxy.sendMessage({id: 'ping'});
         }, 10 * 60 * 1000);
 
-        wsx.onclose = (err) => {
+        const closeEvent = (err) => {
             btn.removeAttribute('disabled');
             console.error('we out', err);
             if (pingInterval)
                 clearInterval(pingInterval);
+            setWsPair({main: undefined, proxy: undefined});
         };
-
+        wsx.onclose = (err) => {
+            console.error('main close');
+            if (wsProxy.readyState === WebSocket.OPEN)
+                wsProxy.close();
+            closeEvent(err);
+        };
+        wsProxy.onclose = (err) => {
+            console.error('proxy close');
+            if (wsx.readyState === WebSocket.OPEN)
+                wsx.close();
+            closeEvent(err);
+        }
         setWsPair({main: wsx, proxy: wsProxy});
     }
 

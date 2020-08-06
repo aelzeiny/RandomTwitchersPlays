@@ -67,7 +67,7 @@ function Homepage(props) {
             {/*</section>*/}
             <section className='home-section' style={{color: 'white'}}>
                 <div className='container-lg'>
-                    <ScrollAnimation animateIn="animate__fadeInLeft" animateOnce={true}>
+                    <ScrollAnimation animateIn="animate__fadeInRight" animateOnce={true}>
                         <h3>Anyone Can Play</h3>
                         <div className='row'>
                             <div className='col-md-4'>
@@ -101,7 +101,7 @@ function Homepage(props) {
             </section>
             <section className='home-section' style={{color: 'white'}}>
                 <div className='container-lg'>
-                    <ScrollAnimation animateIn="animate__fadeInRight" animateOnce={true}>
+                    <ScrollAnimation animateIn="animate__fadeInLeft" animateOnce={true}>
                         <div className='row'>
                             <div className='col-md-8'>
                                 <h3>Live on Twitch</h3>
