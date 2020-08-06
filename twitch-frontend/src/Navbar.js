@@ -59,7 +59,7 @@ export default function Navbar({ buttonText, callback}) {
             <HelpModal/>
             <nav id='arena-navbar' className="navbar fixed-top navbar-dark bg-dark bg-arena">
                 <div className='container'>
-                    <a className="navbar-brand title" href='/'>Twitch Arena</a>
+                    <a className="navbar-brand title" href='/'>Twitch Arena Roulette</a>
                     <div className='nav-buttons'>
                         <button
                             id='queue-button'

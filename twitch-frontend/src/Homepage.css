@@ -34,7 +34,49 @@
     font-weight: bold;
 }
 
+.twitch-embedder {
+    margin-bottom: 24px;
+}
+
 .home-section {
-    background-color: #101011;
     height: 480px;
+    font-size: 1.2rem;
+    padding: 24px;
+}
+
+.home-section:nth-child(even) {
+    background-color: #101011;
+}
+
+
+.home-section span {
+    color: #b17cff;
+    border: 1px solid #9147ff;
+    padding: 1px 3px;
+    font-weight: bold;
+}
+
+span.fa {
+    border: none;
+    color: white;
+}
+
+
+.home-section img {
+    width: 100%;
+}
+
+.home-section .container-lg {
+    height: 100%;
+}
+
+#homepage-controller {
+    display: flex;
+    justify-content: space-around;
+    flex-direction: column;
+    align-items: center;
+}
+
+#homepage-controller button {
+    margin-top: 8px;
 }

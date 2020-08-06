@@ -1,12 +1,13 @@
 import React from 'react';
 import './App.css';
+import "animate.css/animate.min.css";
+
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import Homepage from './Homepage';
 import Queue from './Queue';
 import Play from './Play';
 import Present from './Present';
 import Authorize from './Authorize';
-
 
 
 function App() {

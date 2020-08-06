@@ -21,9 +21,12 @@ body {
   font-style: normal;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-  monospace;
+h3 {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+body {
+  font-family: 'Roboto', sans-serif;
 }
 
 .container {
