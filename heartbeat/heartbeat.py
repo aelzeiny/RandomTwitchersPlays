@@ -9,10 +9,10 @@ logging.root.setLevel(logging.DEBUG)
 log = logging.root.getChild(__name__)
 
 
-SESSION_TIMEOUT_SECS = 300
+SESSION_TIMEOUT_SECS = 5 * 60
 QUEUE_TIMEOUT_SECS = 30
 HEARTBEAT_SECS = 5
-NUM_SLOTS = 3
+NUM_SLOTS = 1
 api = AppApi()
 
 
