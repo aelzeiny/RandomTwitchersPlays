@@ -58,7 +58,16 @@ public class TrafficWebsocketsHandler extends TextWebSocketHandler {
                 if (registry.notWhitelisted(userId.get())) {
                     socketError(session, "User ID is not whitelisted for connection");
                 } else if (registry.getById(userId.get()).isPresent()) {
-                    socketError(session, "User ID is already connected");
+                    // If the user already exists. Clear them out & create a new client.
+                    UserSession oldUserSession = room.getParticipant(userId.get());
+                    oldUserSession.close();
+                    // Add to room & registry
+                    UserSession newUserSession = room.join(
+                            userId.get(),
+                            session,
+                            false
+                    );
+                    this.registry.register(newUserSession);
                 } else {
                     // Add to room & registry
                     UserSession userSession = room.join(
