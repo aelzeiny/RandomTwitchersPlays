@@ -57,24 +57,37 @@ export default function Navbar({ buttonText, callback}) {
     return (
         <div className='navbar-offset'>
             <HelpModal/>
-            <nav id='arena-navbar' className="navbar fixed-top navbar-dark bg-dark bg-arena">
+            <nav id='arena-navbar' className="navbar fixed-top navbar-expand-lg navbar-dark bg-dark bg-arena">
                 <div className='container'>
                     <a className="navbar-brand title" href='/'>Twitch Arena Roulette</a>
-                    <div className='nav-buttons'>
-                        <button
-                            id='queue-button'
-                            type="button"
-                            data-toggle="modal"
-                            data-target="#helpModal"
-                            className="btn btn-dark">
-                            <FA name="question-circle"/>
-                        </button>
-                        {buttonText && <button ref={textButton}
-                                                         className="btn btn-outline-primary join-btn"
-                                                         type="submit"
-                                           onClick={modCallback}>
-                            {buttonText}
-                        </button>}
+                    <button className="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+                            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                        <span className="navbar-toggler-icon"/>
+                    </button>
+
+                    <div className="collapse navbar-collapse" id="navbarNav">
+                        <div className='form-inline nav-buttons'>
+                            <ul className='navbar-nav mr-auto'>
+                                <li className="nav-item">
+                                    <button
+                                        id='queue-button'
+                                        type="button"
+                                        data-toggle="modal"
+                                        data-target="#helpModal"
+                                        className="btn btn-dark">
+                                        <FA name="question-circle"/>
+                                    </button>
+                                </li>
+                                <li className="nav-item">
+                                    {buttonText && <button ref={textButton}
+                                                                     className="btn btn-outline-primary join-btn"
+                                                                     type="submit"
+                                                       onClick={modCallback}>
+                                        {buttonText}
+                                    </button>}
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </nav>
