@@ -53,39 +53,39 @@ functions:
     handler: api_websocket.broadcast_status
     events:
       - http:
-          path: lambda/queue
+          path: queue
           method: GET
 
   rotate:
     handler: api_queue.rotate_queue
     events:
       - http:
-          path: lambda/queue
+          path: queue
           method: POST
   whitelist:
     handler: api_queue.whitelist
     events:
       - http:
-          path: lambda/queue
+          path: queue
           method: PUT
 
   join:
     handler: api_user.join_queue
     events:
       - http:
-          path: lambda/user
+          path: user
           method: PUT
   leave:
     handler: api_user.leave_queue
     events:
       - http:
-          path: lambda/user
+          path: user
           method: DELETE
   position:
     handler: api_user.position_queue
     events:
       - http:
-          path: lambda/user/{username}
+          path: user/{username}
           method: GET
           request:
             parameters:
@@ -95,7 +95,7 @@ functions:
     handler: api_user.login
     events:
       - http:
-          path: lambda/login/{code}
+          path: login/{code}
           method: GET
           request:
             parameters:

@@ -1,8 +1,7 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import './Homepage.css';
 
 import ScrollAnimation from 'react-animate-on-scroll';
-import $ from 'jquery';
 
 import TwitchStream from './TwitchStream';
 import Navbar from "./Navbar";
@@ -12,14 +11,10 @@ import twitchIcon from './img/twitch_icon.png';
 import incognito from './img/incognito.png';
 import ControlsModal from "./gamepad/ControlsModal";
 import GamepadDisplay from "./gamepad/GamepadDisplay";
-import {switchObservable} from "./gamepad/gamepadApi";
+import { switchObservable } from "./gamepad/gamepadApi";
 
 
 function Homepage(props) {
-    useEffect(() => {
-        $('#helpModal').modal('show');
-    });
-
     const joinCallback = (e) => {
         e.target.setAttribute('disabled', true);
         joinQueue().then(() => {
