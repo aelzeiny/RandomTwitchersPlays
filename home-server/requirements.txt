@@ -1,2 +1,2 @@
 websockets
-serial
+pyserial
