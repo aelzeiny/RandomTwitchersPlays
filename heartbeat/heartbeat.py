@@ -10,7 +10,7 @@ log = logging.root.getChild(__name__)
 
 
 SESSION_TIMEOUT_SECS = 5 * 60
-QUEUE_TIMEOUT_SECS = 30
+QUEUE_TIMEOUT_SECS = 60
 HEARTBEAT_SECS = 5
 NUM_SLOTS = 1
 api = AppApi()
@@ -70,7 +70,7 @@ async def init_heartbeat():
 
             new_whitelisted_users.extend([
                 u for u, _ in whitelisted_user_sessions
-                if u not in expired_next_users
+                if u not in expired_next_users and u not in expired_users
             ])
             log.debug('users: ' + str(new_whitelisted_users))
             if set([u for u, _ in whitelisted_user_sessions]) != set(new_whitelisted_users):
@@ -82,7 +82,7 @@ async def init_heartbeat():
 
 
 if __name__ == "__main__":
-    # bot.loop.create_task(queue_listener())
+    bot.loop.create_task(queue_listener())
     bot.loop.create_task(init_heartbeat())
-    # bot.loop.create_task(spam_help())
+    bot.loop.create_task(spam_help())
     bot.run()
