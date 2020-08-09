@@ -8,6 +8,12 @@
     text-shadow: 3px 3px 1px #9147ff;
 }
 
+@media (min-width: 576px) {
+    .title {
+        font-size: .5rem;
+    }
+}
+
 .navbar-brand {
     font-size: 30px;
     text-align: center;
