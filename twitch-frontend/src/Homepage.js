@@ -5,7 +5,7 @@ import ScrollAnimation from 'react-animate-on-scroll';
 
 import TwitchStream from './TwitchStream';
 import Navbar from "./Navbar";
-import { joinQueue } from './apis';
+import { joinQueue, redirectToOauth } from './apis';
 
 import twitchIcon from './img/twitch_icon.png';
 import incognito from './img/incognito.png';
@@ -19,13 +19,7 @@ function Homepage(props) {
         e.target.setAttribute('disabled', true);
         joinQueue().then(() => {
             props.history.push('/queue');
-        }).catch(err => {
-            const { response } = err;
-            if (response && response.status === 401 && response.data.clientId) {
-                const redirectUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${response.data.clientId}&redirect_uri=${window.location.origin}/authorize&response_type=code&scope=openid&claims={"id_token":{"preferred_username":null, "picture":null},"userinfo":{"picture":null, "preferred_username":null}}`;
-                window.location.replace(redirectUrl);
-            }
-        });
+        }).catch(redirectToOauth);
     };
 
     return (

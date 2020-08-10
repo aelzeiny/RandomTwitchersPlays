@@ -5,6 +5,7 @@ import Base64 from 'crypto-js/enc-base64';
 import HmacSHA256 from 'crypto-js/hmac-sha256';
 import Navbar from "./Navbar";
 import Room from "./Room";
+import { openPresenterConnection } from "./apis";
 
 
 const encodeBase64 = (value, padding) => {
@@ -44,7 +45,7 @@ export default function Present () {
         const btn = e.target;
         btn.setAttribute('disabled', true);
         const jwt = toJwt({name: name}, secret);
-        const wsx = new WebSocket('wss://' + window.location.host + `/traffic?jwt=${jwt}`);
+        const wsx = openPresenterConnection(jwt);
         const wsProxy = new WebSocket(proxy);
         let pingInterval = setInterval(() => {
             if (wsx.readyState === WebSocket.OPEN)

@@ -5,7 +5,7 @@ import TwitchStream from "./TwitchStream";
 import GamepadDisplay from "./gamepad/GamepadDisplay";
 import { switchObservable } from "./gamepad/gamepadApi";
 import Navbar from "./Navbar";
-import { joinQueue, leaveQueue, openQueueConnection } from "./apis";
+import { joinQueue, leaveQueue, openQueueConnection, redirectToOauth } from "./apis";
 import cookie from 'cookie';
 import ControlsModal from './gamepad/ControlsModal';
 import FA from "react-fontawesome";
@@ -62,7 +62,7 @@ function Queue(props) {
                 if (ws && ws.readyState === WebSocket.OPEN)
                     ws.close();
             };
-        });
+        }).catch(redirectToOauth);
     }, [props.history, position, setPosition]);
 
     const leave = () => {

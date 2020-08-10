@@ -38,3 +38,12 @@ export function openStreamerConnection(id) {
 export function openPresenterConnection(jwt) {
     return new WebSocket(`wss://${window.location.host}/traffic?jwt=${jwt}`);
 }
+
+
+export function redirectToOauth(promiseErr) {
+    const { response } = promiseErr;
+    if (response && response.status === 401 && response.data.clientId) {
+        const redirectUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${response.data.clientId}&redirect_uri=${window.location.origin}/authorize&response_type=code&scope=openid&claims={"id_token":{"preferred_username":null, "picture":null},"userinfo":{"picture":null, "preferred_username":null}}`;
+        window.location.replace(redirectUrl);
+    }
+}
