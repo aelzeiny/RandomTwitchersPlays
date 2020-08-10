@@ -2,6 +2,7 @@ import './Room.css';
 import loadingScreen from './nook_loading.jpg';
 
 import React from 'react';
+import FA from 'react-fontawesome';
 import { WebRtcPeer } from 'kurento-utils';
 import GamepadDisplay from "./gamepad/GamepadDisplay";
 import { switchObservable } from "./gamepad/gamepadApi";
@@ -30,6 +31,7 @@ export default class Room extends React.Component {
         };
         this.webRtc = {};
         this.ws = props.ws;
+        this.fullScreenVideo = this.fullScreenVideo.bind(this);
     }
 
     componentDidMount() {
@@ -71,6 +73,21 @@ export default class Room extends React.Component {
         for (let player of this.state.players) {
             this.webRtc[player].rtcPeer.dispose();
         }
+    }
+
+    fullScreenVideo() {
+        if (!this.webRtc[this.state.presenter] || !this.webRtc[this.state.presenter].video)
+            return;
+        const elem = this.webRtc[this.state.presenter].video;
+        const fullScreenCompatibleFuncs = [
+            'requestFullscreen', 'mozRequestFullScreen',
+            'webkitRequestFullscreen', 'msRequestFullscreen'
+        ];
+        for (let reqFullScreen of fullScreenCompatibleFuncs)
+            if (elem[reqFullScreen]) {
+                elem[reqFullScreen]();
+                break;
+            }
     }
 
     componentDidUpdate(_, prevState, __) {
@@ -230,12 +247,22 @@ export default class Room extends React.Component {
             }
         }
 
-        return <video id='presenter'
-                      key='presenter'
-                      ref={assignRefIfExists}
-                      autoPlay={true}
-                      controls={false}
-                      poster={loadingScreen}/>
+        return (
+            <div className='presenter-div'>
+                <video id='presenter'
+                       key='presenter'
+                       ref={assignRefIfExists}
+                       autoPlay={true}
+                       controls={false}
+                       poster={loadingScreen}/>
+                {
+                    this.state.presenter &&
+                    <button className='video-fullscreen btn btn-outline-primary' onClick={this.fullScreenVideo}>
+                        <FA name='expand'/>
+                    </button>
+                }
+            </div>
+        );
     }
 
     render() {

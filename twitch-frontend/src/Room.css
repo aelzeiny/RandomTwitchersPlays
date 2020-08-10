@@ -10,6 +10,16 @@
     height: 480px;
 }
 
+.presenter-div {
+    position: relative;
+}
+
+.video-fullscreen {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+}
+
 .players-div {
     display: flex;
     flex-direction: column;
@@ -64,3 +74,4 @@
     justify-content: center;
     align-items: center;
 }
+
