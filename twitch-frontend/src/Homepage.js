@@ -24,9 +24,9 @@ function Homepage(props) {
 
     return (
         <div>
-            <Navbar buttonText='join' callback={joinCallback}/>
-            <TwitchStream chat={false}/>
-            <section className='home-section' style={{color: 'white'}}>
+            <Navbar buttonText='join' callback={joinCallback} />
+            <TwitchStream chat={false} />
+            <section className='home-section' style={{ color: 'white' }}>
                 <div className='container-lg'>
                     <ScrollAnimation animateIn="animate__fadeInLeft" animateOnce={true}>
                         <h3>Strangers on Stream</h3>
@@ -39,8 +39,8 @@ function Homepage(props) {
                                 <p>(try pressing W/A/S/D now)</p>
                             </div>
                             <div className='col-md-4' id='homepage-controller'>
-                                <GamepadDisplay observable={switchObservable}/>
-                                <ControlsModal/>
+                                <GamepadDisplay observable={switchObservable} />
+                                <ControlsModal />
                             </div>
                         </div>
                     </ScrollAnimation>
@@ -54,13 +54,13 @@ function Homepage(props) {
             {/*        </ScrollAnimation>*/}
             {/*    </div>*/}
             {/*</section>*/}
-            <section className='home-section' style={{color: 'white'}}>
+            <section className='home-section' style={{ color: 'white' }}>
                 <div className='container-lg'>
                     <ScrollAnimation animateIn="animate__fadeInRight" animateOnce={true}>
                         <h3>Anyone Can Play</h3>
                         <div className='row'>
                             <div className='col-md-4'>
-                                <img src={incognito} alt='anyone'/>
+                                <img src={incognito} alt='anyone' />
                             </div>
                             <div className='col-md-8'>
                                 <p>
@@ -71,14 +71,14 @@ function Homepage(props) {
                                 <p>
                                     Every few minutes someone new enters the spotlight, and takes control of the same Nintendo
                                     Switch.
-                                    When their time passes, the controls are passed to the next person in line.<br/>
+                                    When their time passes, the controls are passed to the next person in line.<br />
                                 </p>
 
-                                <p>
+                                {/* <p>
                                     But there's a twist. There are 3 people controlling the same Switch at the same time. These
                                     players
                                     must collaborate via voice-chat in order to accomplish their objectives.
-                                </p>
+                                </p> */}
 
                                 <p>
                                     People from all around the globe embark on the same journey, and complete it together.
@@ -88,7 +88,7 @@ function Homepage(props) {
                     </ScrollAnimation>
                 </div>
             </section>
-            <section className='home-section' style={{color: 'white'}}>
+            <section className='home-section' style={{ color: 'white' }}>
                 <div className='container-lg'>
                     <ScrollAnimation animateIn="animate__fadeInLeft" animateOnce={true}>
                         <div className='row'>
@@ -106,7 +106,7 @@ function Homepage(props) {
                                 </ul>
                             </div>
                             <div className='col-md-4'>
-                                <img src={twitchIcon} alt='sidebar'/>
+                                <img src={twitchIcon} alt='sidebar' />
                             </div>
                         </div>
                     </ScrollAnimation>

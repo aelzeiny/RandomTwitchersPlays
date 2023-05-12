@@ -10,6 +10,7 @@ venv
 bower_components
 target
 traffic-controller/src/main/resources/static
+serverfull-auctioneer/static
 
 # other
 *.db
@@ -31,6 +32,7 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
+__pycache__
 
 
 # npm garbage

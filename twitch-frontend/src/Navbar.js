@@ -7,7 +7,7 @@ import FA from "react-fontawesome";
 function HelpModal() {
     return (
         <div className="modal fade" id="helpModal" tabIndex="-1" role="dialog" aria-labelledby="helpModalLabel"
-             aria-hidden="true">
+            aria-hidden="true">
             <div className="modal-dialog modal-dialog-centered" role="document">
                 <div className="modal-content">
                     <div className="modal-header">
@@ -25,7 +25,7 @@ function HelpModal() {
                         <p>
                             Every few minutes someone new enters the spotlight, and takes control of the same Nintendo
                             Switch.
-                            When their time passes, the controls are passed to the next person in line.<br/>
+                            When their time passes, the controls are passed to the next person in line.<br />
                         </p>
 
                         <p>
@@ -48,7 +48,7 @@ function HelpModal() {
 }
 
 
-export default function Navbar({ buttonText, callback}) {
+export default function Navbar({ buttonText, callback }) {
     const textButton = createRef();
     const modCallback = (...args) => {
         textButton.current.setAttribute('disabled', true);
@@ -56,13 +56,13 @@ export default function Navbar({ buttonText, callback}) {
     }
     return (
         <div className='navbar-offset'>
-            <HelpModal/>
+            <HelpModal />
             <nav id='arena-navbar' className="navbar fixed-top navbar-expand-lg navbar-dark bg-dark bg-arena">
                 <div className='container'>
                     <a className="navbar-brand title" href='/'>Twitch Arena Roulette</a>
                     <button className="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
-                            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                        <span className="navbar-toggler-icon"/>
+                        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                        <span className="navbar-toggler-icon" />
                     </button>
 
                     <div className="collapse navbar-collapse" id="navbarNav">
@@ -75,14 +75,14 @@ export default function Navbar({ buttonText, callback}) {
                                         data-toggle="modal"
                                         data-target="#helpModal"
                                         className="btn btn-dark">
-                                        <FA name="question-circle"/>
+                                        <FA name="question-circle" />
                                     </button>
                                 </li>
                                 <li className="nav-item">
                                     {buttonText && <button ref={textButton}
-                                                                     className="btn btn-outline-primary join-btn"
-                                                                     type="submit"
-                                                       onClick={modCallback}>
+                                        className="btn btn-outline-primary join-btn"
+                                        type="submit"
+                                        onClick={modCallback}>
                                         {buttonText}
                                     </button>}
                                 </li>

@@ -1,0 +1,6 @@
+fastapi
+websockets
+aiohttp
+pyjwt
+cryptography
+fastapi_jwt_auth

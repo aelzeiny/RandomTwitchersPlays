@@ -2,6 +2,7 @@
   "name": "twitch-frontend",
   "version": "0.1.0",
   "private": true,
+  "homepage": "/static",
   "dependencies": {
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.5.0",
@@ -9,6 +10,7 @@
     "animate.css": "^4.1.0",
     "axios": "^0.19.2",
     "bootstrap": "^4.5.0",
+    "caniuse-lite": "^1.0.30001486",
     "cookie": "^0.4.1",
     "crypto-js": "^4.0.0",
     "http-proxy-middleware": "^1.0.5",
@@ -30,7 +32,7 @@
   },
   "scripts": {
     "start": "export HTTPS=true && react-scripts start",
-    "build": "react-scripts build && rm -rf ../traffic-controller/src/main/resources/static && mv ./build ../traffic-controller/src/main/resources/static",
+    "build": "react-scripts build && rm -rf ../serverfull-auctioneer/static && mv ./build ../serverfull-auctioneer/static",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {

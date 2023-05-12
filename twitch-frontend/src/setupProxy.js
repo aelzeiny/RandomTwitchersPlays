@@ -11,16 +11,16 @@ module.exports = app => {
         logLevel: 'debug',
         onError: err => console.log(err)
     });
-    const lambdaProxy = createProxyMiddleware('/lambda', {
-        target: `https://hvpdl44jfl.execute-api.us-east-1.amazonaws.com/dev`,
+    const lambdaProxy = createProxyMiddleware('/api', {
+        target: `http://localhost:5001`,
         // target: 'http://localhost:5001',
-        pathRewrite: (path, _) => path.replace('/lambda', ''),
+        // pathRewrite: (path, _) => path.replace('/api', ''),
         changeOrigin: true,
         logLevel: 'debug',
         onError: err => console.log(err)
     });
-    const lambdaWsProxy = createProxyMiddleware('/lambda_ws', {
-        target: 'wss://nq8v1ckz81.execute-api.us-east-1.amazonaws.com/dev',
+    const lambdaWsProxy = createProxyMiddleware('/ws', {
+        target: 'ws://localhost:5001/ws',
         // changeOrigin: true,
         prependPath: false,
         ws: true,

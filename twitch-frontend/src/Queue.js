@@ -39,8 +39,8 @@ function Queue(props) {
                 // request status to get position
                 console.log('open 4 business');
                 // AWS API Gateway has idle connection timeouts of 10 min.
-                interval = setInterval(() => ws.send(JSON.stringify({action: 'ping'})), 5 * 60 * 1000);
-                ws.send(JSON.stringify({action: 'status'}));
+                interval = setInterval(() => ws.send(JSON.stringify({ action: 'ping' })), 5 * 60 * 1000);
+                ws.send(JSON.stringify({ action: 'status' }));
             };
 
             ws.onmessage = (raw) => {
@@ -63,7 +63,7 @@ function Queue(props) {
                     ws.close();
             };
         }).catch(redirectToOauth);
-    }, [props.history, position, setPosition]);
+    }, [props.history, setPosition]);
 
     const leave = () => {
         leaveQueue().then(props.history.push('/'));
@@ -72,8 +72,8 @@ function Queue(props) {
     if (position === null) {
         return (
             <div>
-                <Navbar/>
-                <FA spin={true} pulse={true} size='5x' name='spinner' className='loading'/>
+                <Navbar />
+                <FA spin={true} pulse={true} size='5x' name='spinner' className='loading' />
             </div>
         );
     }
@@ -81,16 +81,16 @@ function Queue(props) {
 
     return (
         <div>
-            <Navbar buttonText='leave' callback={leave}/>
-            {position < 0 && <JoinPrompt callback={() => props.history.push('/play')}/>}
+            <Navbar buttonText='leave' callback={leave} />
+            {position < 0 && <JoinPrompt callback={() => props.history.push('/play')} />}
             <div className='queue-div row'>
                 <div className='gamepad-div col-sm-3'>
                     <h3>{position >= 0 ? (`#${position} In Queue` || '') : 'On Stream'}</h3>
-                    <GamepadDisplay observable={switchObservable}/>
-                    <ControlsModal/>
+                    <GamepadDisplay observable={switchObservable} />
+                    <ControlsModal />
                 </div>
                 <div className='queue-twitch-container col-sm-9'>
-                    <TwitchStream chat={true} width='100%'/>
+                    <TwitchStream chat={true} width='100%' />
                 </div>
             </div>
         </div>

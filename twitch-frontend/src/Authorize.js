@@ -1,6 +1,6 @@
 import './Authorize.css';
 
-import React, {useEffect} from 'react';
+import React, { useEffect } from 'react';
 import qs from 'qs';
 import { authorize } from './apis';
 
@@ -10,8 +10,8 @@ import Navbar from "./Navbar";
 export default function Authorize(props) {
     const queryString = qs.parse(props.location.search, { ignoreQueryPrefix: true });
 
-    useEffect( () => {
-        const exitTimeout = () => setTimeout(props.history.push('/queue'), 3000);
+    useEffect(() => {
+        const exitTimeout = () => setTimeout(props.history.push('/queue'), 5000);
         if (!queryString.code)
             exitTimeout();
         else
@@ -23,7 +23,7 @@ export default function Authorize(props) {
     if (!queryString.code) {
         return (
             <div className='authorize'>
-                <Navbar/>
+                <Navbar />
                 <h1>Hmm, that didn't quite work</h1>
                 <p>Redirecting you in 3 seconds</p>
             </div>
@@ -32,7 +32,7 @@ export default function Authorize(props) {
 
     return (
         <div className='authorize'>
-            <Navbar/>
+            <Navbar />
             <h1>Welcome Friend!</h1>
             <p>We'll redirect you back to the front page</p>
             <p>
