@@ -4,3 +4,5 @@ aiohttp
 pyjwt
 cryptography
 fastapi_jwt_auth
+uvicorn
+twitchio

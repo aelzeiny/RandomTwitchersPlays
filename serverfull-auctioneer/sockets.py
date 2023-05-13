@@ -2,6 +2,8 @@ import asyncio
 from typing import Literal
 from fastapi import APIRouter, WebSocket
 from pydantic import BaseModel
+
+import twitch_chatbot
 from auth import RequiredUser
 from websockets.exceptions import ConnectionClosedError
 from collections import defaultdict
@@ -29,6 +31,9 @@ class StatusResponse(BaseModel):
     whitelist: list[str]
 
 
+BOT = asyncio.Queue()
+
+
 def status_response() -> StatusResponse:
     return StatusResponse(queue=store.queue_scan(1000), whitelist=[])
 
@@ -41,12 +46,10 @@ def maybe_remove_socket(username: str, socket: WebSocket):
         pass
 
 
-async def broadcast():
-    status = status_response()
-
+async def _broadcast(data: dict):
     async def send_or_del(username: str, socket: WebSocket):
         try:
-            await socket.send_json(status.dict())
+            await socket.send_json(data)
         except ConnectionClosedError:
             maybe_remove_socket(username, socket)
 
@@ -55,8 +58,14 @@ async def broadcast():
             send_or_del(username, socket)
             for username in list(SOCKETS)
             for socket in SOCKETS[username]
-        ]
+        ],
+        BOT.put(data)
     )
+
+
+async def broadcast_status():
+    status = status_response().dict()
+    await _broadcast(status)
 
 
 @router.websocket("/ws")
@@ -73,3 +82,9 @@ async def websocket_endpoint(websocket: WebSocket, user: RequiredUser):
                 await websocket.send_json(status_response().dict())
         except ConnectionClosedError:
             maybe_remove_socket(user.username, websocket)
+
+
+@router.on_event("startup")
+async def startup_event():
+    loop = asyncio.get_event_loop()
+    task = loop.create_task(twitch_chatbot.main(BOT))

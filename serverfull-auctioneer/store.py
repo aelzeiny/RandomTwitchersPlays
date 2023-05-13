@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Tuple
 from collections import deque
 
 
@@ -33,8 +33,11 @@ def queue_scan(max_len: int) -> list[str]:
     return list(Q)[:max_len]
 
 
-def queue_rank(username) -> int:
-    return Q.index(username)
+def queue_rank(username) -> Optional[int]:
+    try:
+        return Q.index(username)
+    except ValueError:
+        return None
 
 
 def queue_contains(username) -> bool:

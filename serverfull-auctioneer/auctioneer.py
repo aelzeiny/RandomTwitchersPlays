@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from pydantic.generics import GenericModel
 import store
 import sockets
+import twitch_chatbot
 
 from auth import validate_oidc, RequiredUser
 import uvicorn
@@ -56,12 +57,14 @@ def allowlist():
 @api.put("/user")
 def join(user: RequiredUser) -> OkResponse:
     store.queue_push(user.username)
+    sockets.broadcast_status()
     return OkResponse()
 
 
 @api.delete("/user")
 def leave(user: RequiredUser) -> OkResponse:
     store.queue_remove(user.username)
+    sockets.broadcast_status()
     return OkResponse()
 
 
@@ -119,4 +122,4 @@ async def index(path: str = None):
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=5001)
+    uvicorn.run(app, host="0.0.0.0", port=5001, workers=1)
