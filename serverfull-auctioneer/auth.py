@@ -7,10 +7,17 @@ import jwt
 import json
 
 
+JWT_SECRET = os.environ['JWT_SECRET']
+CookieType = Annotated[str | None, Cookie()]
+
+
 class User(BaseModel):
     username: str
     token: Optional[str]
     refresh_token: Optional[str]
+
+    def to_jwt(self) -> str:
+        return jwt.encode(self.dict(), JWT_SECRET).decode('utf8')
 
 
 async def validate_oidc(id_token: str) -> Optional[dict[str, str]]:
@@ -41,28 +48,6 @@ async def validate_oidc(id_token: str) -> Optional[dict[str, str]]:
     return decoded_data
 
 
-CookieType = Annotated[str | None, Cookie()]
-
-
-def twitch_validate(session: aiohttp.ClientSession, token: str):
-    return session.get(
-        "https://id.twitch.tv/oauth2/validate",
-        headers={"Authorization": f"Bearer {token}"},
-    )
-
-
-def twitch_refresh(session: aiohttp.ClientSession, refresh_token):
-    return session.post(
-        "https://id.twitch.tv/oauth2/token",
-        params={
-            "client_id": os.environ["TWITCH_CLIENT_ID"],
-            "client_secret": os.environ["TWITCH_CLIENT_SECRET"],
-            "grant_type": "refresh_token",
-            "refresh_token": refresh_token,
-        },
-    )
-
-
 class UnauthorizedException(HTTPException):
     def __init__(self):
         super().__init__(
@@ -70,34 +55,14 @@ class UnauthorizedException(HTTPException):
         )
 
 
-async def get_current_user(
-    response: Response,
-    username: CookieType = None,
-    token: CookieType = None,
-    refresh_token: CookieType = None,
-) -> User:
-    if not username or not token:
+def get_current_user(token: CookieType = None) -> User:
+    if not token:
         raise UnauthorizedException()
-    async with aiohttp.ClientSession() as session:
-        challenge_req = await twitch_validate(session, token)
-        if 200 <= challenge_req.status < 300:
-            return User(username=username, token=token, refresh_token=refresh_token)
-        if not refresh_token:
-            raise UnauthorizedException()
-        refresh_req = await twitch_refresh(session, refresh_token=refresh_token)
-        if not (200 <= refresh_req.status < 300):
-            raise UnauthorizedException()
-
-        refresh_data = refresh_req.json()
-        challenge_req = await twitch_validate(session, token)
-        if not (200 <= challenge_req.status < 300):
-            raise UnauthorizedException()
-
-        response.set_cookie(key="token", value=refresh_data["access_token"])
-        response.set_cookie(key="refresh", value=refresh_data["refresh_token"])
-        response.set_cookie(key="username", value=username)
-
-    return User(username=username, token=token, refresh_token=refresh_token)
+    try:
+        decoded = jwt.decode(token, JWT_SECRET)
+    except jwt.exceptions.PyJWTError:
+        raise UnauthorizedException()
+    return User(username=decoded['username'], token=decoded['token'], refresh_token=decoded['refresh_token'])
 
 
 RequiredUser = Annotated[User, Depends(get_current_user)]

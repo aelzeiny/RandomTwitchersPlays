@@ -2,6 +2,7 @@ fastapi
 websockets
 aiohttp
 pyjwt
+pydantic
 cryptography
 fastapi_jwt_auth
 uvicorn

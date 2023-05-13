@@ -1,5 +1,6 @@
 from typing import Generic, TypeVar
 import aiohttp
+import jwt
 from fastapi import APIRouter, FastAPI, HTTPException, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
@@ -11,7 +12,8 @@ import store
 import sockets
 import twitch_chatbot
 
-from auth import validate_oidc, RequiredUser
+import auth
+from auth import RequiredUser
 import uvicorn
 
 app = FastAPI()
@@ -93,13 +95,15 @@ async def login(code: str, response: Response) -> OkResponse:
         if not (200 <= auth_response.status < 300):
             raise HTTPException(status_code=auth_response.status, detail=data)
     try:
-        oidc_token = await validate_oidc(data["id_token"])
+        oidc_token = await auth.validate_oidc(data["id_token"])
     except (AssertionError, KeyError) as e:
         raise HTTPException(status_code=401, detail=str(e))
-    # https://localhost:3000/authorize?code=b2loold024cppv1n54j1bcp31wnb5u&scope=openid
-    response.set_cookie(key="token", value=data["access_token"])
-    response.set_cookie(key="refresh", value=data["refresh_token"])
-    response.set_cookie(key="username", value=oidc_token["preferred_username"])
+    user = auth.User(
+        name=oidc_token["preferred_username"],
+        token=data["access_token"],
+        refresh=data["refresh_token"]
+    )
+    response.set_cookie(key="token", value=user.to_jwt(), httponly=True)
     return OkResponse()
 
 
