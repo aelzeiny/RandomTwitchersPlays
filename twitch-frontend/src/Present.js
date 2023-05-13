@@ -31,7 +31,7 @@ const toJwt = (message, secret) => {
 
 export default function Present () {
     const [secret, setSecret] = useState('');
-    const [proxy, setProxy] = useState('ws://localhost:9999');
+    const [proxy, setProxy] = useState('wss://localhost:3000/traffic');
     const [wsPair, setWsPair] = useState({ main: undefined, proxy: undefined });
 
     const name = '!PRESENTER';

@@ -55,16 +55,16 @@ def allowlist():
 
 
 @api.put("/user")
-def join(user: RequiredUser) -> OkResponse:
+async def join(user: RequiredUser) -> OkResponse:
     store.queue_push(user.username)
-    sockets.broadcast_status()
+    await sockets.broadcast_status()
     return OkResponse()
 
 
 @api.delete("/user")
-def leave(user: RequiredUser) -> OkResponse:
+async def leave(user: RequiredUser) -> OkResponse:
     store.queue_remove(user.username)
-    sockets.broadcast_status()
+    await sockets.broadcast_status()
     return OkResponse()
 
 
@@ -117,7 +117,6 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 @app.get("/{full_path:path}")
 async def index(path: str = None):
     """HTML Response Catch all"""
-    print(INDEX_HTML)
     return HTMLResponse(content=INDEX_HTML, status_code=200)
 
 

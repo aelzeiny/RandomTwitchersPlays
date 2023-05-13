@@ -1,0 +1,34 @@
+#Method Request-URI HTTP-Version
+#Header-field: Header-value
+#
+#Request-Body
+
+GET http://127.0.0.1:8443/api/users
+
+###
+
+POST http://127.0.0.1:8443/api/users
+Content-Type: application/json
+
+["awkii", "dude"]
+
+###
+# This won't work unless you remove the `RequiredUser` annotation from the serverfull-auctioneer
+WEBSOCKET ws://127.0.0.1:5001/ws
+Content-Type: application/json
+
+{"action": "ping"}
+===
+{"action": "ping"}
+
+###
+
+WEBSOCKET ws://127.0.0.1:8443/traffic?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiIVBSRVNFTlRFUiJ9.q-Uq8agSAcDwhjA8aLQRTP_IS9qcmz1XvxTb0pnJYI8
+Content-Type: application/json
+
+{"id": "ping"}
+===
+{"id": "ping"}
+
+###
+

@@ -1,11 +1,10 @@
 import asyncio
 from typing import Literal
-from fastapi import APIRouter, WebSocket
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 
 import twitch_chatbot
 from auth import RequiredUser
-from websockets.exceptions import ConnectionClosedError
 from collections import defaultdict
 
 import store
@@ -50,7 +49,7 @@ async def _broadcast(data: dict):
     async def send_or_del(username: str, socket: WebSocket):
         try:
             await socket.send_json(data)
-        except ConnectionClosedError:
+        except WebSocketDisconnect:
             maybe_remove_socket(username, socket)
 
     await asyncio.gather(
@@ -72,16 +71,16 @@ async def broadcast_status():
 async def websocket_endpoint(websocket: WebSocket, user: RequiredUser):
     await websocket.accept()
     SOCKETS[user.username].append(websocket)
-    while True:
+    async for data in websocket.iter_text():
         try:
-            data = await websocket.receive_text()
             action: WebsocketMessage = WebsocketMessage.parse_raw(data)
             if action.action == "ping":
                 await websocket.send_json(PingResponse(message="pong").dict())
             elif action.action == "status":
                 await websocket.send_json(status_response().dict())
-        except ConnectionClosedError:
+        except WebSocketDisconnect:
             maybe_remove_socket(user.username, websocket)
+            break
 
 
 @router.on_event("startup")

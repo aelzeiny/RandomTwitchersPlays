@@ -1,5 +1,8 @@
+import asyncio
 import os
 import logging
+
+import aiohttp
 from twitchio.ext import commands
 from twitchio.ext.commands import Context
 from asyncio import Queue
@@ -14,6 +17,10 @@ APP_EXTERNAL_URL = 'https://twitcharena.live'
 
 
 class Bot(commands.Bot):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._http.client_id = os.environ['TWITCH_CLIENT_ID']
+
     async def event_ready(self):
         for chan in self.connected_channels:
             await chan.send('/me has landed!')
@@ -70,7 +77,7 @@ async def main(queue: Queue):
     This task just listens in on the app's websocket for changes in the Q, and posts them
     to the channel
     """
-    # token =
+    # TODO: in the long term stop relying on https://twitchtokengenerator.com/ to populate ACCESS TOKEN
     bot = Bot(
         os.environ['TWITCH_ACCESS_TOKEN'],
         prefix='!',
@@ -94,3 +101,8 @@ async def main(queue: Queue):
         else:
             for chan in bot.connected_channels:
                 await chan.send(f'Queue is empty. Type "!join" to enter!')
+
+
+if __name__ == '__main__':
+    q = asyncio.Queue()
+    asyncio.run(main(q))

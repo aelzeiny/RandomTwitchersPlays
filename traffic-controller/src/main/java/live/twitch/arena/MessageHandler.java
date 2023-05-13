@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 public abstract class MessageHandler {
     protected static final Logger log = LoggerFactory.getLogger(TrafficWebsocketsHandler.class);
 
+    public static final String ACTION_PING = "ping";
     public static final String ACTION_RECEIVE_VID = "receiveVideoFrom";
     public static final String ACTION_ICE_CANDIDATE = "onIceCandidate";
     public static final String ACTION_LEAVE_ROOM = "leaveRoom";
@@ -42,6 +43,7 @@ public abstract class MessageHandler {
     }
 
     public void handleMessage() throws IOException {
+        if (!this.jsonMessage.has("id")) return;
         String action = this.jsonMessage.get("id").getAsString();
         switch (action) {
             case MessageHandler.ACTION_RECEIVE_VID:
@@ -55,6 +57,9 @@ public abstract class MessageHandler {
                 break;
             case MessageHandler.ACTION_GAMEPAD_INPUT:
                 this.gamepadInput();
+                break;
+            case MessageHandler.ACTION_PING:
+                this.pong();
                 break;
         }
     }
@@ -86,6 +91,11 @@ public abstract class MessageHandler {
                     candidate.get("sdpMid").getAsString(), candidate.get("sdpMLineIndex").getAsInt());
             user.get().addCandidate(cand, jsonMessage.get("name").getAsString());
         }
+    }
+
+    protected void pong() {
+        Room room = this.rooms.getRoom();
+        room.broadcast("{\"id\": \"pong\"}");
     }
 
     protected void gamepadInput() {
