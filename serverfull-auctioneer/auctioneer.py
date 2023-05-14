@@ -1,16 +1,15 @@
 from typing import Generic, TypeVar
 import aiohttp
-import jwt
 from fastapi import APIRouter, FastAPI, HTTPException, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
-import os
 
 from pydantic import BaseModel
 from pydantic.generics import GenericModel
+
+import constants
 import store
 import sockets
-import twitch_chatbot
 
 import auth
 from auth import RequiredUser
@@ -44,22 +43,6 @@ class PositionPayload(BaseModel):
 # http://localhost:5001/api/login/y5b5nw8x6067jddrvr0h2wrrw42u02
 
 
-@api.get("/queue")
-async def broadcast() -> OkResponse:
-    await sockets.broadcast()
-    return OkResponse()
-
-
-@api.post("/queue")
-def rotate():
-    pass
-
-
-@api.put("/queue")
-def allowlist():
-    pass
-
-
 @api.put("/user")
 async def join(user: RequiredUser) -> PayloadResponse[UserPayload]:
     store.queue_push(user.username)
@@ -74,22 +57,14 @@ async def leave(user: RequiredUser) -> OkResponse:
     return OkResponse()
 
 
-@api.get("/user/{_username}")
-def position(_username: str, user: RequiredUser) -> PayloadResponse[PositionPayload]:
-    if _username != user.username:
-        raise HTTPException(402, detail="Unauthorized User")
-    pos = store.queue_rank(_username)
-    return PayloadResponse(payload=PositionPayload(position=pos))
-
-
 @api.get("/login/{code}")
 async def login(code: str, response: Response) -> OkResponse:
     async with aiohttp.ClientSession() as session:
         auth_response = await session.post(
             "https://id.twitch.tv/oauth2/token",
             params={
-                "client_id": os.environ["TWITCH_CLIENT_ID"],
-                "client_secret": os.environ["TWITCH_CLIENT_SECRET"],
+                "client_id": constants.TWITCH_CLIENT_ID,
+                "client_secret": constants.TWITCH_CLIENT_SECRET,
                 "code": code,
                 "grant_type": "authorization_code",
                 "redirect_uri": "https://localhost:3000/authorize",

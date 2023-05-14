@@ -1,4 +1,3 @@
-import os
 from typing import Annotated, Optional
 import aiohttp
 from fastapi import Cookie, Depends, HTTPException, Response
@@ -6,8 +5,8 @@ from pydantic import BaseModel
 import jwt
 import json
 
+import constants
 
-JWT_SECRET = os.environ['JWT_SECRET']
 CookieType = Annotated[str | None, Cookie()]
 
 
@@ -43,7 +42,7 @@ async def validate_oidc(id_token: str) -> Optional[dict[str, str]]:
         options=dict(verify_aud=False),
     )
     assert (
-        decoded_data["aud"] == os.environ["TWITCH_CLIENT_ID"]
+        decoded_data["aud"] == constants.TWITCH_CLIENT_ID
     ), "This token is not meant for this client"
     return decoded_data
 
@@ -51,7 +50,7 @@ async def validate_oidc(id_token: str) -> Optional[dict[str, str]]:
 class UnauthorizedException(HTTPException):
     def __init__(self):
         super().__init__(
-            401, dict(detail="UnAuthorized", clientId=os.environ["TWITCH_CLIENT_ID"])
+            401, dict(detail="UnAuthorized", clientId=constants.TWITCH_CLIENT_ID)
         )
 
 

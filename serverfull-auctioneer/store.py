@@ -1,6 +1,7 @@
-from typing import Optional, Tuple
+from typing import Optional
 from collections import deque
 
+import aiohttp
 
 Q = deque()
 S = set()
@@ -35,10 +36,15 @@ def queue_scan(max_len: int) -> list[str]:
 
 def queue_rank(username) -> Optional[int]:
     try:
-        return Q.index(username)
+        return Q.index(username) + 1
     except ValueError:
         return None
 
 
 def queue_contains(username) -> bool:
     return username in S
+
+
+async def stream_scan() -> list[str]:
+    async with aiohttp.ClientSession() as session:
+        session.get()

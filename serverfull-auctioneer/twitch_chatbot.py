@@ -1,25 +1,21 @@
 import asyncio
-import os
 import logging
 
-import aiohttp
 from twitchio.ext import commands
 from twitchio.ext.commands import Context
 from asyncio import Queue
 
+import constants
 import store
+from constants import TWITCH_CHANNEL
 
 log = logging.root.getChild(__name__)
-TWITCH_CHANNEL = 'RandomTwitchersPlay'
-BOT_NICK = 'RandomTwitchersPlay'
-
-APP_EXTERNAL_URL = 'https://twitcharena.live'
 
 
 class Bot(commands.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._http.client_id = os.environ['TWITCH_CLIENT_ID']
+        self._http.client_id = constants.TWITCH_CLIENT_ID
 
     async def event_ready(self):
         for chan in self.connected_channels:
@@ -44,12 +40,13 @@ class Bot(commands.Bot):
     @commands.command(name='position', aliases=['where', 'status'])
     async def position(self, ctx: Context):
         username = ctx.author.name
-        pos, in_stream = store.queue_rank(username)
+        pos = store.queue_rank(username)
         if pos:
             await ctx.send(f'@{username} is #{pos} in the queue.')
-        elif in_stream:
-            await ctx.send(f"@{username} you're supposed to be on stream! {APP_EXTERNAL_URL}/queue")
         else:
+            # check if in stream
+
+            await ctx.send(f"@{username} you're supposed to be on stream! {APP_EXTERNAL_URL}/queue")
             await ctx.send(f'@{username} type "!join" to enter the queue')
 
     @commands.command(name='help', aliases=['h', 'ayuda', 'halp'])
@@ -79,9 +76,9 @@ async def main(queue: Queue):
     """
     # TODO: in the long term stop relying on https://twitchtokengenerator.com/ to populate ACCESS TOKEN
     bot = Bot(
-        os.environ['TWITCH_ACCESS_TOKEN'],
+        constants.TWITCH_ACCESS_TOKEN,
         prefix='!',
-        client_secret=os.environ['TWITCH_CLIENT_SECRET'],
+        client_secret=constants.TWITCH_CLIENT_SECRET,
         initial_channels=[TWITCH_CHANNEL]
     )
     await bot.connect()
