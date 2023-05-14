@@ -1,3 +1,0 @@
-twitchio
-requests
-pyjwt
