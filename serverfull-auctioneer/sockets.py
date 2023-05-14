@@ -4,7 +4,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 from starlette.websockets import WebSocketState
 
-import traffic_server
+import traffic_api
 import twitch_chatbot
 from auth import RequiredUser
 from collections import defaultdict
@@ -36,7 +36,7 @@ BOT = asyncio.Queue()
 
 
 async def status_response() -> StatusResponse:
-    status = await traffic_server.status()
+    status = await traffic_api.status()
     return StatusResponse(
         queue=store.queue_scan(1000),
         whitelist=status.whitelist,

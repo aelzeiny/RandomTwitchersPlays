@@ -7,7 +7,7 @@ from asyncio import Queue
 
 import constants
 import store
-import traffic_server
+import traffic_api
 from constants import TWITCH_CHANNEL
 
 log = logging.root.getChild(__name__)
@@ -46,7 +46,7 @@ class Bot(commands.Bot):
             await ctx.send(f'@{username} is #{pos} in the queue.')
         else:
             # check if in stream
-            status = await traffic_server.status()
+            status = await traffic_api.status()
             if username in status.whitelist:
                 await ctx.send(f"@{username} you're supposed to be on stream! {constants.APP_EXTERNAL_URL}/queue")
             else:
