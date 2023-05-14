@@ -32,7 +32,7 @@
   },
   "scripts": {
     "start": "export HTTPS=true && react-scripts start",
-    "build": "react-scripts build && rm -rf ../serverfull-auctioneer/static && mv ./build ../serverfull-auctioneer/static",
+    "build": "export NODE_OPTIONS=--openssl-legacy-provider && react-scripts build && rm -rf ../serverfull-auctioneer/static && mv ./build ../serverfull-auctioneer/static",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {

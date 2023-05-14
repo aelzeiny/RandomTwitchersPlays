@@ -25,31 +25,34 @@ export async function leaveQueue() {
     return await axiosWithCookies.delete('/api/user');
 }
 
+function wsProtocol() {
+    if (window.location.protocol.startsWith('https')) {
+        return 'wss';
+    }
+    return 'ws';
+}
+
 
 export function openQueueConnection() {
-    return new WebSocket(`wss://${window.location.host}/ws`);
+    return new WebSocket(`${wsProtocol()}://${window.location.host}/ws`);
 }
 
 
 export function openStreamerConnection(id) {
-    return new WebSocket(`wss://${window.location.host}/traffic?id=${id}`);
+    return new WebSocket(`${wsProtocol()}://${window.location.host}/traffic`);
 }
+
 
 export function openPresenterConnection(jwt) {
     document.cookie = `token=${jwt}; path=/`;
-    return new WebSocket(`wss://${window.location.host}/traffic`);
+    return new WebSocket(`${wsProtocol()}://${window.location.host}/traffic`);
 }
 
 
 export function redirectToOauth(promiseErr) {
     const { response } = promiseErr;
-    const clientId = response.data.detail.clientId;
-    if (response && response.status === 401 && clientId) {
-        const redirectUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${clientId}&redirect_uri=${window.location.origin}/authorize&response_type=code&scope=openid`;
-        window.location.replace(redirectUrl);
+    const { redirect } = response.data.detail;
+    if (response && response.status === 401 && redirect) {
+        window.location.replace(redirect);
     }
-}
-
-export function getUsername() {
-
 }

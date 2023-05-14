@@ -1,0 +1,53 @@
+version: "3.9"
+services:
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - type: bind
+        source: ./nginx-files/
+        target: /etc/nginx/conf.d/
+    depends_on:
+      - traffic
+      - auctioneer
+  auctioneer:
+    # build:
+    #   context: .
+    #   dockerfile: ./serverfull-auctioneer/Dockerfile
+    image: aelzeiny/twitch-auctioneer
+    ports:
+      - "5001:5001"
+    environment:
+      - "JWT_SECRET=${JWT_SECRET}"
+      - "TWITCH_ACCESS_TOKEN=${TWITCH_ACCESS_TOKEN}"  # needed for chatbot. See twitchtokengenerator.com
+      - "TWITCH_CLIENT_ID=${TWITCH_CLIENT_ID}"
+      - "TWITCH_CLIENT_SECRET=${TWITCH_CLIENT_SECRET}"
+      - "TRAFFIC_INTERNAL_URL=http://traffic:8443/api"
+      - "APP_EXTERNAL_URL=http://localhost"
+    depends_on:
+      - traffic
+  traffic:
+    # build:
+    #   context: .
+    #   dockerfile: ./traffic-controller/Dockerfile
+    image: aelzeiny/twitch-traffic
+    ports:
+      - "8443:8443"
+    depends_on:
+      - kurento
+    environment:
+      - "PRESENTER_SUPER_SECRET=${JWT_SECRET}"
+      - "KURENTO_URL=ws://kurento:8888/kurento"
+  kurento:
+    image: kurento/kurento-media-server:6.13
+    ports:
+      - "8888:8888/tcp"
+      - "5000-5050:5000-5050/udp"
+    environment:
+      - "KMS_MIN_PORT=5000"
+      - "KMS_MAX_PORT=5050"
+    volumes:
+      - type: bind
+        source: ./kurento-files/
+        target: /etc/kurento/

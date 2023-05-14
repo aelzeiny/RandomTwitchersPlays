@@ -16,7 +16,7 @@ class User(BaseModel):
     refresh_token: Optional[str]
 
     def to_jwt(self) -> str:
-        return jwt.encode(self.dict(), constants.JWT_SECRET).decode('utf8')
+        return jwt.encode(self.dict(), constants.JWT_SECRET, algorithm="HS256")
 
 
 async def validate_oidc(id_token: str) -> Optional[dict[str, str]]:
@@ -38,7 +38,7 @@ async def validate_oidc(id_token: str) -> Optional[dict[str, str]]:
     decoded_data = jwt.decode(
         id_token,
         matched_rsa,
-        algorithm=matched_key["alg"],
+        algorithms=[matched_key["alg"]],
         options=dict(verify_aud=False),
     )
     assert (
@@ -50,7 +50,7 @@ async def validate_oidc(id_token: str) -> Optional[dict[str, str]]:
 class UnauthorizedException(HTTPException):
     def __init__(self):
         super().__init__(
-            401, dict(detail="UnAuthorized", clientId=constants.TWITCH_CLIENT_ID)
+            401, dict(detail="Unauthorized", redirect=constants.APP_OAUTH_REDIRECT)
         )
 
 
@@ -58,7 +58,7 @@ def get_current_user(token: CookieType = None) -> User:
     if not token:
         raise UnauthorizedException()
     try:
-        decoded = jwt.decode(token, constants.JWT_SECRET)
+        decoded = jwt.decode(token, constants.JWT_SECRET, algorithms=["HS256"])
     except jwt.exceptions.PyJWTError:
         raise UnauthorizedException()
     return User(username=decoded['username'], token=decoded['token'], refresh_token=decoded['refresh_token'])
