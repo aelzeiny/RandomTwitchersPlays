@@ -13,6 +13,7 @@ Content-Type: application/json
 ["awkii", "dude"]
 
 ###
+
 # This won't work unless you remove the `RequiredUser` annotation from the serverfull-auctioneer
 WEBSOCKET ws://127.0.0.1:5001/ws
 Content-Type: application/json
@@ -23,12 +24,12 @@ Content-Type: application/json
 
 ###
 
-WEBSOCKET ws://127.0.0.1:8443/traffic?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiIVBSRVNFTlRFUiJ9.q-Uq8agSAcDwhjA8aLQRTP_IS9qcmz1XvxTb0pnJYI8
+WEBSOCKET ws://127.0.0.1:8443/traffic
 Content-Type: application/json
+Cookie: token=#some_jwt
 
 {"id": "ping"}
 ===
 {"id": "ping"}
 
-###
 

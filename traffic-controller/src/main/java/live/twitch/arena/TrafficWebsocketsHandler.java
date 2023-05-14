@@ -1,11 +1,13 @@
 package live.twitch.arena;
 
 import java.io.IOException;
-import java.net.URI;
+import java.net.HttpCookie;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
 import live.twitch.arena.security.JwtRequestFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,64 +35,69 @@ public class TrafficWebsocketsHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws IOException {
-        URI endpoint = session.getUri();
         Room room = roomManager.getRoom();
-        if (endpoint != null && endpoint.getQuery() != null) {
-            Optional<String> userId = MessageHandler.getParamFromSession(session, "id");
-            Optional<String> jwt = MessageHandler.getParamFromSession(session, "jwt");
-            // Presenter must have a JWT in the connection URL
-            if (jwt.isPresent()) {
-                if (!JwtRequestFilter.verifyJwt(jwt.get())) {
-                    session.close(CloseStatus.NOT_ACCEPTABLE);
-                } else if (room.getPresenter().isPresent()) {
-                    socketError(session, "PRESENTER has already connected");
-                } else {
-                    UserSession presenterSession = room.join(
-                            UserRegistry.PRESENTER_ID,
-                            session,
-                            true
-                    );
-                    this.registry.register(presenterSession);
-                }
-            }
-            // User must be whitelisted
-            else if (userId.isPresent()) {
-                if (registry.notWhitelisted(userId.get())) {
-                    socketError(session, "User ID is not whitelisted for connection");
-                } else if (registry.getById(userId.get()).isPresent()) {
-                    // If the user already exists. Clear them out & create a new client.
-                    UserSession oldUserSession = room.getParticipant(userId.get());
-                    oldUserSession.close();
-                    // Add to room & registry
-                    UserSession newUserSession = room.join(
-                            userId.get(),
-                            session,
-                            false
-                    );
-                    this.registry.register(newUserSession);
-                } else {
-                    // Add to room & registry
-                    UserSession userSession = room.join(
-                        userId.get(),
-                        session,
-                        false
-                    );
-                    this.registry.register(userSession);
+        List<String> cookieHeader = session.getHandshakeHeaders().get("cookie");
+        if (cookieHeader == null || cookieHeader.isEmpty()) {
+            session.close(CloseStatus.NOT_ACCEPTABLE);
+            return;
+        }
+        Optional<HttpCookie> tokenCookie = HttpCookie
+                .parse(cookieHeader.get(0))
+                .stream()
+                .filter(x -> x.getName().equals("token"))
+                .findFirst();
+        if (!tokenCookie.isPresent()) {
+            session.close(CloseStatus.NOT_ACCEPTABLE);
+            return;
+        }
+        String jwt = tokenCookie.get().getValue();
 
-                    // Filter expired sessions
-                    List<UserSession> expiredSessions = registry.getUsers().stream()
-                        .filter(u -> registry.notWhitelisted(u))
-                        .map(u -> registry.getById(u).orElseThrow(IllegalArgumentException::new))
-                        .collect(Collectors.toList());
-                    for (UserSession sess : expiredSessions) {
-                        this.cleanupUser(sess.getSession());
-                        sess.getSession().close(CloseStatus.NORMAL);
-                    }
-                }
+        if (!JwtRequestFilter.verifyJwt(jwt)) {
+            session.close(CloseStatus.NOT_ACCEPTABLE);
+            return;
+        }
+
+        Jws<Claims> yee = JwtRequestFilter.parseJwt(jwt);
+        String username = yee.getBody().get("username", String.class);
+
+        // Presenter just joined
+        if (username.equals(UserRegistry.PRESENTER_ID)) {
+            if (!room.getPresenter().isPresent()) {
+                UserSession presenterSession = room.join(UserRegistry.PRESENTER_ID, session, true);
+                this.registry.register(presenterSession);
+            } else {
+                socketError(session, "PRESENTER has already connected");
             }
-            // If not user or presenter, then close connection & save bandwidth.
-            else {
-                session.close(CloseStatus.NOT_ACCEPTABLE);
+            return;
+        }
+
+        // User just joined
+        if (registry.notWhitelisted(username)) {
+            socketError(session, "User ID is not whitelisted for connection");
+            return;
+        }
+        if (registry.getById(username).isPresent()) {
+            // If the user already exists. Clear them out & create a new client.
+            UserSession oldUserSession = room.getParticipant(username);
+            oldUserSession.close();
+            // Add to room & registry
+            UserSession newUserSession = room.join(username, session, false);
+            this.registry.register(newUserSession);
+        } else {
+            // Add to room & registry
+            UserSession userSession = room.join(username, session, false);
+            this.registry.register(userSession);
+
+            // Filter expired sessions
+            List<UserSession> expiredSessions = registry
+                    .getUsers()
+                    .stream()
+                    .filter(u -> registry.notWhitelisted(u))
+                    .map(u -> registry.getById(u).orElseThrow(IllegalArgumentException::new))
+                    .collect(Collectors.toList());
+            for (UserSession sess : expiredSessions) {
+                this.cleanupUser(sess.getSession());
+                sess.getSession().close(CloseStatus.NORMAL);
             }
         }
     }
@@ -99,20 +106,18 @@ public class TrafficWebsocketsHandler extends TextWebSocketHandler {
     public void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         final JsonObject jsonMessage = gson.fromJson(message.getPayload(), JsonObject.class);
 
-        if (!session.isOpen())
-            return;
+        if (!session.isOpen()) return;
 
         MessageHandler handler;
         if (MessageHandler.getParamFromSession(session, "jwt").isPresent())
             handler = new PresenterMessageHandler(session, registry, jsonMessage, roomManager);
-        else
-            handler = new UserMessageHandler(session, registry, jsonMessage, roomManager);
+        else handler = new UserMessageHandler(session, registry, jsonMessage, roomManager);
 
         handler.handleMessage();
     }
 
     @Override
-    public void afterConnectionClosed(@NonNull WebSocketSession session,@NonNull CloseStatus status) {
+    public void afterConnectionClosed(@NonNull WebSocketSession session, @NonNull CloseStatus status) {
         cleanupUser(session);
     }
 
