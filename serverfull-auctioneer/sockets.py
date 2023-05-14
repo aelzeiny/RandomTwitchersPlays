@@ -2,6 +2,7 @@ import asyncio
 from typing import Literal
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
+from starlette.websockets import WebSocketState
 
 import twitch_chatbot
 from auth import RequiredUser
@@ -47,6 +48,8 @@ def maybe_remove_socket(username: str, socket: WebSocket):
 
 async def _broadcast(data: dict):
     async def send_or_del(username: str, socket: WebSocket):
+        if socket.client_state == WebSocketState.DISCONNECTED:
+            return
         try:
             await socket.send_json(data)
         except WebSocketDisconnect:
@@ -57,6 +60,7 @@ async def _broadcast(data: dict):
             send_or_del(username, socket)
             for username in list(SOCKETS)
             for socket in SOCKETS[username]
+            if socket.client_state != WebSocketState.DISCONNECTED
         ],
         BOT.put(data)
     )

@@ -4,6 +4,7 @@ aiohttp
 pyjwt
 pydantic
 cryptography
-fastapi_jwt_auth
+starlette
+pydantic
 uvicorn
 twitchio

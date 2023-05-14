@@ -44,7 +44,7 @@ export default function Present () {
     const connect = (e) => {
         const btn = e.target;
         btn.setAttribute('disabled', true);
-        const jwt = toJwt({name: name}, secret);
+        const jwt = toJwt({username: name}, secret);
         const wsx = openPresenterConnection(jwt);
         const wsProxy = new WebSocket(proxy);
         let pingInterval = setInterval(() => {

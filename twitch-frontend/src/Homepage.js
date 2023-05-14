@@ -17,8 +17,8 @@ import { switchObservable } from "./gamepad/gamepadApi";
 function Homepage(props) {
     const joinCallback = (e) => {
         e.target.setAttribute('disabled', true);
-        joinQueue().then(() => {
-            props.history.push('/queue');
+        joinQueue().then(({data}) => {
+            props.history.push(`/queue?username=${data.payload.username}`);
         }).catch(redirectToOauth);
     };
 

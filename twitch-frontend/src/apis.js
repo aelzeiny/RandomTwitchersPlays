@@ -26,9 +26,8 @@ export async function leaveQueue() {
 }
 
 
-export function openQueueConnection(token) {
-    console.log('ayy');
-    return new WebSocket(`wss://${window.location.host}/ws?token=${token}`);
+export function openQueueConnection() {
+    return new WebSocket(`wss://${window.location.host}/ws`);
 }
 
 
@@ -37,7 +36,8 @@ export function openStreamerConnection(id) {
 }
 
 export function openPresenterConnection(jwt) {
-    return new WebSocket(`wss://${window.location.host}/traffic?jwt=${jwt}`);
+    document.cookie = `token=${jwt}; path=/`;
+    return new WebSocket(`wss://${window.location.host}/traffic`);
 }
 
 
@@ -45,8 +45,11 @@ export function redirectToOauth(promiseErr) {
     const { response } = promiseErr;
     const clientId = response.data.detail.clientId;
     if (response && response.status === 401 && clientId) {
-        console.log(clientId, window.location.origin)
         const redirectUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${clientId}&redirect_uri=${window.location.origin}/authorize&response_type=code&scope=openid`;
         window.location.replace(redirectUrl);
     }
+}
+
+export function getUsername() {
+
 }

@@ -1,5 +1,8 @@
 # Random Twitchers Play Random Games From my Nintendo Switch
 
+### What is this?
+You control my Nintendo Switch from your browser anywhere in the world. Each keyboard/mouse press is mapped to a physical controller input.
+
 ### How This Works
 You enter the Twitch stream, and wait in line. When you're up, a low-latency video 
 connection of my Switch is streamed to your browser at an undisclosed URL. You can use a USB 

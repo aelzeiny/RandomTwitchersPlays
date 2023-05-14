@@ -33,6 +33,10 @@ class OkResponse(PayloadResponse[str]):
     payload: str = "success"
 
 
+class UserPayload(BaseModel):
+    username: str
+
+
 class PositionPayload(BaseModel):
     position: int
 
@@ -57,10 +61,10 @@ def allowlist():
 
 
 @api.put("/user")
-async def join(user: RequiredUser) -> OkResponse:
+async def join(user: RequiredUser) -> PayloadResponse[UserPayload]:
     store.queue_push(user.username)
     await sockets.broadcast_status()
-    return OkResponse()
+    return PayloadResponse(payload=UserPayload(username=user.username))
 
 
 @api.delete("/user")
@@ -99,7 +103,7 @@ async def login(code: str, response: Response) -> OkResponse:
     except (AssertionError, KeyError) as e:
         raise HTTPException(status_code=401, detail=str(e))
     user = auth.User(
-        name=oidc_token["preferred_username"],
+        username=oidc_token["preferred_username"],
         token=data["access_token"],
         refresh=data["refresh_token"]
     )

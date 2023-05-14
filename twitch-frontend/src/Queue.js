@@ -5,8 +5,7 @@ import TwitchStream from "./TwitchStream";
 import GamepadDisplay from "./gamepad/GamepadDisplay";
 import { switchObservable } from "./gamepad/gamepadApi";
 import Navbar from "./Navbar";
-import { joinQueue, leaveQueue, openQueueConnection, redirectToOauth } from "./apis";
-import cookie from 'cookie';
+import { leaveQueue, openQueueConnection } from "./apis";
 import ControlsModal from './gamepad/ControlsModal';
 import FA from "react-fontawesome";
 
@@ -25,45 +24,45 @@ function JoinPrompt({ callback }) {
 function Queue(props) {
     // position is index in Q. If < 0 then the user is whitelisted.
     const [position, setPosition] = useState(null);
+
     useEffect(() => {
-        joinQueue().then(() => {
-            const { token, username } = cookie.parse(document.cookie);
-            if (!token) {
-                props.history.push('/');
-                return;
-            }
+        const ws = openQueueConnection();
+        const queryParams = new URLSearchParams(window.location.search);
+        const username = queryParams.get("username");
+        if (!username) {
+            window.location = "/";
+            return;
+        }
+        let interval;
+        ws.onopen = () => {
+            // request status to get position
+            console.log('open 4 business');
+            // AWS API Gateway has idle connection timeouts of 10 min.
+            interval = setInterval(() => ws.send(JSON.stringify({ action: 'ping' })), 30 * 1000);
+            ws.send(JSON.stringify({ action: 'status' }));
+        };
 
-            const ws = openQueueConnection(token);
-            let interval;
-            ws.onopen = () => {
-                // request status to get position
-                console.log('open 4 business');
-                // AWS API Gateway has idle connection timeouts of 10 min.
-                interval = setInterval(() => ws.send(JSON.stringify({ action: 'ping' })), 5 * 60 * 1000);
-                ws.send(JSON.stringify({ action: 'status' }));
-            };
-
-            ws.onmessage = (raw) => {
-                const message = JSON.parse(raw.data);
-                if (message.id === 'status') {
-                    if (message.whitelist.includes(username)) {
-                        setPosition(-1);
-                        return;
-                    }
-                    const pos = message.queue.indexOf(username);
-                    setPosition(pos >= 0 ? pos + 1 : null);
+        ws.onmessage = (raw) => {
+            const message = JSON.parse(raw.data);
+            if (message.id === 'status') {
+                console.log('>>', message, username, message.queue.indexOf(username))
+                if (message.whitelist.includes(username)) {
+                    setPosition(-1);
+                    return;
                 }
-            };
+                const pos = message.queue.indexOf(username);
+                setPosition(pos >= 0 ? pos + 1 : null);
+            }
+        };
 
-            // ws.onerror = () => props.history.push('/queue');  // Refresh the page as a backup
+        ws.onerror = () => window.location = "/";
 
-            return () => {
-                clearInterval(interval);
-                if (ws && ws.readyState === WebSocket.OPEN)
-                    ws.close();
-            };
-        }).catch(redirectToOauth);
-    }, [props.history, setPosition]);
+        return () => {
+            clearInterval(interval);
+            if (ws && ws.readyState === WebSocket.OPEN)
+                ws.close();
+        };
+    }, [setPosition]);
 
     const leave = () => {
         leaveQueue().then(props.history.push('/'));
