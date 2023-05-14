@@ -2,7 +2,7 @@ import os
 
 APP_EXTERNAL_URL = 'https://twitcharena.live'
 TRAFFIC_INTERNAL_URL = 'http://localhost:8443/api'
-TRAFFIC_STREAM_ENDPOINT = TRAFFIC_INTERNAL_URL + '/users/'
+TRAFFIC_USERS_ENDPOINT = TRAFFIC_INTERNAL_URL + '/users/'
 
 TWITCH_CHANNEL = 'RandomTwitchersPlay'
 BOT_NICK = 'RandomTwitchersPlay'

@@ -1,7 +1,6 @@
 from typing import Optional
 from collections import deque
 
-import aiohttp
 
 Q = deque()
 S = set()
@@ -44,7 +43,3 @@ def queue_rank(username) -> Optional[int]:
 def queue_contains(username) -> bool:
     return username in S
 
-
-async def stream_scan() -> list[str]:
-    async with aiohttp.ClientSession() as session:
-        session.get()

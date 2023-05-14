@@ -4,6 +4,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 from starlette.websockets import WebSocketState
 
+import traffic_server
 import twitch_chatbot
 from auth import RequiredUser
 from collections import defaultdict
@@ -34,8 +35,12 @@ class StatusResponse(BaseModel):
 BOT = asyncio.Queue()
 
 
-def status_response() -> StatusResponse:
-    return StatusResponse(queue=store.queue_scan(1000), whitelist=[])
+async def status_response() -> StatusResponse:
+    status = await traffic_server.status()
+    return StatusResponse(
+        queue=store.queue_scan(1000),
+        whitelist=status.whitelist,
+    )
 
 
 def maybe_remove_socket(username: str, socket: WebSocket):
@@ -67,8 +72,8 @@ async def _broadcast(data: dict):
 
 
 async def broadcast_status():
-    status = status_response().dict()
-    await _broadcast(status)
+    status = await status_response()
+    await _broadcast(status.dict())
 
 
 @router.websocket("/ws")
@@ -81,7 +86,8 @@ async def websocket_endpoint(websocket: WebSocket, user: RequiredUser):
             if action.action == "ping":
                 await websocket.send_json(PingResponse(message="pong").dict())
             elif action.action == "status":
-                await websocket.send_json(status_response().dict())
+                status = await status_response()
+                await websocket.send_json(status.dict())
         except WebSocketDisconnect:
             maybe_remove_socket(user.username, websocket)
             break

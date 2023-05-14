@@ -7,6 +7,7 @@ from asyncio import Queue
 
 import constants
 import store
+import traffic_server
 from constants import TWITCH_CHANNEL
 
 log = logging.root.getChild(__name__)
@@ -24,8 +25,8 @@ class Bot(commands.Bot):
     @commands.command(name='join')
     async def join(self, ctx: Context):
         username = ctx.author.name
-        log.info(f'{ctx.author.name} joining queue @{APP_EXTERNAL_URL}')
-        await ctx.send(f'Welcome @{username}! Please wait in line here: {APP_EXTERNAL_URL}')
+        log.info(f'{ctx.author.name} joining queue @{constants.APP_EXTERNAL_URL}')
+        await ctx.send(f'Welcome @{username}! Please wait in line here: {constants.APP_EXTERNAL_URL}')
 
     @commands.command(name='leave', aliases=['quit', 'exit', 'remove'])
     async def leave(self, ctx: Context):
@@ -45,17 +46,19 @@ class Bot(commands.Bot):
             await ctx.send(f'@{username} is #{pos} in the queue.')
         else:
             # check if in stream
-
-            await ctx.send(f"@{username} you're supposed to be on stream! {APP_EXTERNAL_URL}/queue")
-            await ctx.send(f'@{username} type "!join" to enter the queue')
+            status = await traffic_server.status()
+            if username in status.whitelist:
+                await ctx.send(f"@{username} you're supposed to be on stream! {constants.APP_EXTERNAL_URL}/queue")
+            else:
+                await ctx.send(f'@{username} type "!join" to enter the queue')
 
     @commands.command(name='help', aliases=['h', 'ayuda', 'halp'])
     async def helper(self, ctx: Context):
         await ctx.send("!join to enter the queue")
         await ctx.send("!queue to track your status")
         await ctx.send("!leave to exit the queue")
-        await ctx.send("!cheer @<user> adds time")
-        await ctx.send("!kick @<user> to kick")
+        # await ctx.send("!cheer @<user> adds time")
+        # await ctx.send("!kick @<user> to kick")
         await ctx.send("!help to see this again")
 
     @commands.command(name='kick', aliases=['ban', 'boot', 'kill'])
