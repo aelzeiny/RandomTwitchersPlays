@@ -1,7 +1,7 @@
 import React from 'react';
 import './Homepage.css';
 
-import ScrollAnimation from 'react-animate-on-scroll';
+import {AnimationOnScroll} from 'react-animation-on-scroll';
 
 import TwitchStream from './TwitchStream';
 import Navbar from "./Navbar";
@@ -28,7 +28,7 @@ function Homepage(props) {
             <TwitchStream chat={false} />
             <section className='home-section' style={{ color: 'white' }}>
                 <div className='container-lg'>
-                    <ScrollAnimation animateIn="animate__fadeInLeft" animateOnce={true}>
+                    <AnimationOnScroll animateIn="animate__fadeInLeft" animateOnce={true}>
                         <h3>Strangers on Stream</h3>
                         <div className='row'>
                             <div className='col-md-8'>
@@ -43,20 +43,20 @@ function Homepage(props) {
                                 <ControlsModal />
                             </div>
                         </div>
-                    </ScrollAnimation>
+                    </AnimationOnScroll>
                 </div>
             </section>
             {/*<section className='home-section' style={{color: 'white'}}>*/}
             {/*    <div className='container-lg'>*/}
-            {/*        <ScrollAnimation animateIn="animate__fadeInRight" animateOnce={true}>*/}
+            {/*        <AnimationOnScroll animateIn="animate__fadeInRight" animateOnce={true}>*/}
             {/*            <h3>Strangers in Queue</h3>*/}
             {/*            <p>There are <span>__</span> people in line to play. Each player plays for 15 minutes.</p>*/}
-            {/*        </ScrollAnimation>*/}
+            {/*        </AnimationOnScroll>*/}
             {/*    </div>*/}
             {/*</section>*/}
             <section className='home-section' style={{ color: 'white' }}>
                 <div className='container-lg'>
-                    <ScrollAnimation animateIn="animate__fadeInRight" animateOnce={true}>
+                    <AnimationOnScroll animateIn="animate__fadeInRight" animateOnce={true}>
                         <h3>Anyone Can Play</h3>
                         <div className='row'>
                             <div className='col-md-4'>
@@ -85,12 +85,12 @@ function Homepage(props) {
                                 </p>
                             </div>
                         </div>
-                    </ScrollAnimation>
+                    </AnimationOnScroll>
                 </div>
             </section>
             <section className='home-section' style={{ color: 'white' }}>
                 <div className='container-lg'>
-                    <ScrollAnimation animateIn="animate__fadeInLeft" animateOnce={true}>
+                    <AnimationOnScroll animateIn="animate__fadeInLeft" animateOnce={true}>
                         <div className='row'>
                             <div className='col-md-8'>
                                 <h3>Live on Twitch</h3>
@@ -109,7 +109,7 @@ function Homepage(props) {
                                 <img src={twitchIcon} alt='sidebar' />
                             </div>
                         </div>
-                    </ScrollAnimation>
+                    </AnimationOnScroll>
                 </div>
             </section>
         </div>
