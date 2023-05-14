@@ -1,37 +1,13 @@
 import React, { useState } from 'react';
 import './Present.css';
 
-import Base64 from 'crypto-js/enc-base64';
-import HmacSHA256 from 'crypto-js/hmac-sha256';
 import Navbar from "./Navbar";
 import Room from "./Room";
-import { openPresenterConnection } from "./apis";
-
-
-const encodeBase64 = (value, padding) => {
-    const encoded = window.btoa(window.unescape(window.encodeURIComponent(value)));
-    if (!padding)
-        return encoded.replace(/=+$/, '');
-    return encoded;
-};
-
-const toJwt = (message, secret) => {
-    const header = encodeBase64(JSON.stringify({alg: "HS256", typ: "JWT"}));
-    const payload = encodeBase64(JSON.stringify(message));
-    let signature = Base64.stringify(
-        HmacSHA256(header + '.' + payload, secret)
-    );
-    // base64 -> base64URL
-    signature = signature.split('+').join('-')
-        .split('/').join('_')
-        .replace(/(=+$)/g, "");
-    return `${header}.${payload}.${signature}`;
-}
-
+import { openPresenterConnection, getTrafficURL, present } from "./apis";
 
 export default function Present () {
     const [secret, setSecret] = useState('');
-    const [proxy, setProxy] = useState('wss://localhost:3000/traffic');
+    const [proxy, setProxy] = useState(getTrafficURL());
     const [wsPair, setWsPair] = useState({ main: undefined, proxy: undefined });
 
     const name = '!PRESENTER';
@@ -41,11 +17,11 @@ export default function Present () {
             wsPair.proxy.sendMessage({id: 'switchInput', input: commonInput});
     };
 
-    const connect = (e) => {
+    const connect = async (e) => {
         const btn = e.target;
         btn.setAttribute('disabled', true);
-        const jwt = toJwt({username: name}, secret);
-        const wsx = openPresenterConnection(jwt);
+        await present(secret);
+        const wsx = openPresenterConnection();
         const wsProxy = new WebSocket(proxy);
         let pingInterval = setInterval(() => {
             if (wsx.readyState === WebSocket.OPEN)

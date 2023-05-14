@@ -12,7 +12,7 @@ const axiosWithCookies = axios.create({
 
 
 export async function authorize(code) {
-    return await axiosWithCookies.get(`/api/login/${code}`);
+    return await axiosWithCookies.get(`/api/login?code=${code}`);
 }
 
 
@@ -23,6 +23,10 @@ export async function joinQueue() {
 
 export async function leaveQueue() {
     return await axiosWithCookies.delete('/api/user');
+}
+
+export async function present(token) {
+    return await axiosWithCookies.post('/api/present', {token});
 }
 
 function wsProtocol() {
@@ -42,10 +46,12 @@ export function openStreamerConnection(id) {
     return new WebSocket(`${wsProtocol()}://${window.location.host}/traffic`);
 }
 
+export function getTrafficURL() {
+    return `${wsProtocol()}://${window.location.host}/traffic`;
+}
 
 export function openPresenterConnection(jwt) {
-    document.cookie = `token=${jwt}; path=/`;
-    return new WebSocket(`${wsProtocol()}://${window.location.host}/traffic`);
+    return new WebSocket(getTrafficURL());
 }
 
 

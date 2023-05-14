@@ -1,3 +1,4 @@
+import asyncio
 from typing import Generic, TypeVar
 import aiohttp
 from fastapi import APIRouter, FastAPI, HTTPException, Response
@@ -6,6 +7,8 @@ from fastapi.responses import HTMLResponse
 
 from pydantic import BaseModel
 from pydantic.generics import GenericModel
+from starlette import status
+from starlette.responses import RedirectResponse
 
 import constants
 import store
@@ -40,25 +43,26 @@ class PositionPayload(BaseModel):
     position: int
 
 
-# http://localhost:5001/api/login/y5b5nw8x6067jddrvr0h2wrrw42u02
+class PresenterRequest(BaseModel):
+    token: str
 
 
 @api.put("/user")
 async def join(user: RequiredUser) -> PayloadResponse[UserPayload]:
     store.queue_push(user.username)
-    await sockets.broadcast_status()
+    asyncio.ensure_future(sockets.broadcast_status())
     return PayloadResponse(payload=UserPayload(username=user.username))
 
 
 @api.delete("/user")
 async def leave(user: RequiredUser) -> OkResponse:
     store.queue_remove(user.username)
-    await sockets.broadcast_status()
+    asyncio.ensure_future(sockets.broadcast_status())
     return OkResponse()
 
 
-@api.get("/login/{code}")
-async def login(code: str, response: Response) -> OkResponse:
+@api.get("/login")
+async def login(code: str, response: Response) -> PayloadResponse[UserPayload]:
     async with aiohttp.ClientSession() as session:
         auth_response = await session.post(
             "https://id.twitch.tv/oauth2/token",
@@ -67,7 +71,7 @@ async def login(code: str, response: Response) -> OkResponse:
                 "client_secret": constants.TWITCH_CLIENT_SECRET,
                 "code": code,
                 "grant_type": "authorization_code",
-                "redirect_uri": "https://localhost:3000/authorize",
+                "redirect_uri": f"{constants.APP_EXTERNAL_URL}/authorize",
             },
         )
         data = await auth_response.json()
@@ -82,6 +86,15 @@ async def login(code: str, response: Response) -> OkResponse:
         token=data["access_token"],
         refresh=data["refresh_token"]
     )
+    response.set_cookie(key="token", value=user.to_jwt(), httponly=True)
+    return PayloadResponse(payload=UserPayload(username=user.username))
+
+
+@api.post("/present")
+async def present(token: PresenterRequest, response: Response) -> OkResponse:
+    if token.token != constants.JWT_SECRET:
+        return auth.UnauthorizedException()
+    user = auth.User(username=constants.PRESENTER)
     response.set_cookie(key="token", value=user.to_jwt(), httponly=True)
     return OkResponse()
 

@@ -11,14 +11,20 @@ export default function Authorize(props) {
     const queryString = qs.parse(props.location.search, { ignoreQueryPrefix: true });
 
     useEffect(() => {
-        const exitTimeout = () => setTimeout(props.history.push('/queue'), 5000);
+        let timeout;
+        const exitTimeout = (username) => {
+            timeout = setTimeout(props.history.push('/queue?username=' + username), 5000);
+        };
         if (!queryString.code)
             exitTimeout();
         else
             authorize(queryString.code)
-                .then(exitTimeout)  // exit if authorized
+                .then(({data}) => exitTimeout(data.payload.username))  // exit if authorized
                 .catch(() => props.history.push('/authorize'));  // Tell user that didn't work if the API call failed
-    }, [queryString, props]);
+        return () => {
+            if (timeout) clearTimeout(timeout);
+        }
+    }, [queryString, props.history]);
 
     if (!queryString.code) {
         return (

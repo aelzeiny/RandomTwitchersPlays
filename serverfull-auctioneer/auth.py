@@ -16,7 +16,7 @@ class User(BaseModel):
     refresh_token: Optional[str]
 
     def to_jwt(self) -> str:
-        return jwt.encode(self.dict(), constants.JWT_SECRET, algorithm="HS256")
+        return jwt.encode(self.dict(), constants.JWT_SECRET, algorithm="HS256").decode('utf8')
 
 
 async def validate_oidc(id_token: str) -> Optional[dict[str, str]]:
@@ -60,6 +60,8 @@ def get_current_user(token: CookieType = None) -> User:
     try:
         decoded = jwt.decode(token, constants.JWT_SECRET, algorithms=["HS256"])
     except jwt.exceptions.PyJWTError:
+        raise UnauthorizedException()
+    if decoded['username'] == constants.PRESENTER:  # by user we don't mean presenter!
         raise UnauthorizedException()
     return User(username=decoded['username'], token=decoded['token'], refresh_token=decoded['refresh_token'])
 
