@@ -5,6 +5,7 @@ axios.defaults.withCredentials = true;
 
 window.axios = axios;
 
+const USERNAME_KEY = "_username";
 
 const axiosWithCookies = axios.create({
     withCredentials: true
@@ -12,7 +13,13 @@ const axiosWithCookies = axios.create({
 
 
 export async function authorize(code) {
-    return await axiosWithCookies.get(`/api/login?code=${code}`);
+    const retval = await axiosWithCookies.get(`/api/login?code=${code}`);
+    window.localStorage.setItem(USERNAME_KEY, retval.data.payload.username);
+    return retval;
+}
+
+export function getUsername() {
+    return window.localStorage.getItem(USERNAME_KEY);
 }
 
 

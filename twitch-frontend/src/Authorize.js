@@ -2,7 +2,7 @@ import './Authorize.css';
 
 import React, { useEffect } from 'react';
 import qs from 'qs';
-import { authorize } from './apis';
+import {authorize, joinQueue} from './apis';
 
 import FA from 'react-fontawesome';
 import Navbar from "./Navbar";
@@ -16,13 +16,14 @@ export default function Authorize(props) {
             timeout = setTimeout(props.history.push('/queue?username=' + username), 5000);
         };
         if (!queryString.code)
-            exitTimeout();
+            props.history.push('/');
         else
             authorize(queryString.code)
-                .then(({data}) => exitTimeout(data.payload.username))  // exit if authorized
+                .then(joinQueue)
+                .then(({data}) => exitTimeout(data.payload.username))// exit if authorized
                 .catch(() => props.history.push('/authorize'));  // Tell user that didn't work if the API call failed
         return () => {
-            if (timeout) clearTimeout(timeout);
+            if (timeout !== undefined) clearTimeout(timeout);
         }
     }, [queryString, props.history]);
 

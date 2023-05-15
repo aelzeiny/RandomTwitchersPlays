@@ -5,8 +5,12 @@ import Navbar from "./Navbar";
 import Room from "./Room";
 import { openPresenterConnection, getTrafficURL, present } from "./apis";
 
+
+const SUPER_SECRET_STORAGE_KEY = "_SUPER_SECRET";
+
+
 export default function Present () {
-    const [secret, setSecret] = useState('');
+    const [secret, setSecret] = useState(window.localStorage.getItem(SUPER_SECRET_STORAGE_KEY) || "");
     const [proxy, setProxy] = useState(getTrafficURL());
     const [wsPair, setWsPair] = useState({ main: undefined, proxy: undefined });
 
@@ -18,6 +22,7 @@ export default function Present () {
     };
 
     const connect = async (e) => {
+        window.localStorage.setItem(SUPER_SECRET_STORAGE_KEY, secret);
         const btn = e.target;
         btn.setAttribute('disabled', true);
         await present(secret);

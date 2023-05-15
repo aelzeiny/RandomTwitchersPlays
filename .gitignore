@@ -14,6 +14,7 @@ serverfull-auctioneer/static
 
 # other
 *.db
+certbot
 
 # Python + Serverless directories
 .serverless/

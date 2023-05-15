@@ -39,7 +39,7 @@ async def status_response() -> StatusResponse:
     status = await traffic_api.status()
     return StatusResponse(
         queue=store.queue_scan(1000),
-        whitelist=status.whitelist,
+        whitelist=[u.user_id for u in status.whitelist],
     )
 
 
@@ -91,9 +91,3 @@ async def websocket_endpoint(websocket: WebSocket, user: RequiredUser):
         except WebSocketDisconnect:
             maybe_remove_socket(user.username, websocket)
             break
-
-
-@router.on_event("startup")
-async def startup_event():
-    loop = asyncio.get_event_loop()
-    task = loop.create_task(twitch_chatbot.main(BOT))

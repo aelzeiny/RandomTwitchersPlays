@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from typing import Generic, TypeVar
 import aiohttp
 from fastapi import APIRouter, FastAPI, HTTPException, Response
@@ -7,17 +8,19 @@ from fastapi.responses import HTMLResponse
 
 from pydantic import BaseModel
 from pydantic.generics import GenericModel
-from starlette import status
-from starlette.responses import RedirectResponse
 
 import constants
+import heartbeat
 import store
 import sockets
 
 import auth
+import twitch_chatbot
 from auth import RequiredUser
 import uvicorn
 
+
+log = logging.root.getChild(__name__)
 app = FastAPI()
 
 
@@ -49,15 +52,17 @@ class PresenterRequest(BaseModel):
 
 @api.put("/user")
 async def join(user: RequiredUser) -> PayloadResponse[UserPayload]:
-    store.queue_push(user.username)
-    asyncio.ensure_future(sockets.broadcast_status())
+    log.info(f'User {user.username} joined the Q')
+    if store.queue_push(user.username):
+        asyncio.ensure_future(sockets.broadcast_status())
     return PayloadResponse(payload=UserPayload(username=user.username))
 
 
 @api.delete("/user")
 async def leave(user: RequiredUser) -> OkResponse:
-    store.queue_remove(user.username)
-    asyncio.ensure_future(sockets.broadcast_status())
+    log.info(f'User {user.username} left the Q')
+    if store.queue_remove(user.username):
+        asyncio.ensure_future(sockets.broadcast_status())
     return OkResponse()
 
 
@@ -93,7 +98,7 @@ async def login(code: str, response: Response) -> PayloadResponse[UserPayload]:
 @api.post("/present")
 async def present(token: PresenterRequest, response: Response) -> OkResponse:
     if token.token != constants.JWT_SECRET:
-        return auth.UnauthorizedException()
+        raise auth.UnauthorizedException()
     user = auth.User(username=constants.PRESENTER)
     response.set_cookie(key="token", value=user.to_jwt(), httponly=True)
     return OkResponse()
@@ -114,6 +119,14 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 async def index(path: str = None):
     """HTML Response Catch all"""
     return HTMLResponse(content=INDEX_HTML, status_code=200)
+
+
+@app.on_event("startup")
+async def startup_event():
+    """Register critical asyncio loops"""
+    loop = asyncio.get_event_loop()
+    loop.create_task(heartbeat.main())
+    loop.create_task(twitch_chatbot.main(sockets.BOT))
 
 
 if __name__ == "__main__":

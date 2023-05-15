@@ -16,7 +16,10 @@ class User(BaseModel):
     refresh_token: Optional[str]
 
     def to_jwt(self) -> str:
-        return jwt.encode(self.dict(), constants.JWT_SECRET, algorithm="HS256").decode('utf8')
+        answer = jwt.encode(self.dict(), constants.JWT_SECRET, algorithm="HS256")
+        if isinstance(answer, bytes):
+            answer = answer.decode('utf8')
+        return answer
 
 
 async def validate_oidc(id_token: str) -> Optional[dict[str, str]]:
