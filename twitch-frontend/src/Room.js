@@ -127,9 +127,10 @@ export default class Room extends React.Component {
                         }
                     } else {
                         vidOptions = {
+                            minWidth: 1280,
                             maxWidth: 1280,
-                            maxFrameRate: 60,
-                            minFrameRate: 15
+                            minFrameRate: 24,
+                            maxFrameRate: 30,
                         }
                     }
 
