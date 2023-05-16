@@ -54,7 +54,5 @@ services:
     environment:
       - "KMS_MIN_PORT=5000"
       - "KMS_MAX_PORT=5050"
-    # volumes:
-    #   - type: bind
-    #     source: ./kurento-files/
-    #     target: /etc/kurento/
+    volumes:
+      - ./kurento-files/WebRtcEndpoint.conf.ini:/etc/kurento/modules/kurento/WebRtcEndpoint.conf.ini

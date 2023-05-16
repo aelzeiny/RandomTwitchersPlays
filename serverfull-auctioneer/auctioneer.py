@@ -15,6 +15,7 @@ import store
 import sockets
 
 import auth
+import traffic_api
 import twitch_chatbot
 from auth import RequiredUser
 import uvicorn
@@ -52,8 +53,13 @@ class PresenterRequest(BaseModel):
 
 @api.put("/user")
 async def join(user: RequiredUser) -> PayloadResponse[UserPayload]:
-    log.info(f'User {user.username} joined the Q')
+    # user cannot be in stream
+    status = await traffic_api.status()
+    if user in [x.user_id for x in status.stream] or user in [x.user_id for x in status.whitelist]:
+        return PayloadResponse(payload=UserPayload(username=user.username))
+    # try to put user in Q
     if store.queue_push(user.username):
+        log.info(f'User {user.username} joined the Q')
         asyncio.ensure_future(sockets.broadcast_status())
     return PayloadResponse(payload=UserPayload(username=user.username))
 

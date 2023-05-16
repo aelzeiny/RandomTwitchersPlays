@@ -10,7 +10,7 @@ GET http://127.0.0.1:8443/api/users
 POST http://127.0.0.1:8443/api/users
 Content-Type: application/json
 
-["awkii", "dude"]
+["awkii", "aelzeiny"]
 
 ###
 

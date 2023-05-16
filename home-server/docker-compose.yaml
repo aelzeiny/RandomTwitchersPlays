@@ -1,9 +1,11 @@
 version: "3.9"
 services:
     relay:
+        build:
+            context: .
         image: aelzeiny/twitch-relay
         ports:
             - "9999:9999"
-        volumes:
-            - /dev/bus/usb/001/
-        command: python controller_relay.py -p /dev/bus/usb/001/003
+        # volumes:
+        #     - /dev/ttyUSB0
+        command: python controller_relay.py

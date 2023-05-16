@@ -16,6 +16,17 @@ WebSocket.prototype.sendMessage = function (msg) {
     this.send(jsonMessage);
 }
 
+/**
+    See: https://doc-kurento.readthedocs.io/en/latest/features/kurento_utils_js.html
+    [{"urls":"turn:turn.example.org","username":"user","credential":"myPassword"}]
+    [{"urls":"stun:stun1.example.net"},{"urls":"stun:stun2.example.net"}]
+*/
+
+const iceServersConfig = [
+    {"urls": "turn:turn.tearsofthekingdom.live", "username": "turnunit", "credential": "foUvJHWBNQ4hHp77sk577o8"},
+    {"urls":"stun:turn.tearsofthekingdom.live"}
+];
+
 
 export default class Room extends React.Component {
     constructor(props) {
@@ -128,13 +139,15 @@ export default class Room extends React.Component {
                             audio: true,
                             video: vidOptions
                         },
-                        onicecandidate: this.onIceCandidate.bind(this, player)
+                        onicecandidate: this.onIceCandidate.bind(this, player),
+                        configuration: {iceServers: iceServersConfig},
                     };
                     this.webRtc[player].rtcPeer = new WebRtcPeer.WebRtcPeerSendonly(options, offerCallback);
                 } else {
                     const options = {
                         remoteVideo: this.webRtc[player].video,
-                        onicecandidate: this.onIceCandidate.bind(this, player)
+                        onicecandidate: this.onIceCandidate.bind(this, player),
+                        configuration: {iceServers: iceServersConfig},
                     };
                     this.webRtc[player].rtcPeer = new WebRtcPeer.WebRtcPeerRecvonly(options, offerCallback);
                 }

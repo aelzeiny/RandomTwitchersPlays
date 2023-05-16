@@ -11,7 +11,7 @@ const SUPER_SECRET_STORAGE_KEY = "_SUPER_SECRET";
 
 export default function Present () {
     const [secret, setSecret] = useState(window.localStorage.getItem(SUPER_SECRET_STORAGE_KEY) || "");
-    const [proxy, setProxy] = useState(getTrafficURL());
+    const [proxy, setProxy] = useState('ws://127.0.0.1:9999');
     const [wsPair, setWsPair] = useState({ main: undefined, proxy: undefined });
 
     const name = '!PRESENTER';

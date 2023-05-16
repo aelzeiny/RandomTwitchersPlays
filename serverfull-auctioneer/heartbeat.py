@@ -29,6 +29,8 @@ async def main():
         await asyncio.sleep(HEARTBEAT_SECS)
         traffic_status = await traffic_api.status()
 
+        old_streamers = traffic_status.stream
+        old_streamers_set = set((u.user_id for u in old_streamers))
         old_allowed = traffic_status.whitelist
 
         new_streamers = list(traffic_status.stream)
@@ -43,7 +45,7 @@ async def main():
         # STEP 2: remove the expired allowed
         new_allowed = [
             s for s in new_allowed
-            if s.time <= JOIN_TIMEOUT_SECS
+            if s.time <= JOIN_TIMEOUT_SECS and s.user_id not in old_streamers_set
         ]
 
         # STEP 3: fill up allowed from Q to the best of ability
