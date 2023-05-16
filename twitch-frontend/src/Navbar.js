@@ -59,7 +59,7 @@ export default function Navbar({ buttonText, callback }) {
             <HelpModal />
             <nav id='arena-navbar' className="navbar fixed-top navbar-expand-lg navbar-dark bg-dark bg-arena">
                 <div className='container'>
-                    <a className="navbar-brand title" href='/'>Twitch Arena Roulette</a>
+                    <a className="navbar-brand title" href='/'>Tears Of The Kingdom Live</a>
                     <button className="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
                         aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                         <span className="navbar-toggler-icon" />
