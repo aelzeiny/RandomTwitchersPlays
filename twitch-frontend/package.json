@@ -25,7 +25,7 @@
     "react-dom": "^18.2.0",
     "react-fontawesome": "^1.7.1",
     "react-router-dom": "^5.3.4",
-    "react-scripts": "3.4.1",
+    "react-scripts": "5.0.1",
     "react-twitch-embed": "^3.0.1",
     "rxjs": "^6.6.7",
     "use-state-with-callback": "^3.0.2"
