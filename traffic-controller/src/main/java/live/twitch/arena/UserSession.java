@@ -34,12 +34,15 @@ public class UserSession implements Closeable {
 
     private GamepadInput gamepadInput;
 
-    public UserSession(final String userId, final WebSocketSession session, MediaPipeline pipeline) {
+    private boolean isPresenter;
+
+    public UserSession(final String userId, final WebSocketSession session, MediaPipeline pipeline, boolean isPresenter) {
         this.pipeline = pipeline;
         this.userId = userId;
         this.session = session;
         this.outgoingMedia = new WebRtcEndpoint.Builder(pipeline).build();
         this.createdDttm = LocalDateTime.now();
+        this.isPresenter = isPresenter;
 
         this.outgoingMedia.addIceCandidateFoundListener(event -> {
             JsonObject response = new JsonObject();
@@ -54,6 +57,12 @@ public class UserSession implements Closeable {
                 log.debug(e.getMessage());
             }
         });
+
+        // ensure high-quality video for presenter
+        if (isPresenter) {
+            this.outgoingMedia.setMinVideoSendBandwidth(2000);
+            this.outgoingMedia.setMaxVideoSendBandwidth(5000);
+        }
     }
 
     public WebRtcEndpoint getOutgoingWebRtcPeer() {
@@ -63,6 +72,8 @@ public class UserSession implements Closeable {
     public String getUserId() {
         return userId;
     }
+
+    public boolean isPresenter() { return isPresenter; }
 
     public WebSocketSession getSession() {
         return session;
@@ -104,7 +115,9 @@ public class UserSession implements Closeable {
         WebRtcEndpoint incoming = incomingMedia.get(sender.getUserId());
         if (incoming == null) {
             log.debug("PARTICIPANT {}: creating new endpoint for {}", this.userId, sender.getUserId());
-            incoming = new WebRtcEndpoint.Builder(pipeline).build();
+            WebRtcEndpoint.Builder incomingBuilder = new WebRtcEndpoint.Builder(pipeline);
+
+            incoming = incomingBuilder.build();
 
             incoming.addIceCandidateFoundListener(event -> {
                 JsonObject response = new JsonObject();
@@ -119,6 +132,11 @@ public class UserSession implements Closeable {
                     log.debug(e.getMessage());
                 }
             });
+            // Ensure high quality presenter setup
+            if (sender.isPresenter) {
+                incoming.setMinVideoSendBandwidth(2000);
+                incoming.setMaxVideoSendBandwidth(5000);
+            }
 
             incomingMedia.put(sender.getUserId(), incoming);
         }
