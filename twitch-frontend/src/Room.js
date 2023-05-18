@@ -94,11 +94,14 @@ export default class Room extends React.Component {
             'requestFullscreen', 'mozRequestFullScreen',
             'webkitRequestFullscreen', 'msRequestFullscreen'
         ];
-        for (let reqFullScreen of fullScreenCompatibleFuncs)
+        for (let reqFullScreen of fullScreenCompatibleFuncs) {
             if (elem[reqFullScreen]) {
-                elem[reqFullScreen]();
+                elem[reqFullScreen]().then(() => {
+                    elem.requestPointerLock();
+                });
                 break;
             }
+        }
     }
 
     componentDidUpdate(_, prevState, __) {
@@ -122,8 +125,8 @@ export default class Room extends React.Component {
                     if (!this.isPresenter) {
                         vidOptions = {
                             maxWidth: 100,
-                                maxFrameRate: 15,
-                                minFrameRate: 15
+                            maxFrameRate: 15,
+                            minFrameRate: 15
                         }
                     } else {
                         vidOptions = {

@@ -12,12 +12,16 @@
 
 .presenter-div {
     position: relative;
+    background-color: black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .video-fullscreen {
     position: absolute;
-    right: 0;
-    bottom: 0;
+    right: 16px;
+    bottom: 16px;
 }
 
 .players-div {

@@ -1,29 +1,41 @@
 import isEqual from 'lodash.isequal';
 import { Subject } from 'rxjs';
+import {gamepad} from "caniuse-lite/data/features";
 
 const switchApi = require('./switchApi');
 
 export const switchObservable = new Subject();
 
-let gamepadInterval = null;
 let keyboardDownEvent = null;
 let keyboardUpEvent = null;
+let mouseMoveEvent = null;
+let mouseDownEvent = null;
+let mouseUpEvent = null;
+
+let _SENSITIVITY = 5;
+
+window.sensitivity = {
+    get: () => _SENSITIVITY,
+    set: (x) => _SENSITIVITY = x,
+};
 
 
-export function updateController(newGamepad) {
-    if(gamepadInterval)
-        clearInterval(gamepadInterval);
-    if (keyboardUpEvent || keyboardDownEvent) {
+export function updateController() {
+    if (keyboardUpEvent || keyboardDownEvent || mouseMoveEvent) {
         document.removeEventListener('keydown', keyboardDownEvent);
         document.removeEventListener('keyup', keyboardUpEvent);
-    }
+        document.removeEventListener('mousemove', mouseMoveEvent);
+        document.removeEventListener("mousedown", mouseDownEvent);
+        document.removeEventListener("mouseup", mouseUpEvent);
+    } 
 
-    if (newGamepad)
-        setInterval(() => getGamepadLoop(newGamepad),1);
     else {
-        [keyboardDownEvent, keyboardUpEvent] = getKeyboardEvents();
+        [keyboardDownEvent, keyboardUpEvent, mouseMoveEvent, mouseDownEvent, mouseUpEvent] = getKeyboardEvents();
         document.addEventListener('keydown', keyboardDownEvent);
         document.addEventListener('keyup', keyboardUpEvent);
+        document.addEventListener("mousemove", mouseMoveEvent);
+        document.addEventListener("mousedown", mouseDownEvent);
+        document.addEventListener("mouseup", mouseUpEvent);
     }
 }
 
@@ -41,38 +53,41 @@ function getGamepadLoop(gamepad) {
 
 /**
  * TODO: ADD GAMEPAD INPUT MAPPING
+ * @param gamepad
+ * @type {Gamepad}
  */
-function getGamepadInput() {
-    // for (i = 0; i < controller.buttons.length; i++) {
-    //     var b = buttons[i];
-    //     var val = controller.buttons[i];
-    //     var pressed = val == 1.0;
-    //     if (typeof (val) == "object") {
-    //         pressed = val.pressed;
-    //         val = val.value;
-    //     }
+function getGamepadInput(gamepad) {
+    // source: https://w3c.github.io/gamepad/#dom-gamepad-mapping
+    // XYBA
+    // PROBLEM: NO STANDARDIZED GAMEPAD format for gamepads.
+    // const gamepadButtonToSwitchMapping = {
+    //     0: switchApi.BUTTON_B,
+    //     1: switchApi.BUTTON_A,
+    //     2: switchApi.BUTTON_X,
+    //     3: switchApi.BUTTON_Y,
+    //     4: switchApi.BUTTON_LB,
+    //     5: switchApi.BUTTON_RB,
+    //     6: switchApi.BUTTON_LTRIGGER,
+    //     7: switchApi.BUTTON_RTRIGGER,
+    //     8: switchApi.BUTTON_SELECT,
+    //     9: switchApi.BUTTON_START,
     //
-    //     if (pressed) {
-    //         b.className = "button pressed";
-    //     } else {
-    //         b.className = "button";
-    //     }
-    // }
-    //
-    // for (i = 0; i < controller.axes.length; i++) {
-    //     var a = axes[i];
-    // }
+    // };
 }
 
 const switchKeyboardMapping = {
     'enter': switchApi.BUTTON_START,
     'esc': switchApi.BUTTON_SELECT,
-    'shift': switchApi.BUTTON_SELECT,
 
-    'a': switchApi.BUTTON_Y,
-    's': switchApi.BUTTON_B,
-    'd': switchApi.BUTTON_A,
-    'w': switchApi.BUTTON_X,
+    // TotK Button Mapping
+    'shift': switchApi.BUTTON_B, // put away + sprint
+    ' ': switchApi.BUTTON_X, // space -> jump
+
+
+    'i': switchApi.BUTTON_X,
+    'j': switchApi.BUTTON_Y,
+    'k': switchApi.BUTTON_B,
+    'l': switchApi.BUTTON_A,
 
     'q': switchApi.BUTTON_LB,
     'e': switchApi.BUTTON_RB,
@@ -91,40 +106,42 @@ function getKeyboardEvents() {
     lastInput[switchApi.AXIS_LY] = 0;
     lastInput[switchApi.AXIS_RX] = 0;
     lastInput[switchApi.AXIS_RY] = 0;
+    let clearMouseTimeout = null;
 
     const newKeyDown = (e) => {
         const newInput = {...lastInput};
         const eKey = e.key.toLowerCase();
         switch (eKey) {
-            case "down": // IE/Edge
-            case "arrowdown":
-                newInput[switchApi.AXIS_LY] = 1;
-                break;
-            case "up": // IE/Edge
-            case "arrowup":
+            case "w": // IE/Edge
                 newInput[switchApi.AXIS_LY] = -1;
                 break;
-            case "left": // IE/Edge
-            case "arrowleft":
+            case "a": // IE/Edge
                 newInput[switchApi.AXIS_LX] = -1;
                 break;
-            case "right": // IE/Edge
-            case "arrowright":
+            case "s": // IE/Edge
+                newInput[switchApi.AXIS_LY] = 1;
+                break;
+            case "d": // IE/Edge
                 newInput[switchApi.AXIS_LX] = 1;
                 break;
 
-            case "j":
-                newInput[switchApi.AXIS_RX] = -1;
-                break;
-            case "l":
-                newInput[switchApi.AXIS_RX] = 1;
-                break;
-            case "i":
+            case "up": // IE/Edge
+            case "arrowup":
                 newInput[switchApi.AXIS_RY] = -1;
                 break;
-            case "k":
+            case "left": // IE/Edge
+            case "arrowleft":
+                newInput[switchApi.AXIS_RX] = -1;
+                break;
+            case "down": // IE/Edge
+            case "arrowdown":
                 newInput[switchApi.AXIS_RY] = 1;
                 break;
+            case "right": // IE/Edge
+            case "arrowright":
+                newInput[switchApi.AXIS_RX] = 1;
+                break;
+
             default:
                 if (eKey in switchKeyboardMapping) {
                     newInput[switchKeyboardMapping[eKey]] = true;
@@ -144,22 +161,22 @@ function getKeyboardEvents() {
             case "arrowdown":
             case "up": // IE/Edge
             case "arrowup":
-                newInput[switchApi.AXIS_LY] = 0;
+                newInput[switchApi.AXIS_RY] = 0;
                 break;
             case "left": // IE/Edge
             case "arrowleft":
             case "right": // IE/Edge
             case "arrowright":
-                newInput[switchApi.AXIS_LX] = 0;
-                break;
-
-            case "j":
-            case "l":
                 newInput[switchApi.AXIS_RX] = 0;
                 break;
-            case "k":
-            case "i":
-                newInput[switchApi.AXIS_RY] = 0;
+
+            case "w":
+            case "s":
+                newInput[switchApi.AXIS_LY] = 0;
+                break;
+            case "a":
+            case "d":
+                newInput[switchApi.AXIS_LX] = 0;
                 break;
             default:
                 if (eKey in switchKeyboardMapping && switchKeyboardMapping[eKey] in newInput)
@@ -171,7 +188,54 @@ function getKeyboardEvents() {
         }
     };
 
-    return [newKeyDown, newKeyUp];
+    const mouseMove = (e) => {
+        const newInput = {...lastInput};
+
+        if (e.movementX) {
+            newInput[switchApi.AXIS_RX] = Math.min(Math.max(e.movementX / _SENSITIVITY, -1), 1);
+        }
+        if (e.movementY) {
+            newInput[switchApi.AXIS_RY] = Math.min(Math.max(e.movementY / _SENSITIVITY, -1), 1);
+        }
+
+        if (!isEqual(newInput, lastInput)) {
+            lastInput = newInput;
+            if (clearMouseTimeout) {
+                clearTimeout(clearMouseTimeout);
+            }
+            clearMouseTimeout = setTimeout(() => {
+                clearMouseTimeout = null;
+                const clearInput = {...lastInput};
+                clearInput[switchApi.AXIS_RX] = 0;
+                clearInput[switchApi.AXIS_RY] = 0;
+                if (clearInput !== lastInput) {
+                    lastInput = clearInput;
+                    switchObservable.next(clearInput);
+                }
+            }, 100);
+            switchObservable.next(newInput);
+        }
+    };
+
+    const mouseDown = (e) => {
+        const newInput = {...lastInput};
+        const btn = (e.which === 3) ? switchApi.BUTTON_A : switchApi.BUTTON_Y;
+        newInput[btn] = true;
+        switchObservable.next(newInput);
+        lastInput = newInput;
+    };
+
+    const mouseUp = (e) => {
+        const newInput = {...lastInput};
+        const btn = (e.which === 3) ? switchApi.BUTTON_A : switchApi.BUTTON_Y;
+        if (btn in newInput) {
+            delete newInput[btn];
+            switchObservable.next(newInput);
+            lastInput = newInput;
+        }
+    };
+
+    return [newKeyDown, newKeyUp, mouseMove, mouseDown, mouseUp];
 }
 
-updateController(null);
+updateController();

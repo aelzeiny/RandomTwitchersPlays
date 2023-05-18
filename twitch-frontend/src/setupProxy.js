@@ -9,7 +9,7 @@ module.exports = app => {
         target: 'http://localhost:8443',
         ws: true, // enable websocket proxy
         logLevel: 'debug',
-        onError: err => console.log(err)
+        onError: err => console.error(err)
     });
     const lambdaProxy = createProxyMiddleware('/api', {
         target: `http://localhost:5001`,
@@ -17,7 +17,7 @@ module.exports = app => {
         // pathRewrite: (path, _) => path.replace('/api', ''),
         changeOrigin: true,
         logLevel: 'debug',
-        onError: err => console.log(err)
+        onError: err => console.error(err)
     });
     const lambdaWsProxy = createProxyMiddleware('/ws', {
         target: 'ws://localhost:5001/ws',
@@ -26,7 +26,7 @@ module.exports = app => {
         ws: true,
         logLevel: 'debug',
         secure: false,
-        onError: err => console.log(err)
+        onError: err => console.error(err)
     });
     app.use(wsProxy);
     app.use(lambdaProxy);

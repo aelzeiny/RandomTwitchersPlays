@@ -45,7 +45,6 @@ function Queue(props) {
         ws.onmessage = (raw) => {
             const message = JSON.parse(raw.data);
             if (message.id === 'status') {
-                console.log('>>', message, username, message.queue.indexOf(username))
                 if (message.whitelist.includes(username)) {
                     setPosition(-1);
                     return;

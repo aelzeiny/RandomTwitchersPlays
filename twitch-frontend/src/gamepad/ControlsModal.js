@@ -1,6 +1,6 @@
 import React  from 'react';
 import FA from 'react-fontawesome';
-import ControllerImg from '../img/controller_labeled.png';
+import ControllerImg from '../img/controller_labeled_3.png';
 
 
 export default function ControlsModal() {
