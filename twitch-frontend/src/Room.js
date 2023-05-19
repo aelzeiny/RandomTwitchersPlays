@@ -23,8 +23,8 @@ WebSocket.prototype.sendMessage = function (msg) {
 */
 
 const iceServersConfig = [
-    {"urls": "turn:turn.tearsofthekingdom.live", "username": "turnunit", "credential": "foUvJHWBNQ4hHp77sk577o8"},
-    {"urls":"stun:turn.tearsofthekingdom.live"}
+    {"urls": "turn:45.79.88.189", "username": "turnunit", "credential": "foUvJHWBNQ4hHp77sk577o8"},
+    {"urls":"stun:45.79.88.189"}
 ];
 
 
@@ -48,6 +48,7 @@ export default class Room extends React.Component {
     componentDidMount() {
 	    this.ws.onmessage = (message) => {
             const parsedMessage = JSON.parse(message.data);
+            console.log('Received message id:', parsedMessage.id);
             console.debug('Received message:', parsedMessage.id, parsedMessage);
 
             switch (parsedMessage.id) {
@@ -105,6 +106,7 @@ export default class Room extends React.Component {
     }
 
     componentDidUpdate(_, prevState, __) {
+        console.log('Update component', Array.from(prevState.players), '->', Array.from(this.state.players));
         // check for connected players
         for (let player of this.state.players) {
             if (!prevState.players.has(player)) {
@@ -146,7 +148,9 @@ export default class Room extends React.Component {
                         onicecandidate: this.onIceCandidate.bind(this, player),
                         configuration: {iceServers: iceServersConfig},
                     };
-                    this.webRtc[player].rtcPeer = new WebRtcPeer.WebRtcPeerSendonly(options, offerCallback);
+                    if (this.isPresenter) {
+                        this.webRtc[player].rtcPeer = new WebRtcPeer.WebRtcPeerSendonly(options, offerCallback);
+                    }
                 } else {
                     const options = {
                         remoteVideo: this.webRtc[player].video,
@@ -244,6 +248,7 @@ export default class Room extends React.Component {
     }s
 
     renderPlayer(player) {
+        console.log('rip, rerendered the vid');
         return (
             <div key={player} className='player-div'>
                 <span>{player}</span>

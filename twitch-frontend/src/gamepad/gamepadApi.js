@@ -1,6 +1,5 @@
 import isEqual from 'lodash.isequal';
 import { Subject } from 'rxjs';
-import {gamepad} from "caniuse-lite/data/features";
 
 const switchApi = require('./switchApi');
 
@@ -37,42 +36,6 @@ export function updateController() {
         document.addEventListener("mousedown", mouseDownEvent);
         document.addEventListener("mouseup", mouseUpEvent);
     }
-}
-
-function getGamepadLoop(gamepad) {
-    let lastInput = null;
-    return () => {
-        let newInput = getGamepadInput(gamepad);
-        if (!isEqual(gamepad, lastInput)) {
-            const switchEvent = new CustomEvent('switchMessage', newInput);
-            document.dispatchEvent(switchEvent);
-        }
-        lastInput = newInput;
-    };
-}
-
-/**
- * TODO: ADD GAMEPAD INPUT MAPPING
- * @param gamepad
- * @type {Gamepad}
- */
-function getGamepadInput(gamepad) {
-    // source: https://w3c.github.io/gamepad/#dom-gamepad-mapping
-    // XYBA
-    // PROBLEM: NO STANDARDIZED GAMEPAD format for gamepads.
-    // const gamepadButtonToSwitchMapping = {
-    //     0: switchApi.BUTTON_B,
-    //     1: switchApi.BUTTON_A,
-    //     2: switchApi.BUTTON_X,
-    //     3: switchApi.BUTTON_Y,
-    //     4: switchApi.BUTTON_LB,
-    //     5: switchApi.BUTTON_RB,
-    //     6: switchApi.BUTTON_LTRIGGER,
-    //     7: switchApi.BUTTON_RTRIGGER,
-    //     8: switchApi.BUTTON_SELECT,
-    //     9: switchApi.BUTTON_START,
-    //
-    // };
 }
 
 const switchKeyboardMapping = {

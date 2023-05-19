@@ -3,7 +3,7 @@ import './Present.css';
 
 import Navbar from "./Navbar";
 import Room from "./Room";
-import { openPresenterConnection, getTrafficURL, present } from "./apis";
+import { openPresenterConnection, present } from "./apis";
 
 
 const SUPER_SECRET_STORAGE_KEY = "_SUPER_SECRET";

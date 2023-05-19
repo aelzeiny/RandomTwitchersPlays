@@ -31,7 +31,7 @@
     "use-state-with-callback": "^3.0.2"
   },
   "scripts": {
-    "start": "export HTTPS=true && react-scripts start",
+    "start": "export NODE_OPTIONS=--openssl-legacy-provider && export HTTPS=true && react-scripts start",
     "build": "export NODE_OPTIONS=--openssl-legacy-provider && react-scripts build && rm -rf ../serverfull-auctioneer/static && mv ./build ../serverfull-auctioneer/static",
     "eject": "react-scripts eject"
   },
