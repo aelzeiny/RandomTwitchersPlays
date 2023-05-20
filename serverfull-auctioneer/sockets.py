@@ -5,7 +5,6 @@ from pydantic import BaseModel
 from starlette.websockets import WebSocketState
 
 import traffic_api
-import twitch_chatbot
 from auth import RequiredUser
 from collections import defaultdict
 
@@ -66,14 +65,19 @@ async def _broadcast(data: dict):
             for username in list(SOCKETS)
             for socket in SOCKETS[username]
             if socket.client_state != WebSocketState.DISCONNECTED
-        ],
-        BOT.put(data)
+        ]
     )
 
 
 async def broadcast_status():
     status = await status_response()
     await _broadcast(status.dict())
+
+    chatbot_msgs = []
+    if status.queue:
+        chatbot_msgs.append(f'In Queue: {",".join(status.queue[:5])}')
+    for chatbot_msg in chatbot_msgs:
+        await BOT.put(chatbot_msg)
 
 
 @router.websocket("/ws")

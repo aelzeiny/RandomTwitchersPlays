@@ -28,6 +28,7 @@ services:
     environment:
       - "JWT_SECRET=${JWT_SECRET}"
       - "TWITCH_ACCESS_TOKEN=${TWITCH_ACCESS_TOKEN}"  # needed for chatbot. See twitchtokengenerator.com
+      - "TWITCH_REFRESH_TOKEN=${TWITCH_REFRESH_TOKEN}"  # needed for chatbot. See twitchtokengenerator.com
       - "TWITCH_CLIENT_ID=${TWITCH_CLIENT_ID}"
       - "TWITCH_CLIENT_SECRET=${TWITCH_CLIENT_SECRET}"
       - "TRAFFIC_INTERNAL_URL=http://traffic:8443/api"

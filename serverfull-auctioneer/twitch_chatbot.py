@@ -1,10 +1,12 @@
 import asyncio
 import logging
 
+from twitchio import AuthenticationError
 from twitchio.ext import commands
 from twitchio.ext.commands import Context
 from asyncio import Queue
 
+import auth
 import constants
 import store
 import traffic_api
@@ -38,7 +40,7 @@ class Bot(commands.Bot):
         store.queue_remove(ctx.author.name)
         await ctx.send(f'Goodbye, @{ctx.author.name}! We hope you can "!join" us again soon!')
 
-    @commands.command(name='position', aliases=['where', 'status'])
+    @commands.command(name='position', aliases=['where', 'status', 'queue'])
     async def position(self, ctx: Context):
         username = ctx.author.name
         pos = store.queue_rank(username)
@@ -71,6 +73,17 @@ class Bot(commands.Bot):
         # TODO Add cheering abilities
         await ctx.send('Not implemented yet. Sorry m8.')
 
+    @classmethod
+    async def new(cls, access_token):
+        _bot = cls(
+            access_token,
+            prefix='!',
+            client_secret=constants.TWITCH_CLIENT_SECRET,
+            initial_channels=[TWITCH_CHANNEL]
+        )
+        await _bot.connect()
+        return _bot
+
 
 async def main(queue: Queue):
     """
@@ -78,29 +91,24 @@ async def main(queue: Queue):
     to the channel
     """
     # TODO: in the long term stop relying on https://twitchtokengenerator.com/ to populate ACCESS TOKEN
-    bot = Bot(
-        constants.TWITCH_ACCESS_TOKEN,
-        prefix='!',
-        client_secret=constants.TWITCH_CLIENT_SECRET,
-        initial_channels=[TWITCH_CHANNEL]
-    )
-    await bot.connect()
+
+    curr_access_token = constants.TWITCH_ACCESS_TOKEN
+    curr_refresh_token = constants.TWITCH_REFRESH_TOKEN
+
+    try:
+        bot = await Bot.new(curr_access_token)
+    except AuthenticationError:
+        curr_access_token, curr_refresh_token = await auth.refresh_token(curr_refresh_token)
+        bot = await Bot.new(curr_access_token)
     while True:
         data = await queue.get()
-        queue_usernames = data['queue'][:5]
-        whitelist_usernames = data['whitelist']
-        if queue_usernames:
-            up_next = ', '.join([f"#{i + 1} @{u}" for i, u in enumerate(queue_usernames)])
-            on_now = ', '.join([f"@{u}" for u in whitelist_usernames])
-            log.info(f'Next: {queue_usernames}')
-            log.info(f'On Stream: {on_now}')
+        try:
             for chan in bot.connected_channels:
-                await chan.send(f'Coming up: {up_next}')
-            for chan in bot.connected_channels:
-                await chan.send(f'On Stream: {on_now}')
-        else:
-            for chan in bot.connected_channels:
-                await chan.send(f'Queue is empty. Type "!join" to enter!')
+                await chan.send(data)
+        except AuthenticationError:
+            await queue.put(data)
+            curr_access_token, curr_refresh_token = await auth.refresh_token(curr_refresh_token)
+            bot = await Bot.new(curr_access_token)
 
 
 if __name__ == '__main__':

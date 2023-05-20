@@ -88,7 +88,7 @@ function Queue(props) {
                     <ControlsModal />
                 </div>
                 <div className='queue-twitch-container col-sm-9'>
-                    <TwitchStream chat={true} width='100%' />
+                    {position >= 0 && <TwitchStream chat={true} width='100%'/>}
                 </div>
             </div>
         </div>

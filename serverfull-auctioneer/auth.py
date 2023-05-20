@@ -50,6 +50,18 @@ async def validate_oidc(id_token: str) -> Optional[dict[str, str]]:
     return decoded_data
 
 
+async def refresh_token(_refresh_token: str) -> tuple[str, str]:
+    async with aiohttp.ClientSession() as session:
+        req = await session.post('https://id.twitch.tv/oauth2/token', data=dict(
+            client_id=constants.TWITCH_CLIENT_ID,
+            client_secret=constants.TWITCH_CLIENT_SECRET,
+            grant_type='refresh_token',
+            refresh_token=_refresh_token,
+        ))
+        resp = await req.json()
+        return resp['access_token'], resp['refresh_token']
+
+
 class UnauthorizedException(HTTPException):
     def __init__(self):
         super().__init__(
